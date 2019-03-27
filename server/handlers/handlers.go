@@ -17,5 +17,7 @@ func RegisterHandlers(s *server.ApiServer) {
 	registerPage.Path("").Methods("GET").Handler(s.WrapHandler(Get_Register, true))
 	registerPage.Path("/page/register").Methods("POST").Handler(s.WrapHandler(Handle_Register, true))
     router.Path("/api/problem/create").Methods("GET").Handler(s.WrapHandler(Get_Problem_Create, true))
+    router.Path("/api/problem/create/page/create").Methods("POST").Handler(s.WrapHandler(Handle_Problem_Create, true))
+    router.Path("/api/problem/{problem_id:[0-9A-Za-z-_]{16}}").Methods("GET").Handler(s.WrapHandler(Get_Problem, true))
 	router.PathPrefix("/api").Methods("GET").Handler(s.WrapHandler(Handle_Not_Found, true))
 }

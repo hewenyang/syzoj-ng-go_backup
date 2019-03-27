@@ -45,7 +45,7 @@ func Handle_Register(ctx context.Context, req *model.RegisterRequest) error {
 		log.WithError(err).Error("Handle_Register query failed")
 		return server.ErrBusy
 	}
-	if err = txn.Commit(); err != nil {
+	if err = txn.Commit(ctx); err != nil {
 		log.WithError(err).Error("Handle_Register query failed")
 		return server.ErrBusy
 	}

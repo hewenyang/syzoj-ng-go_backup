@@ -70,14 +70,20 @@ func (d *Database) OpenReadonlyTxn(ctx context.Context) (*DatabaseTxn, error) {
 	return tx2, nil
 }
 
-func (t *DatabaseTxn) Commit() error {
+func (t *DatabaseTxn) Commit(context.Context) error {
 	atomic.StoreInt32(&t.done, 1)
 	return t.tx.Commit()
 }
 
-func (t *DatabaseTxn) Rollback() error {
-	atomic.StoreInt32(&t.done, 1)
-	return t.tx.Rollback()
+func (t *DatabaseTxn) Rollback() {
+    if atomic.CompareAndSwapInt32(&t.done, 0, 1) {
+        go func() {
+            err := t.tx.Rollback()
+            if err != nil {
+                log.WithError(err).Error("Failed to rollback transaction")
+            }
+        }()
+    }
 }
 
 func (t *DatabaseTxn) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {

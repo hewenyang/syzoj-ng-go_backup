@@ -55,6 +55,10 @@ message RegisterPage {
 message ProblemCreatePage {
 }
 
+message ProblemCreateRequest {
+    optional string problem_title = 16;
+}
+
 message ProblemViewPage {
     optional string problem_title = 16;
     optional ProblemStatementComponent problem_statement = 17;

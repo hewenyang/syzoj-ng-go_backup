@@ -188,6 +188,10 @@ func (c *ApiContext) Redirect(path string) {
 	c.Mutate("", "redirect", &model.Path{Path: proto.String(path)})
 }
 
+func (c *ApiContext) Vars() map[string]string {
+    return mux.Vars(c.r)
+}
+
 func (c *ApiContext) Send() {
 	resp := &model.Response{Mutations: c.mut}
 	if err := jsonMarshaler.Marshal(c.w, resp); err != nil {
