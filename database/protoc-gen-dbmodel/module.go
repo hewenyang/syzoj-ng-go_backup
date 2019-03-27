@@ -42,6 +42,18 @@ func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) 
 	return v, nil
 }
 
+func (t *DatabaseTxn) Get{{.CapName}}ForUpdate(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
+	v := new({{.CapName}})
+	err := t.tx.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=? FOR UPDATE", ref).Scan(&v.Id, {{.ScanList}})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return v, nil
+}
+
 func (t *DatabaseTxn) Update{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref, v {{.CapName}}) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
