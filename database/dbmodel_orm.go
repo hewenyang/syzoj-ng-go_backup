@@ -3,13 +3,17 @@ package database
 import (
 	"context"
 	"database/sql"
-
-	"github.com/syzoj/syzoj-ng-go/model"
 )
 
-func (t *DatabaseTxn) GetUser(ctx context.Context, ref model.UserRef) (*model.User, error) {
-	v := new(model.User)
-	err := t.tx.QueryRowContext(ctx, "SELECT user_name, auth FROM user WHERE id=?", ref).Scan(&v.Id, &v.UserName, &v.Auth)
+type UserRef string
+
+func NewUserRef() UserRef {
+	return UserRef(newId())
+}
+
+func (t *DatabaseTxn) GetUser(ctx context.Context, ref UserRef) (*User, error) {
+	v := new(User)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, user_name, auth FROM user WHERE id=?", ref).Scan(&v.Id, &v.UserName, &v.Auth)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -19,7 +23,7 @@ func (t *DatabaseTxn) GetUser(ctx context.Context, ref model.UserRef) (*model.Us
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateUser(ctx context.Context, ref model.UserRef, v *model.User) error {
+func (t *DatabaseTxn) UpdateUser(ctx context.Context, ref UserRef, v User) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -27,23 +31,29 @@ func (t *DatabaseTxn) UpdateUser(ctx context.Context, ref model.UserRef, v *mode
 	return err
 }
 
-func (t *DatabaseTxn) InsertUser(ctx context.Context, v *model.User) error {
+func (t *DatabaseTxn) InsertUser(ctx context.Context, v *User) error {
 	if v.Id == nil {
-		ref := model.NewUserRef()
+		ref := NewUserRef()
 		v.Id = &ref
 	}
 	_, err := t.tx.ExecContext(ctx, "INSERT INTO user (id, user_name, auth) VALUES (?, ?, ?)", v.Id, v.UserName, v.Auth)
 	return err
 }
 
-func (t *DatabaseTxn) DeleteUser(ctx context.Context, ref model.UserRef) error {
+func (t *DatabaseTxn) DeleteUser(ctx context.Context, ref UserRef) error {
 	_, err := t.tx.ExecContext(ctx, "DELETE FROM user WHERE id=?", ref)
 	return err
 }
 
-func (t *DatabaseTxn) GetDevice(ctx context.Context, ref model.DeviceRef) (*model.Device, error) {
-	v := new(model.Device)
-	err := t.tx.QueryRowContext(ctx, "SELECT user, info FROM device WHERE id=?", ref).Scan(&v.Id, &v.User, &v.Info)
+type DeviceRef string
+
+func NewDeviceRef() DeviceRef {
+	return DeviceRef(newId())
+}
+
+func (t *DatabaseTxn) GetDevice(ctx context.Context, ref DeviceRef) (*Device, error) {
+	v := new(Device)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, user, info FROM device WHERE id=?", ref).Scan(&v.Id, &v.User, &v.Info)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -53,7 +63,7 @@ func (t *DatabaseTxn) GetDevice(ctx context.Context, ref model.DeviceRef) (*mode
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateDevice(ctx context.Context, ref model.DeviceRef, v *model.Device) error {
+func (t *DatabaseTxn) UpdateDevice(ctx context.Context, ref DeviceRef, v Device) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -61,23 +71,29 @@ func (t *DatabaseTxn) UpdateDevice(ctx context.Context, ref model.DeviceRef, v *
 	return err
 }
 
-func (t *DatabaseTxn) InsertDevice(ctx context.Context, v *model.Device) error {
+func (t *DatabaseTxn) InsertDevice(ctx context.Context, v *Device) error {
 	if v.Id == nil {
-		ref := model.NewDeviceRef()
+		ref := NewDeviceRef()
 		v.Id = &ref
 	}
 	_, err := t.tx.ExecContext(ctx, "INSERT INTO device (id, user, info) VALUES (?, ?, ?)", v.Id, v.User, v.Info)
 	return err
 }
 
-func (t *DatabaseTxn) DeleteDevice(ctx context.Context, ref model.DeviceRef) error {
+func (t *DatabaseTxn) DeleteDevice(ctx context.Context, ref DeviceRef) error {
 	_, err := t.tx.ExecContext(ctx, "DELETE FROM device WHERE id=?", ref)
 	return err
 }
 
-func (t *DatabaseTxn) GetProblem(ctx context.Context, ref model.ProblemRef) (*model.Problem, error) {
-	v := new(model.Problem)
-	err := t.tx.QueryRowContext(ctx, "SELECT title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Title)
+type ProblemRef string
+
+func NewProblemRef() ProblemRef {
+	return ProblemRef(newId())
+}
+
+func (t *DatabaseTxn) GetProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
+	v := new(Problem)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Title)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -87,7 +103,7 @@ func (t *DatabaseTxn) GetProblem(ctx context.Context, ref model.ProblemRef) (*mo
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateProblem(ctx context.Context, ref model.ProblemRef, v *model.Problem) error {
+func (t *DatabaseTxn) UpdateProblem(ctx context.Context, ref ProblemRef, v Problem) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -95,23 +111,29 @@ func (t *DatabaseTxn) UpdateProblem(ctx context.Context, ref model.ProblemRef, v
 	return err
 }
 
-func (t *DatabaseTxn) InsertProblem(ctx context.Context, v *model.Problem) error {
+func (t *DatabaseTxn) InsertProblem(ctx context.Context, v *Problem) error {
 	if v.Id == nil {
-		ref := model.NewProblemRef()
+		ref := NewProblemRef()
 		v.Id = &ref
 	}
 	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem (id, title) VALUES (?, ?)", v.Id, v.Title)
 	return err
 }
 
-func (t *DatabaseTxn) DeleteProblem(ctx context.Context, ref model.ProblemRef) error {
+func (t *DatabaseTxn) DeleteProblem(ctx context.Context, ref ProblemRef) error {
 	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem WHERE id=?", ref)
 	return err
 }
 
-func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref model.ProblemSourceRef) (*model.ProblemSource, error) {
-	v := new(model.ProblemSource)
-	err := t.tx.QueryRowContext(ctx, "SELECT data FROM problem_source WHERE id=?", ref).Scan(&v.Id, &v.Data)
+type ProblemSourceRef string
+
+func NewProblemSourceRef() ProblemSourceRef {
+	return ProblemSourceRef(newId())
+}
+
+func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
+	v := new(ProblemSource)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, source FROM problem_source WHERE id=?", ref).Scan(&v.Id, &v.Source)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -121,31 +143,37 @@ func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref model.ProblemSou
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateProblemSource(ctx context.Context, ref model.ProblemSourceRef, v *model.ProblemSource) error {
+func (t *DatabaseTxn) UpdateProblemSource(ctx context.Context, ref ProblemSourceRef, v ProblemSource) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_source SET data=? WHERE id=?", v.Data, v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE problem_source SET source=? WHERE id=?", v.Source, v.Id)
 	return err
 }
 
-func (t *DatabaseTxn) InsertProblemSource(ctx context.Context, v *model.ProblemSource) error {
+func (t *DatabaseTxn) InsertProblemSource(ctx context.Context, v *ProblemSource) error {
 	if v.Id == nil {
-		ref := model.NewProblemSourceRef()
+		ref := NewProblemSourceRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_source (id, data) VALUES (?, ?)", v.Id, v.Data)
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_source (id, source) VALUES (?, ?)", v.Id, v.Source)
 	return err
 }
 
-func (t *DatabaseTxn) DeleteProblemSource(ctx context.Context, ref model.ProblemSourceRef) error {
+func (t *DatabaseTxn) DeleteProblemSource(ctx context.Context, ref ProblemSourceRef) error {
 	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem_source WHERE id=?", ref)
 	return err
 }
 
-func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref model.ProblemJudgerRef) (*model.ProblemJudger, error) {
-	v := new(model.ProblemJudger)
-	err := t.tx.QueryRowContext(ctx, "SELECT problem, user, type, data FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &v.Data)
+type ProblemJudgerRef string
+
+func NewProblemJudgerRef() ProblemJudgerRef {
+	return ProblemJudgerRef(newId())
+}
+
+func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
+	v := new(ProblemJudger)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -155,7 +183,7 @@ func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref model.ProblemJud
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateProblemJudger(ctx context.Context, ref model.ProblemJudgerRef, v *model.ProblemJudger) error {
+func (t *DatabaseTxn) UpdateProblemJudger(ctx context.Context, ref ProblemJudgerRef, v ProblemJudger) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -163,23 +191,29 @@ func (t *DatabaseTxn) UpdateProblemJudger(ctx context.Context, ref model.Problem
 	return err
 }
 
-func (t *DatabaseTxn) InsertProblemJudger(ctx context.Context, v *model.ProblemJudger) error {
+func (t *DatabaseTxn) InsertProblemJudger(ctx context.Context, v *ProblemJudger) error {
 	if v.Id == nil {
-		ref := model.NewProblemJudgerRef()
+		ref := NewProblemJudgerRef()
 		v.Id = &ref
 	}
 	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_judger (id, problem, user, type, data) VALUES (?, ?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Type, v.Data)
 	return err
 }
 
-func (t *DatabaseTxn) DeleteProblemJudger(ctx context.Context, ref model.ProblemJudgerRef) error {
+func (t *DatabaseTxn) DeleteProblemJudger(ctx context.Context, ref ProblemJudgerRef) error {
 	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem_judger WHERE id=?", ref)
 	return err
 }
 
-func (t *DatabaseTxn) GetProblemStatement(ctx context.Context, ref model.ProblemStatementRef) (*model.ProblemStatement, error) {
-	v := new(model.ProblemStatement)
-	err := t.tx.QueryRowContext(ctx, "SELECT problem, user, data FROM problem_statement WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
+type ProblemStatementRef string
+
+func NewProblemStatementRef() ProblemStatementRef {
+	return ProblemStatementRef(newId())
+}
+
+func (t *DatabaseTxn) GetProblemStatement(ctx context.Context, ref ProblemStatementRef) (*ProblemStatement, error) {
+	v := new(ProblemStatement)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_statement WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -189,7 +223,7 @@ func (t *DatabaseTxn) GetProblemStatement(ctx context.Context, ref model.Problem
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateProblemStatement(ctx context.Context, ref model.ProblemStatementRef, v *model.ProblemStatement) error {
+func (t *DatabaseTxn) UpdateProblemStatement(ctx context.Context, ref ProblemStatementRef, v ProblemStatement) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -197,23 +231,29 @@ func (t *DatabaseTxn) UpdateProblemStatement(ctx context.Context, ref model.Prob
 	return err
 }
 
-func (t *DatabaseTxn) InsertProblemStatement(ctx context.Context, v *model.ProblemStatement) error {
+func (t *DatabaseTxn) InsertProblemStatement(ctx context.Context, v *ProblemStatement) error {
 	if v.Id == nil {
-		ref := model.NewProblemStatementRef()
+		ref := NewProblemStatementRef()
 		v.Id = &ref
 	}
 	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_statement (id, problem, user, data) VALUES (?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Data)
 	return err
 }
 
-func (t *DatabaseTxn) DeleteProblemStatement(ctx context.Context, ref model.ProblemStatementRef) error {
+func (t *DatabaseTxn) DeleteProblemStatement(ctx context.Context, ref ProblemStatementRef) error {
 	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem_statement WHERE id=?", ref)
 	return err
 }
 
-func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref model.SubmissionRef) (*model.Submission, error) {
-	v := new(model.Submission)
-	err := t.tx.QueryRowContext(ctx, "SELECT problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Data)
+type SubmissionRef string
+
+func NewSubmissionRef() SubmissionRef {
+	return SubmissionRef(newId())
+}
+
+func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
+	v := new(Submission)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -223,7 +263,7 @@ func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref model.SubmissionRef
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateSubmission(ctx context.Context, ref model.SubmissionRef, v *model.Submission) error {
+func (t *DatabaseTxn) UpdateSubmission(ctx context.Context, ref SubmissionRef, v Submission) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -231,16 +271,16 @@ func (t *DatabaseTxn) UpdateSubmission(ctx context.Context, ref model.Submission
 	return err
 }
 
-func (t *DatabaseTxn) InsertSubmission(ctx context.Context, v *model.Submission) error {
+func (t *DatabaseTxn) InsertSubmission(ctx context.Context, v *Submission) error {
 	if v.Id == nil {
-		ref := model.NewSubmissionRef()
+		ref := NewSubmissionRef()
 		v.Id = &ref
 	}
 	_, err := t.tx.ExecContext(ctx, "INSERT INTO submission (id, problem_judger, user, data) VALUES (?, ?, ?, ?)", v.Id, v.ProblemJudger, v.User, v.Data)
 	return err
 }
 
-func (t *DatabaseTxn) DeleteSubmission(ctx context.Context, ref model.SubmissionRef) error {
+func (t *DatabaseTxn) DeleteSubmission(ctx context.Context, ref SubmissionRef) error {
 	_, err := t.tx.ExecContext(ctx, "DELETE FROM submission WHERE id=?", ref)
 	return err
 }

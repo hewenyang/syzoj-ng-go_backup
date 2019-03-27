@@ -1,9 +1,7 @@
 package model
 
 import (
-	"crypto/rand"
 	"database/sql/driver"
-	"encoding/base64"
 	"errors"
 
 	"github.com/golang/protobuf/proto"
@@ -11,54 +9,18 @@ import (
 
 var ErrInvalidType = errors.New("Can only scan []byte into protobuf message")
 
-func newId() string {
-	var b [12]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		panic(err)
+func (m *Any) Value() (driver.Value, error) {
+	return proto.Marshal(m)
+}
+
+func (m *Any) Scan(v interface{}) error {
+	if v == nil {
+		return nil
 	}
-	return base64.URLEncoding.EncodeToString(b[:])
-}
-
-type UserRef string
-
-func NewUserRef() UserRef {
-	return UserRef(newId())
-}
-
-type DeviceRef string
-
-func NewDeviceRef() DeviceRef {
-	return DeviceRef(newId())
-}
-
-type ProblemRef string
-
-func NewProblemRef() ProblemRef {
-	return ProblemRef(newId())
-}
-
-type ProblemSourceRef string
-
-func NewProblemSourceRef() ProblemSourceRef {
-	return ProblemSourceRef(newId())
-}
-
-type ProblemJudgerRef string
-
-func NewProblemJudgerRef() ProblemJudgerRef {
-	return ProblemJudgerRef(newId())
-}
-
-type ProblemStatementRef string
-
-func NewProblemStatementRef() ProblemStatementRef {
-	return ProblemStatementRef(newId())
-}
-
-type SubmissionRef string
-
-func NewSubmissionRef() SubmissionRef {
-	return SubmissionRef(newId())
+	if b, ok := v.([]byte); ok {
+		return proto.Unmarshal(b, m)
+	}
+	return ErrInvalidType
 }
 
 func (m *DeviceInfo) Value() (driver.Value, error) {
@@ -75,11 +37,11 @@ func (m *DeviceInfo) Scan(v interface{}) error {
 	return ErrInvalidType
 }
 
-func (m *ProblemJudgerData) Value() (driver.Value, error) {
+func (m *ProblemSource) Value() (driver.Value, error) {
 	return proto.Marshal(m)
 }
 
-func (m *ProblemJudgerData) Scan(v interface{}) error {
+func (m *ProblemSource) Scan(v interface{}) error {
 	if v == nil {
 		return nil
 	}
@@ -89,39 +51,11 @@ func (m *ProblemJudgerData) Scan(v interface{}) error {
 	return ErrInvalidType
 }
 
-func (m *ProblemSourceData) Value() (driver.Value, error) {
+func (m *ProblemStatement) Value() (driver.Value, error) {
 	return proto.Marshal(m)
 }
 
-func (m *ProblemSourceData) Scan(v interface{}) error {
-	if v == nil {
-		return nil
-	}
-	if b, ok := v.([]byte); ok {
-		return proto.Unmarshal(b, m)
-	}
-	return ErrInvalidType
-}
-
-func (m *ProblemStatementData) Value() (driver.Value, error) {
-	return proto.Marshal(m)
-}
-
-func (m *ProblemStatementData) Scan(v interface{}) error {
-	if v == nil {
-		return nil
-	}
-	if b, ok := v.([]byte); ok {
-		return proto.Unmarshal(b, m)
-	}
-	return ErrInvalidType
-}
-
-func (m *SubmissionData) Value() (driver.Value, error) {
-	return proto.Marshal(m)
-}
-
-func (m *SubmissionData) Scan(v interface{}) error {
+func (m *ProblemStatement) Scan(v interface{}) error {
 	if v == nil {
 		return nil
 	}

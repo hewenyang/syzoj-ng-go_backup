@@ -12,7 +12,7 @@ import (
 	pgsgo "github.com/lyft/protoc-gen-star/lang/go"
     "github.com/golang/protobuf/protoc-gen-go/descriptor"
 
-    "github.com/syzoj/syzoj-ng-go/model/protoc-gen-dbmodel/dbmodel"
+    "github.com/syzoj/syzoj-ng-go/database/protoc-gen-dbmodel/dbmodel"
 )
 
 var tplOrm = template.Must(template.New("dbmodel_orm").Parse(`
@@ -21,14 +21,18 @@ package database
 import (
 	"context"
 	"database/sql"
-
-	"github.com/syzoj/syzoj-ng-go/model"
 )
 
 {{range .Tables}}
-func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref model.{{.CapName}}Ref) (*model.{{.CapName}}, error) {
-	v := new(model.{{.CapName}})
-	err := t.tx.QueryRowContext(ctx, "SELECT {{.SelList}} FROM {{.Name}} WHERE id=?", ref).Scan(&v.Id, {{.ScanList}})
+type {{.CapName}}Ref string
+
+func New{{.CapName}}Ref() {{.CapName}}Ref {
+	return {{.CapName}}Ref(newId())
+}
+
+func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
+	v := new({{.CapName}})
+	err := t.tx.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=?", ref).Scan(&v.Id, {{.ScanList}})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -38,7 +42,7 @@ func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref model.{{.CapName}
 	return v, nil
 }
 
-func (t *DatabaseTxn) Update{{.CapName}}(ctx context.Context, ref model.{{.CapName}}Ref, v *model.{{.CapName}}) error {
+func (t *DatabaseTxn) Update{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref, v {{.CapName}}) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -46,16 +50,16 @@ func (t *DatabaseTxn) Update{{.CapName}}(ctx context.Context, ref model.{{.CapNa
 	return err
 }
 
-func (t *DatabaseTxn) Insert{{.CapName}}(ctx context.Context, v *model.{{.CapName}}) error {
+func (t *DatabaseTxn) Insert{{.CapName}}(ctx context.Context, v *{{.CapName}}) error {
 	if v.Id == nil {
-		ref := model.New{{.CapName}}Ref()
+		ref := New{{.CapName}}Ref()
 		v.Id = &ref
 	}
 	_, err := t.tx.ExecContext(ctx, "INSERT INTO {{.Name}} (id, {{.InsList}}) VALUES ({{.InsValue}})", v.Id, {{.ArgList}})
 	return err
 }
 
-func (t *DatabaseTxn) Delete{{.CapName}}(ctx context.Context, ref model.{{.CapName}}Ref) error {
+func (t *DatabaseTxn) Delete{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) error {
 	_, err := t.tx.ExecContext(ctx, "DELETE FROM {{.Name}} WHERE id=?", ref)
 	return err
 }
@@ -65,30 +69,12 @@ var tplModel = template.Must(template.New("dbmodel_model").Parse(`
 package model
 
 import (
-	"crypto/rand"
 	"database/sql/driver"
-	"encoding/base64"
 	"errors"
 
 	"github.com/golang/protobuf/proto"
 )
 var ErrInvalidType = errors.New("Can only scan []byte into protobuf message")
-
-func newId() string {
-	var b [12]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		panic(err)
-	}
-	return base64.URLEncoding.EncodeToString(b[:])
-}
-
-{{range .Tables}}
-type {{.CapName}}Ref string
-
-func New{{.CapName}}Ref() {{.CapName}}Ref {
-	return {{.CapName}}Ref(newId())
-}
-{{end}}
 
 {{range .Messages}}
 func (m *{{.}}) Value() (driver.Value, error) {
@@ -138,9 +124,9 @@ func (m *module) Execute(targets map[string]pgs.File, packages map[string]pgs.Pa
 			panic(err)
 		}
         data := v.getData()
-		m.AddCustomTemplateFile("dbmodel_orm.go", tplOrm, data, 0644)
-		m.AddCustomTemplateFile("dbmodel_model.go", tplModel, data, 0644)
-		m.AddCustomTemplateFile("dbmodel_sql.sql", tplSql, data, 0644)
+		m.OverwriteCustomTemplateFile("dbmodel_orm.go", tplOrm, data, 0644)
+		m.OverwriteCustomTemplateFile("dbmodel_model.go", tplModel, data, 0644)
+		m.OverwriteCustomTemplateFile("dbmodel_sql.sql", tplSql, data, 0644)
 	}
 	return m.Artifacts()
 }

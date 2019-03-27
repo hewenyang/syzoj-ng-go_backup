@@ -1,0 +1,76 @@
+syntax = "proto2";
+
+package syzoj.api;
+
+import "google/protobuf/any.proto";
+import "gotype.proto";
+import "syzoj.model.proto";
+
+option go_package = "github.com/syzoj/syzoj-ng-go/model";
+
+// This file defines messages used in the frontend.
+// When making any changes to this file, reflect them tn the frontend too.
+
+////////// Basic messages
+message Response {
+    repeated Mutation mutations = 3;
+}
+
+message Mutation {
+    optional string path = 1;
+    optional string method = 2;
+    optional google.protobuf.Any value = 3;
+}
+
+message Error {
+    optional string error = 1;
+}
+
+message Path {
+    optional string path = 1;
+}
+
+message NotFoundPage {
+}
+
+// /login
+message LoginPage {
+}
+
+message LoginRequest {
+    optional string user_name = 1;
+    optional string password = 2;
+}
+
+// /register
+message RegisterRequest {
+    optional string user_name = 1;
+    optional string password = 2;
+}
+
+message RegisterPage {
+}
+
+// problem
+message ProblemCreatePage {
+}
+
+message ProblemViewPage {
+    optional string problem_title = 16;
+    optional ProblemStatementComponent problem_statement = 17;
+    optional ProblemSourceComponent problem_source = 18;
+    optional ProblemJudgeComponent problem_judge = 19;
+}
+
+message ProblemStatementComponent {
+    optional syzoj.model.ProblemStatement statement = 1;
+}
+
+message ProblemSourceComponent {
+    optional syzoj.model.ProblemSource source = 1;
+}
+
+message ProblemJudgeComponent {
+    optional string type = 1;
+    optional google.protobuf.Any data = 2;
+}

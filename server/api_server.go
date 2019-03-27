@@ -91,7 +91,13 @@ func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
 	t := val.Type()
 	var reqType reflect.Type
 	if t.NumIn() == 1 {
+        if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
+            panic("wrapHandler: Type of first argument is not context.Context")
+        }
 	} else if t.NumIn() == 2 {
+        if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
+            panic("wrapHandler: Type of first argument is not context.Context")
+        }
 		reqType = t.In(1)
 		if !reqType.Implements(reflect.TypeOf((*proto.Message)(nil)).Elem()) {
 			panic("wrapHandler: Type of the second input argument does not implement proto.Message")
@@ -99,18 +105,12 @@ func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
 	} else {
 		panic("wrapHandler: Number of input arguments is neither 1 nor 2")
 	}
-	if t.NumOut() != 2 {
-		panic("wrapHandler: Number of outputs is not 2")
-	}
-	if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
-		panic("wrapHandler: Type of first argument is not context.Context")
-	}
-	if t.Out(1) != reflect.TypeOf((*error)(nil)).Elem() {
-		panic("wrapHandler: Type of second output is not error")
-	}
-	respType := t.Out(0)
-	if !respType.Implements(reflect.TypeOf((*proto.Message)(nil)).Elem()) {
-		panic("wrapHandler: Type of first output does not ipmlement proto.Message")
+    if t.NumOut() == 1 {
+        if t.Out(0) != reflect.TypeOf((*error)(nil)).Elem() {
+            panic("wrapHandler: Type of output is not error")
+        }
+    } else {
+		panic("wrapHandler: Number of outputs is not 1")
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c := &ApiContext{r: r, w: w, s: s}
@@ -138,11 +138,9 @@ func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
 		} else {
 			out = val.Call([]reflect.Value{reflect.ValueOf(ctx)})
 		}
-		if out[1].Interface() != nil {
-			c.SendError(out[1].Interface().(error))
-		} else {
-			c.SendBody(out[0].Interface().(proto.Message))
-		}
+        if out[0].Interface() != nil {
+            c.SendError(out[0].Interface().(error))
+        }
 	})
 }
 
@@ -184,6 +182,10 @@ func (c *ApiContext) SendBody(val proto.Message) {
 
 func (c *ApiContext) SendError(err error) {
 	c.Mutate("", "setError", &model.Error{Error: proto.String(err.Error())})
+}
+
+func (c *ApiContext) Redirect(path string) {
+	c.Mutate("", "redirect", &model.Path{Path: proto.String(path)})
 }
 
 func (c *ApiContext) Send() {

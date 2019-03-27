@@ -17,7 +17,7 @@ CREATE TABLE problem (
 
 CREATE TABLE problem_source (
   id VARCHAR(16) PRIMARY KEY,
-  data BLOB
+  source BLOB
 );
 
 CREATE TABLE problem_judger (

@@ -4,7 +4,7 @@ package dbmodel;
 
 import "google/protobuf/descriptor.proto";
 
-option go_package = "github.com/syzoj/syzoj-ng-go/model/protoc-gen-dbmodel/dbmodel";
+option go_package = "github.com/syzoj/syzoj-ng-go/database/protoc-gen-dbmodel/dbmodel";
 
 extend google.protobuf.FieldOptions {
     optional string sql = 291985;

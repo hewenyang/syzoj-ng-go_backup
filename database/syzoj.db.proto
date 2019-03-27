@@ -1,35 +1,28 @@
 syntax = "proto2";
 
-package syzoj.server;
+package syzoj.db;
 
 import "gotype.proto";
 import "dbmodel.proto";
-import "model_data.proto";
+import "syzoj.model.proto";
 
-option go_package = "github.com/syzoj/syzoj-ng-go/model";
+option go_package = "github.com/syzoj/syzoj-ng-go/database";
 
-// There are two sets of mesasges.
-// One is the messages with the id column and they coreespond to a table row. Every field
-// corresponds to a table column, and changes to those messages need to be reflected
-// in model/model.go and database/database.go. Each of these messages have a special Go
-// type suffixed Ref that represents the primary key column of the message.
-// The other is the messages nested in a BLOB column of a table row. These messages can
-// be changed easily and fields can be added or removed without changing anything else,
-// but they cannot be indexed.
-
-// This file defines all database tables. The other file, model_data.proto, defines the
-// protobuf data stored in BLOB columns.
+// This file defines all tables in the database.
+// Every field is stored as a column, and protobuf fields are stored as a blob field.
+// Be careful when editing this file. SQL schemas and any SQL statements in source files
+// also need to be updated.
 
 message User {
     optional string id = 1 [(gotype.gotype) = "UserRef"];
     optional string user_name = 2 [(dbmodel.sql) = "user_name varchar(64) UNIQUE"];
-    optional UserAuth auth = 3;
+    optional syzoj.model.UserAuth auth = 3;
 }
 
 message Device {
     optional string id = 1 [(gotype.gotype) = "DeviceRef"];
     optional string user = 2 [(gotype.gotype) = "UserRef"];
-    optional DeviceInfo info = 3;
+    optional syzoj.model.DeviceInfo info = 3;
 }
 
 message Problem {
@@ -39,7 +32,7 @@ message Problem {
 
 message ProblemSource {
     optional string id = 1 [(gotype.gotype) = "ProblemSourceRef"];
-    optional ProblemSourceData data = 16;
+    optional syzoj.model.ProblemSource source = 16;
 }
 
 message ProblemJudger {
@@ -47,19 +40,19 @@ message ProblemJudger {
     optional string problem = 2 [(gotype.gotype) = "ProblemRef"];
     optional string user = 3 [(gotype.gotype) = "UserRef"];
     optional string type = 4;
-    optional ProblemJudgerData data = 16;
+    optional syzoj.model.Any data = 16;
 }
 
 message ProblemStatement {
     optional string id = 1 [(gotype.gotype) = "ProblemStatementRef"];
     optional string problem = 2 [(gotype.gotype) = "ProblemRef"];
     optional string user = 3 [(gotype.gotype) = "UserRef"];
-    optional ProblemStatementData data = 16;
+    optional syzoj.model.ProblemStatement data = 16;
 }
 
 message Submission {
     optional string id = 1 [(gotype.gotype) = "SubmissionRef"];
     optional string problem_judger = 2 [(gotype.gotype) = "ProblemJudgerRef"];
     optional string user = 3 [(gotype.gotype) = "UserRef"];
-    optional SubmissionData data = 16;
+    optional syzoj.model.Any data = 16;
 }

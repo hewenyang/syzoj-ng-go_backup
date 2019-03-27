@@ -2,7 +2,9 @@ package database
 
 import (
 	"context"
+    "crypto/rand"
 	"database/sql"
+    "encoding/base64"
 	"sync/atomic"
     "reflect"
 
@@ -84,6 +86,14 @@ func (t *DatabaseTxn) QueryContext(ctx context.Context, query string, args ...in
 
 func (t *DatabaseTxn) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	return t.tx.QueryRowContext(ctx, query, args...)
+}
+
+func newId() string {
+	var b [12]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		panic(err)
+	}
+	return base64.URLEncoding.EncodeToString(b[:])
 }
 
 func ScanAll(r *sql.Rows, v interface{}) error {
