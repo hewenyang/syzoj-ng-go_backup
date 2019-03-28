@@ -5,8 +5,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/syzoj/syzoj-ng-go/model"
 	"github.com/syzoj/syzoj-ng-go/database"
+	"github.com/syzoj/syzoj-ng-go/model"
 	"github.com/syzoj/syzoj-ng-go/server"
 )
 
@@ -19,7 +19,7 @@ func Get_Register(ctx context.Context) error {
 func Handle_Register(ctx context.Context, req *model.RegisterRequest) error {
 	var err error
 	s := server.GetServer(ctx)
-    c := server.GetApiContext(ctx)
+	c := server.GetApiContext(ctx)
 	txn, err := s.GetDB().OpenTxn(ctx)
 	if err != nil {
 		log.WithError(err).Error("Failed to open transaction")

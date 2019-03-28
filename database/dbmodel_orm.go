@@ -11,6 +11,11 @@ func NewUserRef() UserRef {
 	return UserRef(newId())
 }
 
+func CreateUserRef(ref UserRef) *UserRef {
+	x := ref
+	return &x
+}
+
 func (t *DatabaseTxn) GetUser(ctx context.Context, ref UserRef) (*User, error) {
 	v := new(User)
 	err := t.tx.QueryRowContext(ctx, "SELECT id, user_name, auth FROM user WHERE id=?", ref).Scan(&v.Id, &v.UserName, &v.Auth)
@@ -35,7 +40,7 @@ func (t *DatabaseTxn) GetUserForUpdate(ctx context.Context, ref UserRef) (*User,
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateUser(ctx context.Context, ref UserRef, v User) error {
+func (t *DatabaseTxn) UpdateUser(ctx context.Context, ref UserRef, v *User) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -63,6 +68,11 @@ func NewDeviceRef() DeviceRef {
 	return DeviceRef(newId())
 }
 
+func CreateDeviceRef(ref DeviceRef) *DeviceRef {
+	x := ref
+	return &x
+}
+
 func (t *DatabaseTxn) GetDevice(ctx context.Context, ref DeviceRef) (*Device, error) {
 	v := new(Device)
 	err := t.tx.QueryRowContext(ctx, "SELECT id, user, info FROM device WHERE id=?", ref).Scan(&v.Id, &v.User, &v.Info)
@@ -87,7 +97,7 @@ func (t *DatabaseTxn) GetDeviceForUpdate(ctx context.Context, ref DeviceRef) (*D
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateDevice(ctx context.Context, ref DeviceRef, v Device) error {
+func (t *DatabaseTxn) UpdateDevice(ctx context.Context, ref DeviceRef, v *Device) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -115,9 +125,14 @@ func NewProblemRef() ProblemRef {
 	return ProblemRef(newId())
 }
 
+func CreateProblemRef(ref ProblemRef) *ProblemRef {
+	x := ref
+	return &x
+}
+
 func (t *DatabaseTxn) GetProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
 	v := new(Problem)
-	err := t.tx.QueryRowContext(ctx, "SELECT id, title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Title)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, title, user FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Title, &v.User)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -129,7 +144,7 @@ func (t *DatabaseTxn) GetProblem(ctx context.Context, ref ProblemRef) (*Problem,
 
 func (t *DatabaseTxn) GetProblemForUpdate(ctx context.Context, ref ProblemRef) (*Problem, error) {
 	v := new(Problem)
-	err := t.tx.QueryRowContext(ctx, "SELECT id, title FROM problem WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Title)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, title, user FROM problem WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Title, &v.User)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -139,11 +154,11 @@ func (t *DatabaseTxn) GetProblemForUpdate(ctx context.Context, ref ProblemRef) (
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateProblem(ctx context.Context, ref ProblemRef, v Problem) error {
+func (t *DatabaseTxn) UpdateProblem(ctx context.Context, ref ProblemRef, v *Problem) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem SET title=? WHERE id=?", v.Title, v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE problem SET title=?, user=? WHERE id=?", v.Title, v.User, v.Id)
 	return err
 }
 
@@ -152,7 +167,7 @@ func (t *DatabaseTxn) InsertProblem(ctx context.Context, v *Problem) error {
 		ref := NewProblemRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem (id, title) VALUES (?, ?)", v.Id, v.Title)
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem (id, title, user) VALUES (?, ?, ?)", v.Id, v.Title, v.User)
 	return err
 }
 
@@ -165,6 +180,11 @@ type ProblemSourceRef string
 
 func NewProblemSourceRef() ProblemSourceRef {
 	return ProblemSourceRef(newId())
+}
+
+func CreateProblemSourceRef(ref ProblemSourceRef) *ProblemSourceRef {
+	x := ref
+	return &x
 }
 
 func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
@@ -191,7 +211,7 @@ func (t *DatabaseTxn) GetProblemSourceForUpdate(ctx context.Context, ref Problem
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateProblemSource(ctx context.Context, ref ProblemSourceRef, v ProblemSource) error {
+func (t *DatabaseTxn) UpdateProblemSource(ctx context.Context, ref ProblemSourceRef, v *ProblemSource) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -219,6 +239,11 @@ func NewProblemJudgerRef() ProblemJudgerRef {
 	return ProblemJudgerRef(newId())
 }
 
+func CreateProblemJudgerRef(ref ProblemJudgerRef) *ProblemJudgerRef {
+	x := ref
+	return &x
+}
+
 func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
 	v := new(ProblemJudger)
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &v.Data)
@@ -243,7 +268,7 @@ func (t *DatabaseTxn) GetProblemJudgerForUpdate(ctx context.Context, ref Problem
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateProblemJudger(ctx context.Context, ref ProblemJudgerRef, v ProblemJudger) error {
+func (t *DatabaseTxn) UpdateProblemJudger(ctx context.Context, ref ProblemJudgerRef, v *ProblemJudger) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -271,6 +296,11 @@ func NewProblemStatementRef() ProblemStatementRef {
 	return ProblemStatementRef(newId())
 }
 
+func CreateProblemStatementRef(ref ProblemStatementRef) *ProblemStatementRef {
+	x := ref
+	return &x
+}
+
 func (t *DatabaseTxn) GetProblemStatement(ctx context.Context, ref ProblemStatementRef) (*ProblemStatement, error) {
 	v := new(ProblemStatement)
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_statement WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
@@ -295,7 +325,7 @@ func (t *DatabaseTxn) GetProblemStatementForUpdate(ctx context.Context, ref Prob
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateProblemStatement(ctx context.Context, ref ProblemStatementRef, v ProblemStatement) error {
+func (t *DatabaseTxn) UpdateProblemStatement(ctx context.Context, ref ProblemStatementRef, v *ProblemStatement) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -323,6 +353,11 @@ func NewSubmissionRef() SubmissionRef {
 	return SubmissionRef(newId())
 }
 
+func CreateSubmissionRef(ref SubmissionRef) *SubmissionRef {
+	x := ref
+	return &x
+}
+
 func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
 	v := new(Submission)
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Data)
@@ -347,7 +382,7 @@ func (t *DatabaseTxn) GetSubmissionForUpdate(ctx context.Context, ref Submission
 	return v, nil
 }
 
-func (t *DatabaseTxn) UpdateSubmission(ctx context.Context, ref SubmissionRef, v Submission) error {
+func (t *DatabaseTxn) UpdateSubmission(ctx context.Context, ref SubmissionRef, v *Submission) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}

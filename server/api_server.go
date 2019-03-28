@@ -91,13 +91,13 @@ func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
 	t := val.Type()
 	var reqType reflect.Type
 	if t.NumIn() == 1 {
-        if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
-            panic("wrapHandler: Type of first argument is not context.Context")
-        }
+		if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
+			panic("wrapHandler: Type of first argument is not context.Context")
+		}
 	} else if t.NumIn() == 2 {
-        if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
-            panic("wrapHandler: Type of first argument is not context.Context")
-        }
+		if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
+			panic("wrapHandler: Type of first argument is not context.Context")
+		}
 		reqType = t.In(1)
 		if !reqType.Implements(reflect.TypeOf((*proto.Message)(nil)).Elem()) {
 			panic("wrapHandler: Type of the second input argument does not implement proto.Message")
@@ -105,11 +105,11 @@ func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
 	} else {
 		panic("wrapHandler: Number of input arguments is neither 1 nor 2")
 	}
-    if t.NumOut() == 1 {
-        if t.Out(0) != reflect.TypeOf((*error)(nil)).Elem() {
-            panic("wrapHandler: Type of output is not error")
-        }
-    } else {
+	if t.NumOut() == 1 {
+		if t.Out(0) != reflect.TypeOf((*error)(nil)).Elem() {
+			panic("wrapHandler: Type of output is not error")
+		}
+	} else {
 		panic("wrapHandler: Number of outputs is not 1")
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -138,9 +138,9 @@ func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
 		} else {
 			out = val.Call([]reflect.Value{reflect.ValueOf(ctx)})
 		}
-        if out[0].Interface() != nil {
-            c.SendError(out[0].Interface().(error))
-        }
+		if out[0].Interface() != nil {
+			c.SendError(out[0].Interface().(error))
+		}
 	})
 }
 
@@ -148,14 +148,39 @@ func (s *ApiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.wg.Add(1)
 	defer s.wg.Done()
 	if s.debug {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if origin := r.Header.Get("Origin"); origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		} else {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
 	s.router.ServeHTTP(w, r)
 }
 
 func GetApiContext(ctx context.Context) *ApiContext {
 	return ctx.Value(apiContextKey{}).(*ApiContext)
+}
+
+func (c *ApiContext) Vars() map[string]string {
+	return mux.Vars(c.r)
+}
+
+func (c *ApiContext) GetCookie(name string) (*http.Cookie, error) {
+	return c.r.Cookie(name)
+}
+
+func (c *ApiContext) SetCookie(k *http.Cookie) {
+	http.SetCookie(c.w, k)
+}
+
+func (c *ApiContext) GetHeader(name string) string {
+	return c.r.Header.Get(name)
+}
+
+func (c *ApiContext) GetRemoteAddr() string {
+	return c.r.RemoteAddr
 }
 
 func (c *ApiContext) ReadBody(val proto.Message) error {
@@ -186,10 +211,6 @@ func (c *ApiContext) SendError(err error) {
 
 func (c *ApiContext) Redirect(path string) {
 	c.Mutate("", "redirect", &model.Path{Path: proto.String(path)})
-}
-
-func (c *ApiContext) Vars() map[string]string {
-    return mux.Vars(c.r)
 }
 
 func (c *ApiContext) Send() {

@@ -19,7 +19,7 @@ message UserAuth {
 message DeviceInfo {
     optional string token = 1;
     optional string user_agent = 16;
-    optional string ip = 17;
+    optional string remote_addr = 17;
 }
 
 // ProblemSource defines the content of a problem's source.

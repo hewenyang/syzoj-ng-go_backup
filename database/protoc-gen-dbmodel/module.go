@@ -1,18 +1,18 @@
 package main
 
 import (
-    "errors"
-    "fmt"
+	"errors"
+	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"text/template"
-    "os"
 
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	pgs "github.com/lyft/protoc-gen-star"
 	pgsgo "github.com/lyft/protoc-gen-star/lang/go"
-    "github.com/golang/protobuf/protoc-gen-go/descriptor"
 
-    "github.com/syzoj/syzoj-ng-go/database/protoc-gen-dbmodel/dbmodel"
+	"github.com/syzoj/syzoj-ng-go/database/protoc-gen-dbmodel/dbmodel"
 )
 
 var tplOrm = template.Must(template.New("dbmodel_orm").Parse(`
@@ -28,6 +28,11 @@ type {{.CapName}}Ref string
 
 func New{{.CapName}}Ref() {{.CapName}}Ref {
 	return {{.CapName}}Ref(newId())
+}
+
+func Create{{.CapName}}Ref(ref {{.CapName}}Ref) *{{.CapName}}Ref {
+    x := ref
+    return &x
 }
 
 func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
@@ -54,7 +59,7 @@ func (t *DatabaseTxn) Get{{.CapName}}ForUpdate(ctx context.Context, ref {{.CapNa
 	return v, nil
 }
 
-func (t *DatabaseTxn) Update{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref, v {{.CapName}}) error {
+func (t *DatabaseTxn) Update{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref, v *{{.CapName}}) error {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
@@ -135,7 +140,7 @@ func (m *module) Execute(targets map[string]pgs.File, packages map[string]pgs.Pa
 		if err := pgs.Walk(v, f); err != nil {
 			panic(err)
 		}
-        data := v.getData()
+		data := v.getData()
 		m.OverwriteCustomTemplateFile("dbmodel_orm.go", tplOrm, data, 0644)
 		m.OverwriteCustomTemplateFile("dbmodel_model.go", tplModel, data, 0644)
 		m.OverwriteCustomTemplateFile("dbmodel_sql.sql", tplSql, data, 0644)
@@ -161,7 +166,7 @@ type tplTable struct {
 	ArgList    string
 	InsList    string
 	InsValue   string
-    SqlFields string
+	SqlFields  string
 }
 
 func makeVisitor(d pgs.DebuggerCommon) *visitor {
@@ -183,52 +188,52 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 	var scanList []string
 	var insList []string
 	var insValue []string
-    var sqlFields []string
+	var sqlFields []string
 	for i, f := range m.Fields() {
 		insValue = append(insValue, "?")
-        if i == 0 && f.Name().String() != "id" {
-            return nil, errors.New("The first field of a database model must be named \"id\"")
-        }
-        if f.Type().IsMap() || f.Type().IsRepeated() {
-            return nil, errors.New("Map or repeated fields in a database model is not allowed")
-        }
+		if i == 0 && f.Name().String() != "id" {
+			return nil, errors.New("The first field of a database model must be named \"id\"")
+		}
+		if f.Type().IsMap() || f.Type().IsRepeated() {
+			return nil, errors.New("Map or repeated fields in a database model is not allowed")
+		}
 		if i != 0 {
 			selList = append(selList, f.Name().String())
 			updateList = append(updateList, f.Name().String()+"=?")
 			argList = append(argList, "v."+f.Name().UpperCamelCase().String())
 			scanList = append(scanList, "&v."+f.Name().UpperCamelCase().String())
 			insList = append(insList, f.Name().String())
-        }
+		}
 		if m := f.Type().Embed(); m != nil {
 			v.d.Messages = append(v.d.Messages, m.Name().String())
 		}
-        var sql string
-        if ok, _ := f.Extension(dbmodel.E_Sql, &sql); ok {
-        } else {
-            if i == 0 {
-                sql = "id VARCHAR(16) PRIMARY KEY"
-            } else {
-                t := f.Type().ProtoType()
-                if t.IsInt() {
-                    sql = fmt.Sprintf("%s BIGINT", f.Name().String())
-                } else {
-                    switch t.Proto() {
-                    case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
-                        sql = fmt.Sprintf("%s DOUBLE", f.Name().String())
-                    case descriptor.FieldDescriptorProto_TYPE_FLOAT:
-                        sql = fmt.Sprintf("%s FLOAT", f.Name().String())
-                    case descriptor.FieldDescriptorProto_TYPE_STRING:
-                        sql = fmt.Sprintf("%s VARCHAR(255)", f.Name().String())
-                    case descriptor.FieldDescriptorProto_TYPE_BYTES, descriptor.FieldDescriptorProto_TYPE_MESSAGE:
-                        sql = fmt.Sprintf("%s BLOB", f.Name().String())
-                    default:
-                        return nil, errors.New(fmt.Sprintf("Cannot generate SQL statement for %s.%s", m.Name().String(), f.Name().String()))
-                    }
-                }
-            }
-        }
-        sqlFields = append(sqlFields, "  " + sql)
-        fmt.Sprintln(os.Stderr, sql)
+		var sql string
+		if ok, _ := f.Extension(dbmodel.E_Sql, &sql); ok {
+		} else {
+			if i == 0 {
+				sql = "id VARCHAR(16) PRIMARY KEY"
+			} else {
+				t := f.Type().ProtoType()
+				if t.IsInt() {
+					sql = fmt.Sprintf("%s BIGINT", f.Name().String())
+				} else {
+					switch t.Proto() {
+					case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
+						sql = fmt.Sprintf("%s DOUBLE", f.Name().String())
+					case descriptor.FieldDescriptorProto_TYPE_FLOAT:
+						sql = fmt.Sprintf("%s FLOAT", f.Name().String())
+					case descriptor.FieldDescriptorProto_TYPE_STRING:
+						sql = fmt.Sprintf("%s VARCHAR(255)", f.Name().String())
+					case descriptor.FieldDescriptorProto_TYPE_BYTES, descriptor.FieldDescriptorProto_TYPE_MESSAGE:
+						sql = fmt.Sprintf("%s BLOB", f.Name().String())
+					default:
+						return nil, errors.New(fmt.Sprintf("Cannot generate SQL statement for %s.%s", m.Name().String(), f.Name().String()))
+					}
+				}
+			}
+		}
+		sqlFields = append(sqlFields, "  "+sql)
+		fmt.Sprintln(os.Stderr, sql)
 	}
 	t.SelList = strings.Join(selList, ", ")
 	t.UpdateList = strings.Join(updateList, ", ")
@@ -236,7 +241,7 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 	t.ScanList = strings.Join(scanList, ", ")
 	t.InsList = strings.Join(insList, ", ")
 	t.InsValue = strings.Join(insValue, ", ")
-    t.SqlFields = strings.Join(sqlFields, ",\n")
+	t.SqlFields = strings.Join(sqlFields, ",\n")
 	v.d.Tables = append(v.d.Tables, t)
 	return v, nil
 }

@@ -2,11 +2,11 @@ package database
 
 import (
 	"context"
-    "crypto/rand"
+	"crypto/rand"
 	"database/sql"
-    "encoding/base64"
+	"encoding/base64"
+	"reflect"
 	"sync/atomic"
-    "reflect"
 
 	"github.com/sirupsen/logrus"
 )
@@ -76,14 +76,14 @@ func (t *DatabaseTxn) Commit(context.Context) error {
 }
 
 func (t *DatabaseTxn) Rollback() {
-    if atomic.CompareAndSwapInt32(&t.done, 0, 1) {
-        go func() {
-            err := t.tx.Rollback()
-            if err != nil {
-                log.WithError(err).Error("Failed to rollback transaction")
-            }
-        }()
-    }
+	if atomic.CompareAndSwapInt32(&t.done, 0, 1) {
+		go func() {
+			err := t.tx.Rollback()
+			if err != nil {
+				log.WithError(err).Error("Failed to rollback transaction")
+			}
+		}()
+	}
 }
 
 func (t *DatabaseTxn) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
@@ -103,27 +103,27 @@ func newId() string {
 }
 
 func ScanAll(r *sql.Rows, v interface{}) error {
-    val := reflect.ValueOf(v)
-    if val.Type().Kind() != reflect.Ptr {
-        panic("database: ScanAll: must be a pointer to a slice")
-    }
-    val = val.Elem()
-    if val.Type().Kind() != reflect.Slice {
-        panic("database: ScanAll: must be a pointer to a slice")
-    }
-    slice := reflect.Zero(val.Type())
-    elType := val.Type().Elem()
-    var i int
-    for r.Next() {
-        slice = reflect.Append(slice, reflect.Zero(elType))
-        err := r.Scan(slice.Index(i).Addr().Interface())
-        if err != nil {
-            return err
-        }
-    }
-    if err := r.Err(); err != nil {
-        return err
-    }
-    val.Set(slice)
-    return nil
+	val := reflect.ValueOf(v)
+	if val.Type().Kind() != reflect.Ptr {
+		panic("database: ScanAll: must be a pointer to a slice")
+	}
+	val = val.Elem()
+	if val.Type().Kind() != reflect.Slice {
+		panic("database: ScanAll: must be a pointer to a slice")
+	}
+	slice := reflect.Zero(val.Type())
+	elType := val.Type().Elem()
+	var i int
+	for r.Next() {
+		slice = reflect.Append(slice, reflect.Zero(elType))
+		err := r.Scan(slice.Index(i).Addr().Interface())
+		if err != nil {
+			return err
+		}
+	}
+	if err := r.Err(); err != nil {
+		return err
+	}
+	val.Set(slice)
+	return nil
 }

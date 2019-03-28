@@ -28,6 +28,7 @@ message Device {
 message Problem {
     optional string id = 1 [(gotype.gotype) = "ProblemRef"];
     optional string title = 2;
+    optional string user = 3 [(gotype.gotype) = "UserRef"];
 }
 
 message ProblemSource {

@@ -12,7 +12,8 @@ CREATE TABLE device (
 
 CREATE TABLE problem (
   id VARCHAR(16) PRIMARY KEY,
-  title VARCHAR(255)
+  title VARCHAR(255),
+  user VARCHAR(255)
 );
 
 CREATE TABLE problem_source (
