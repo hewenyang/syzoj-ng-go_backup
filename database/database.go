@@ -120,6 +120,7 @@ func ScanAll(r *sql.Rows, v interface{}) error {
 		if err != nil {
 			return err
 		}
+		i++
 	}
 	if err := r.Err(); err != nil {
 		return err

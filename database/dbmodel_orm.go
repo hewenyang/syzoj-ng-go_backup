@@ -176,6 +176,63 @@ func (t *DatabaseTxn) DeleteProblem(ctx context.Context, ref ProblemRef) error {
 	return err
 }
 
+type ProblemEntryRef string
+
+func NewProblemEntryRef() ProblemEntryRef {
+	return ProblemEntryRef(newId())
+}
+
+func CreateProblemEntryRef(ref ProblemEntryRef) *ProblemEntryRef {
+	x := ref
+	return &x
+}
+
+func (t *DatabaseTxn) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
+	v := new(ProblemEntry)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem FROM problem_entry WHERE id=?", ref).Scan(&v.Id, &v.Problem)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return v, nil
+}
+
+func (t *DatabaseTxn) GetProblemEntryForUpdate(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
+	v := new(ProblemEntry)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem FROM problem_entry WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return v, nil
+}
+
+func (t *DatabaseTxn) UpdateProblemEntry(ctx context.Context, ref ProblemEntryRef, v *ProblemEntry) error {
+	if v.Id == nil || v.GetId() != ref {
+		panic("ref and v does not match")
+	}
+	_, err := t.tx.ExecContext(ctx, "UPDATE problem_entry SET problem=? WHERE id=?", v.Problem, v.Id)
+	return err
+}
+
+func (t *DatabaseTxn) InsertProblemEntry(ctx context.Context, v *ProblemEntry) error {
+	if v.Id == nil {
+		ref := NewProblemEntryRef()
+		v.Id = &ref
+	}
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_entry (id, problem) VALUES (?, ?)", v.Id, v.Problem)
+	return err
+}
+
+func (t *DatabaseTxn) DeleteProblemEntry(ctx context.Context, ref ProblemEntryRef) error {
+	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem_entry WHERE id=?", ref)
+	return err
+}
+
 type ProblemSourceRef string
 
 func NewProblemSourceRef() ProblemSourceRef {

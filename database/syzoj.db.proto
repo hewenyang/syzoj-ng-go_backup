@@ -2,7 +2,6 @@ syntax = "proto2";
 
 package syzoj.db;
 
-import "gotype.proto";
 import "dbmodel.proto";
 import "syzoj.model.proto";
 
@@ -14,46 +13,52 @@ option go_package = "github.com/syzoj/syzoj-ng-go/database";
 // also need to be updated.
 
 message User {
-    optional string id = 1 [(gotype.gotype) = "UserRef"];
-    optional string user_name = 2 [(dbmodel.sql) = "user_name varchar(64) UNIQUE"];
+    optional string id = 1;
+    optional string user_name = 2 [(dbmodel.model).sql = "user_name VARCHAR(64) UNIQUE"];
     optional syzoj.model.UserAuth auth = 3;
 }
 
 message Device {
-    optional string id = 1 [(gotype.gotype) = "DeviceRef"];
-    optional string user = 2 [(gotype.gotype) = "UserRef"];
+    optional string id = 1;
+    optional string user = 2 [(dbmodel.model).fkey = "user"];
     optional syzoj.model.DeviceInfo info = 3;
 }
 
 message Problem {
-    optional string id = 1 [(gotype.gotype) = "ProblemRef"];
+    optional string id = 1;
     optional string title = 2;
-    optional string user = 3 [(gotype.gotype) = "UserRef"];
+    optional string user = 3 [(dbmodel.model).fkey = "user"];
+}
+
+// A problem displayed in public.
+message ProblemEntry {
+    optional string id = 1;
+    optional string problem = 2 [(dbmodel.model).fkey = "problem"];
 }
 
 message ProblemSource {
-    optional string id = 1 [(gotype.gotype) = "ProblemSourceRef"];
+    optional string id = 1;
     optional syzoj.model.ProblemSource source = 16;
 }
 
 message ProblemJudger {
-    optional string id = 1 [(gotype.gotype) = "ProblemJudgerRef"];
-    optional string problem = 2 [(gotype.gotype) = "ProblemRef"];
-    optional string user = 3 [(gotype.gotype) = "UserRef"];
+    optional string id = 1;
+    optional string problem = 2 [(dbmodel.model).fkey = "problem"];
+    optional string user = 3 [(dbmodel.model).fkey = "user"];
     optional string type = 4;
     optional syzoj.model.Any data = 16;
 }
 
 message ProblemStatement {
-    optional string id = 1 [(gotype.gotype) = "ProblemStatementRef"];
-    optional string problem = 2 [(gotype.gotype) = "ProblemRef"];
-    optional string user = 3 [(gotype.gotype) = "UserRef"];
+    optional string id = 1;
+    optional string problem = 2 [(dbmodel.model).fkey = "problem"];
+    optional string user = 3 [(dbmodel.model).fkey = "user"];
     optional syzoj.model.ProblemStatement data = 16;
 }
 
 message Submission {
-    optional string id = 1 [(gotype.gotype) = "SubmissionRef"];
-    optional string problem_judger = 2 [(gotype.gotype) = "ProblemJudgerRef"];
-    optional string user = 3 [(gotype.gotype) = "UserRef"];
+    optional string id = 1;
+    optional string problem_judger = 2;
+    optional string user = 3 [(dbmodel.model).fkey = "user"];
     optional syzoj.model.Any data = 16;
 }

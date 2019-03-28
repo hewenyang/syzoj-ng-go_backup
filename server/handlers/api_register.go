@@ -16,7 +16,7 @@ func Get_Register(ctx context.Context) error {
 	return nil
 }
 
-func Handle_Register(ctx context.Context, req *model.RegisterRequest) error {
+func Handle_Register(ctx context.Context, req *model.RegisterPage_RegisterRequest) error {
 	var err error
 	s := server.GetServer(ctx)
 	c := server.GetApiContext(ctx)

@@ -8,7 +8,7 @@ syzoj-ng
 syzoj-ng 采用前后端分离架构，前端在 <https://github.com/syzoj/syzoj-ng-app> 安装，后端在本仓库，两者互相独立，通过 nginx 使两者配合工作。
 
 安装方法：
-1. 安装 MongoDB、nodejs 和 nginx，具体操作取决于操作系统。
+1. 安装 MySQL、nodejs 和 nginx，具体操作取决于操作系统。
 2. 下载 <https://github.com/syzoj/syzoj-ng-app>。依次执行 `npm install`，`npm install -g react-scripts` `npm run build` 编译前端。
 3. 安装 [Go](https://golang.org) 语言，并设置 `GOPATH`，将 bin 目录加入到 `PATH`。具体步骤为将以下内容加入到 `~/.profile`：
 ```bash

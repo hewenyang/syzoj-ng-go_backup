@@ -1,6 +1,5 @@
-//go:generate protoc -I. -I../model syzoj.db.proto --go_out=grpc=$GOPATH/src:$GOPATH/src
-//go:generate protoc -I. -I../model syzoj.db.proto --gotype_out=.
-//go:generate protoc -I. -I../model syzoj.db.proto --dbmodel_out=.
+//go:generate protoc -I. -Iprotoc-gen-dbmodel/dbmodel -I../model syzoj.db.proto --go_out=grpc=$GOPATH/src:$GOPATH/src
+//go:generate protoc -I. -Iprotoc-gen-dbmodel/dbmodel -I../model syzoj.db.proto --dbmodel_out=.
 //go:generate mv dbmodel_model.go ../model
 package database
 

@@ -18,7 +18,7 @@ func Get_Login(ctx context.Context) error {
 	return nil
 }
 
-func Handle_Login(ctx context.Context, req *model.LoginRequest) error {
+func Handle_Login(ctx context.Context, req *model.LoginPage_LoginRequest) error {
 	var err error
 	s := server.GetServer(ctx)
 	c := server.GetApiContext(ctx)

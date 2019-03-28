@@ -3,7 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"os"
+	"go/ast"
+	"go/parser"
+	"go/printer"
+	"go/token"
 	"sort"
 	"strings"
 	"text/template"
@@ -144,6 +147,20 @@ func (m *module) Execute(targets map[string]pgs.File, packages map[string]pgs.Pa
 		m.OverwriteCustomTemplateFile("dbmodel_orm.go", tplOrm, data, 0644)
 		m.OverwriteCustomTemplateFile("dbmodel_model.go", tplModel, data, 0644)
 		m.OverwriteCustomTemplateFile("dbmodel_sql.sql", tplSql, data, 0644)
+
+		f2 := m.BuildContext.JoinPath(f.InputPath().SetExt(".pb.go").Base())
+		fs := token.NewFileSet()
+		fn, err := parser.ParseFile(fs, f2, nil, parser.ParseComments)
+		if err != nil {
+			panic(err)
+		}
+		ast.Walk(v.g, fn)
+		var b strings.Builder
+		err = printer.Fprint(&b, fs, fn)
+		if err != nil {
+			panic(err)
+		}
+		m.OverwriteGeneratorFile(f2, b.String())
 	}
 	return m.Artifacts()
 }
@@ -152,6 +169,7 @@ type visitor struct {
 	pgs.Visitor
 	pgs.DebuggerCommon
 	d tplData
+	g *goVisitor
 }
 type tplData struct {
 	Tables   []tplTable
@@ -173,6 +191,9 @@ func makeVisitor(d pgs.DebuggerCommon) *visitor {
 	return &visitor{
 		Visitor:        pgs.NilVisitor(),
 		DebuggerCommon: d,
+		g: &goVisitor{
+			nodes: make(map[string]map[string]string),
+		},
 	}
 }
 
@@ -189,6 +210,7 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 	var insList []string
 	var insValue []string
 	var sqlFields []string
+	types := make(map[string]string)
 	for i, f := range m.Fields() {
 		insValue = append(insValue, "?")
 		if i == 0 && f.Name().String() != "id" {
@@ -207,33 +229,46 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 		if m := f.Type().Embed(); m != nil {
 			v.d.Messages = append(v.d.Messages, m.Name().String())
 		}
+		d := &dbmodel.DbModelField{}
 		var sql string
-		if ok, _ := f.Extension(dbmodel.E_Sql, &sql); ok {
-		} else {
-			if i == 0 {
-				sql = "id VARCHAR(16) PRIMARY KEY"
-			} else {
-				t := f.Type().ProtoType()
-				if t.IsInt() {
-					sql = fmt.Sprintf("%s BIGINT", f.Name().String())
-				} else {
-					switch t.Proto() {
-					case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
-						sql = fmt.Sprintf("%s DOUBLE", f.Name().String())
-					case descriptor.FieldDescriptorProto_TYPE_FLOAT:
-						sql = fmt.Sprintf("%s FLOAT", f.Name().String())
-					case descriptor.FieldDescriptorProto_TYPE_STRING:
-						sql = fmt.Sprintf("%s VARCHAR(255)", f.Name().String())
-					case descriptor.FieldDescriptorProto_TYPE_BYTES, descriptor.FieldDescriptorProto_TYPE_MESSAGE:
-						sql = fmt.Sprintf("%s BLOB", f.Name().String())
-					default:
-						return nil, errors.New(fmt.Sprintf("Cannot generate SQL statement for %s.%s", m.Name().String(), f.Name().String()))
-					}
-				}
-			}
+		_, _ = f.Extension(dbmodel.E_Model, d)
+        if i == 0 {
+            sql = "id VARCHAR(16) PRIMARY KEY"
+            types[f.Name().UpperCamelCase().String()] = m.Name().UpperCamelCase().String() + "Ref"
+        } else {
+            t := f.Type().ProtoType()
+            if t.IsInt() {
+                sql = fmt.Sprintf("%s BIGINT", f.Name().String())
+            } else {
+                switch t.Proto() {
+                case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
+                    sql = fmt.Sprintf("%s DOUBLE", f.Name().String())
+                case descriptor.FieldDescriptorProto_TYPE_FLOAT:
+                    sql = fmt.Sprintf("%s FLOAT", f.Name().String())
+                case descriptor.FieldDescriptorProto_TYPE_STRING:
+                    if d.Fkey != nil {
+                        sql = fmt.Sprintf("%s VARCHAR(16)", f.Name().String())
+                    } else {
+                        sql = fmt.Sprintf("%s VARCHAR(255)", f.Name().String())
+                    }
+                case descriptor.FieldDescriptorProto_TYPE_BYTES, descriptor.FieldDescriptorProto_TYPE_MESSAGE:
+                    sql = fmt.Sprintf("%s BLOB", f.Name().String())
+                default:
+                    return nil, errors.New(fmt.Sprintf("Cannot generate SQL statement for %s.%s", m.Name().String(), f.Name().String()))
+                }
+                if d.Fkey != nil {
+                    sql = fmt.Sprintf("%s REFERENCES %s(id)", sql, d.GetFkey())
+                }
+            }
+            if d.Fkey != nil {
+                s := pgs.Name(d.GetFkey())
+                types[f.Name().UpperCamelCase().String()] = s.UpperCamelCase().String() + "Ref"
+            }
+        }
+		if d.Sql != nil {
+			sql = d.GetSql()
 		}
 		sqlFields = append(sqlFields, "  "+sql)
-		fmt.Sprintln(os.Stderr, sql)
 	}
 	t.SelList = strings.Join(selList, ", ")
 	t.UpdateList = strings.Join(updateList, ", ")
@@ -243,8 +278,10 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 	t.InsValue = strings.Join(insValue, ", ")
 	t.SqlFields = strings.Join(sqlFields, ",\n")
 	v.d.Tables = append(v.d.Tables, t)
+	v.g.nodes[m.Name().String()] = types
 	return v, nil
 }
+
 func (v *visitor) getData() interface{} {
 	sort.Strings(v.d.Messages)
 	var i, j int

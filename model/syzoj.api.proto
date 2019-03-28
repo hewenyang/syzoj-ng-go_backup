@@ -3,7 +3,6 @@ syntax = "proto2";
 package syzoj.api;
 
 import "google/protobuf/any.proto";
-import "gotype.proto";
 import "syzoj.model.proto";
 
 option go_package = "github.com/syzoj/syzoj-ng-go/model";
@@ -33,48 +32,64 @@ message Path {
 message NotFoundPage {
 }
 
-// /login
+message IndexPage {
+}
+
 message LoginPage {
-}
-
-message LoginRequest {
-    optional string user_name = 1;
-    optional string password = 2;
-}
-
-// /register
-message RegisterRequest {
-    optional string user_name = 1;
-    optional string password = 2;
+    message LoginRequest {
+        optional string user_name = 1;
+        optional string password = 2;
+    }
 }
 
 message RegisterPage {
+    message RegisterRequest {
+        optional string user_name = 1;
+        optional string password = 2;
+    }
 }
 
 // problem
 message ProblemCreatePage {
-}
-
-message ProblemCreateRequest {
-    optional string problem_title = 16;
+    message CreateRequest {
+        optional string problem_title = 16;
+    }
 }
 
 message ProblemViewPage {
     optional string problem_title = 16;
-    optional ProblemStatementComponent problem_statement = 17;
-    optional ProblemSourceComponent problem_source = 18;
-    optional ProblemJudgeComponent problem_judge = 19;
+    repeated ProblemStatementEntry problem_statement = 17;
+    repeated ProblemSourceEntry problem_source = 18;
+    repeated ProblemJudgeEntry problem_judge = 19;
+    repeated ProblemEntry problem_entry = 20;
+    message ProblemStatementEntry {
+        optional string id = 1;
+        optional syzoj.model.ProblemStatement statement = 2;
+    }
+    message ProblemSourceEntry {
+        optional string id = 1;
+        optional syzoj.model.ProblemSource source = 2;
+    }
+    message ProblemJudgeEntry {
+        optional string id = 1;
+        optional string type = 2;
+        optional google.protobuf.Any data = 3;
+    }
+    message ProblemEntry {
+        optional string id = 1;
+    }
+    message AddStatementRequest {
+        optional syzoj.model.ProblemStatement statement = 1;
+    }
+    message SetPublicRequest {
+    }
 }
 
-message ProblemStatementComponent {
-    optional syzoj.model.ProblemStatement statement = 1;
-}
-
-message ProblemSourceComponent {
-    optional syzoj.model.ProblemSource source = 1;
-}
-
-message ProblemJudgeComponent {
-    optional string type = 1;
-    optional google.protobuf.Any data = 2;
+message ProblemsPage {
+    repeated ProblemEntry problem_entry = 16;
+    message ProblemEntry {
+        optional string id = 1;
+        optional string problem_id = 2;
+        optional string problem_title = 3;
+    }
 }
