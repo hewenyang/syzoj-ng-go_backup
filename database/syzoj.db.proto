@@ -5,6 +5,7 @@ package syzoj.db;
 import "dbmodel.proto";
 import "syzoj.model.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 
 option go_package = "github.com/syzoj/syzoj-ng-go/database";
 
@@ -41,6 +42,8 @@ message ProblemEntry {
 
 message ProblemSource {
     optional string id = 1;
+    optional string problem = 2 [(dbmodel.model).fkey = "problem"];
+    optional string user = 3 [(dbmodel.model).fkey = "user"];
     optional syzoj.model.ProblemSource source = 16;
 }
 
@@ -49,7 +52,7 @@ message ProblemJudger {
     optional string problem = 2 [(dbmodel.model).fkey = "problem"];
     optional string user = 3 [(dbmodel.model).fkey = "user"];
     optional string type = 4;
-    optional syzoj.model.Any data = 16;
+    optional google.protobuf.Any data = 16;
 }
 
 message ProblemStatement {
@@ -63,5 +66,5 @@ message Submission {
     optional string id = 1;
     optional string problem_judger = 2;
     optional string user = 3 [(dbmodel.model).fkey = "user"];
-    optional syzoj.model.Any data = 16;
+    optional google.protobuf.Any data = 16;
 }

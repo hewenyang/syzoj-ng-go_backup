@@ -24,21 +24,36 @@ package database
 import (
 	"context"
 	"database/sql"
-    "time"
+	"time"
 
-    "github.com/golang/protobuf/ptypes"
-    "github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/any"
+	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
+var _ = proto.Marshal
 var _ = ptypes.Duration
+var _ = any.Any{}
 var _ = time.Now
 
 func convertTimestamp(t *timestamp.Timestamp) interface{} {
-    if t == nil {
-        return nil
-    }
-    t2, _ := ptypes.Timestamp(t)
-    return t2
+	if t == nil {
+	    return nil
+	}
+	t2, _ := ptypes.Timestamp(t)
+	return t2
+}
+
+func convertAny(t *any.Any) interface{} {
+	if t == nil {
+		return nil
+	}
+	v, err := proto.Marshal(t)
+	if err != nil {
+		panic(err)
+	}
+	return v
 }
 
 {{range .Tables}}
@@ -49,13 +64,13 @@ func New{{.CapName}}Ref() {{.CapName}}Ref {
 }
 
 func Create{{.CapName}}Ref(ref {{.CapName}}Ref) *{{.CapName}}Ref {
-    x := ref
-    return &x
+	x := ref
+	return &x
 }
 
 func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
 	v := new({{.CapName}})
-    {{.VarList}}
+	{{.VarList}}
 	err := t.tx.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=?", ref).Scan(&v.Id, {{.ScanList}})
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -63,13 +78,13 @@ func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) 
 		}
 		return nil, err
 	}
-    {{.DecodeList}}
+	{{.DecodeList}}
 	return v, nil
 }
 
 func (t *DatabaseTxn) Get{{.CapName}}ForUpdate(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
 	v := new({{.CapName}})
-    {{.VarList}}
+	{{.VarList}}
 	err := t.tx.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=? FOR UPDATE", ref).Scan(&v.Id, {{.ScanList}})
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -77,7 +92,7 @@ func (t *DatabaseTxn) Get{{.CapName}}ForUpdate(ctx context.Context, ref {{.CapNa
 		}
 		return nil, err
 	}
-    {{.DecodeList}}
+	{{.DecodeList}}
 	return v, nil
 }
 
@@ -256,6 +271,18 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 				scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
 				decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil { v.%s, _ = ptypes.TimestampProto(*var%d) } else { v.%s = nil }`, curVar, f.Name().UpperCamelCase().String(), curVar, f.Name().UpperCamelCase().String()))
 				argList = append(argList, fmt.Sprintf("convertTimestamp(v.%s)", f.Name().UpperCamelCase().String()))
+			} else if f.Type().IsEmbed() && f.Type().Embed().WellKnownType() == pgs.AnyWKT {
+				varList = append(varList, fmt.Sprintf("var var%d []byte", curVar))
+				scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
+				decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil {
+	v.%s = &any.Any{}
+	if err := proto.Unmarshal(var%d, v.%s); err != nil {
+		panic(err)
+	}
+} else {
+	v.%s = nil
+}`, curVar, f.Name().UpperCamelCase().String(), curVar, f.Name().UpperCamelCase().String(), f.Name().UpperCamelCase().String()))
+				argList = append(argList, fmt.Sprintf("convertAny(v.%s)", f.Name().UpperCamelCase().String()))
 			} else {
 				scanList = append(scanList, "&v."+f.Name().UpperCamelCase().String())
 				argList = append(argList, "v."+f.Name().UpperCamelCase().String())

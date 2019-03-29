@@ -5,11 +5,15 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
+var _ = proto.Marshal
 var _ = ptypes.Duration
+var _ = any.Any{}
 var _ = time.Now
 
 func convertTimestamp(t *timestamp.Timestamp) interface{} {
@@ -18,6 +22,17 @@ func convertTimestamp(t *timestamp.Timestamp) interface{} {
 	}
 	t2, _ := ptypes.Timestamp(t)
 	return t2
+}
+
+func convertAny(t *any.Any) interface{} {
+	if t == nil {
+		return nil
+	}
+	v, err := proto.Marshal(t)
+	if err != nil {
+		panic(err)
+	}
+	return v
 }
 
 type UserRef string
@@ -294,7 +309,7 @@ func CreateProblemSourceRef(ref ProblemSourceRef) *ProblemSourceRef {
 func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
 	v := new(ProblemSource)
 
-	err := t.tx.QueryRowContext(ctx, "SELECT id, source FROM problem_source WHERE id=?", ref).Scan(&v.Id, &v.Source)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, source FROM problem_source WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Source)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -308,7 +323,7 @@ func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef
 func (t *DatabaseTxn) GetProblemSourceForUpdate(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
 	v := new(ProblemSource)
 
-	err := t.tx.QueryRowContext(ctx, "SELECT id, source FROM problem_source WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Source)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, source FROM problem_source WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Source)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -323,7 +338,7 @@ func (t *DatabaseTxn) UpdateProblemSource(ctx context.Context, ref ProblemSource
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_source SET source=? WHERE id=?", v.Source, v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE problem_source SET problem=?, user=?, source=? WHERE id=?", v.Problem, v.User, v.Source, v.Id)
 	return err
 }
 
@@ -332,7 +347,7 @@ func (t *DatabaseTxn) InsertProblemSource(ctx context.Context, v *ProblemSource)
 		ref := NewProblemSourceRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_source (id, source) VALUES (?, ?)", v.Id, v.Source)
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_source (id, problem, user, source) VALUES (?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Source)
 	return err
 }
 
@@ -354,29 +369,43 @@ func CreateProblemJudgerRef(ref ProblemJudgerRef) *ProblemJudgerRef {
 
 func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
 	v := new(ProblemJudger)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &v.Data)
+	var var4 []byte
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &var4)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-
+	if var4 != nil {
+		v.Data = &any.Any{}
+		if err := proto.Unmarshal(var4, v.Data); err != nil {
+			panic(err)
+		}
+	} else {
+		v.Data = nil
+	}
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetProblemJudgerForUpdate(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
 	v := new(ProblemJudger)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &v.Data)
+	var var4 []byte
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &var4)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-
+	if var4 != nil {
+		v.Data = &any.Any{}
+		if err := proto.Unmarshal(var4, v.Data); err != nil {
+			panic(err)
+		}
+	} else {
+		v.Data = nil
+	}
 	return v, nil
 }
 
@@ -384,7 +413,7 @@ func (t *DatabaseTxn) UpdateProblemJudger(ctx context.Context, ref ProblemJudger
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_judger SET problem=?, user=?, type=?, data=? WHERE id=?", v.Problem, v.User, v.Type, v.Data, v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE problem_judger SET problem=?, user=?, type=?, data=? WHERE id=?", v.Problem, v.User, v.Type, convertAny(v.Data), v.Id)
 	return err
 }
 
@@ -393,7 +422,7 @@ func (t *DatabaseTxn) InsertProblemJudger(ctx context.Context, v *ProblemJudger)
 		ref := NewProblemJudgerRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_judger (id, problem, user, type, data) VALUES (?, ?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Type, v.Data)
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_judger (id, problem, user, type, data) VALUES (?, ?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Type, convertAny(v.Data))
 	return err
 }
 
@@ -476,29 +505,43 @@ func CreateSubmissionRef(ref SubmissionRef) *SubmissionRef {
 
 func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
 	v := new(Submission)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Data)
+	var var3 []byte
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &var3)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-
+	if var3 != nil {
+		v.Data = &any.Any{}
+		if err := proto.Unmarshal(var3, v.Data); err != nil {
+			panic(err)
+		}
+	} else {
+		v.Data = nil
+	}
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetSubmissionForUpdate(ctx context.Context, ref SubmissionRef) (*Submission, error) {
 	v := new(Submission)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Data)
+	var var3 []byte
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &var3)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-
+	if var3 != nil {
+		v.Data = &any.Any{}
+		if err := proto.Unmarshal(var3, v.Data); err != nil {
+			panic(err)
+		}
+	} else {
+		v.Data = nil
+	}
 	return v, nil
 }
 
@@ -506,7 +549,7 @@ func (t *DatabaseTxn) UpdateSubmission(ctx context.Context, ref SubmissionRef, v
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE submission SET problem_judger=?, user=?, data=? WHERE id=?", v.ProblemJudger, v.User, v.Data, v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE submission SET problem_judger=?, user=?, data=? WHERE id=?", v.ProblemJudger, v.User, convertAny(v.Data), v.Id)
 	return err
 }
 
@@ -515,7 +558,7 @@ func (t *DatabaseTxn) InsertSubmission(ctx context.Context, v *Submission) error
 		ref := NewSubmissionRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO submission (id, problem_judger, user, data) VALUES (?, ?, ?, ?)", v.Id, v.ProblemJudger, v.User, v.Data)
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO submission (id, problem_judger, user, data) VALUES (?, ?, ?, ?)", v.Id, v.ProblemJudger, v.User, convertAny(v.Data))
 	return err
 }
 
