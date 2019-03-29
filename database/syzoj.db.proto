@@ -4,6 +4,7 @@ package syzoj.db;
 
 import "dbmodel.proto";
 import "syzoj.model.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/syzoj/syzoj-ng-go/database";
 
@@ -14,8 +15,9 @@ option go_package = "github.com/syzoj/syzoj-ng-go/database";
 
 message User {
     optional string id = 1;
-    optional string user_name = 2 [(dbmodel.model).sql = "user_name VARCHAR(64) UNIQUE"];
+    optional string user_name = 2 [(dbmodel.model).index = "UNIQUE"];
     optional syzoj.model.UserAuth auth = 3;
+    optional google.protobuf.Timestamp register_time = 4 [(dbmodel.model).index = "INDEX"];
 }
 
 message Device {
@@ -28,6 +30,7 @@ message Problem {
     optional string id = 1;
     optional string title = 2;
     optional string user = 3 [(dbmodel.model).fkey = "user"];
+    optional google.protobuf.Timestamp create_time = 4 [(dbmodel.model).index = "INDEX"];
 }
 
 // A problem displayed in public.

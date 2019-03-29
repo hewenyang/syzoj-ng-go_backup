@@ -7,8 +7,12 @@ import (
 	"encoding/base64"
 	"reflect"
 	"sync/atomic"
+	"time"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
 type Database struct {
@@ -127,4 +131,18 @@ func ScanAll(r *sql.Rows, v interface{}) error {
 	}
 	val.Set(slice)
 	return nil
+}
+
+type TimestampType = timestamp.Timestamp
+
+func TimestampNow() *TimestampType {
+	return ptypes.TimestampNow()
+}
+
+func Timestamp(ts *TimestampType) (time.Time, error) {
+	return ptypes.Timestamp(ts)
+}
+
+func TimestampProto(t time.Time) (*TimestampType, error) {
+	return ptypes.TimestampProto(t)
 }

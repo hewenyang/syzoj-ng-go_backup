@@ -9,6 +9,7 @@ option go_package = "github.com/syzoj/syzoj-ng-go/database/protoc-gen-dbmodel/db
 message DbModelField {
     optional string sql = 1;
     optional string fkey = 2;
+    optional string index = 3;
 }
 
 extend google.protobuf.FieldOptions {

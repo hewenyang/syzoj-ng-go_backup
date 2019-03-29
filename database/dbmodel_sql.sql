@@ -1,7 +1,8 @@
 CREATE TABLE user (
   id VARCHAR(16) PRIMARY KEY,
-  user_name VARCHAR(64) UNIQUE,
-  auth BLOB
+  user_name VARCHAR(255) UNIQUE,
+  auth BLOB,
+  register_time DATEtIIME
 );
 
 CREATE TABLE device (
@@ -13,7 +14,8 @@ CREATE TABLE device (
 CREATE TABLE problem (
   id VARCHAR(16) PRIMARY KEY,
   title VARCHAR(255),
-  user VARCHAR(16) REFERENCES user(id)
+  user VARCHAR(16) REFERENCES user(id),
+  create_time DATEtIIME INDEX
 );
 
 CREATE TABLE problem_entry (

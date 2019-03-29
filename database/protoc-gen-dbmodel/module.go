@@ -24,7 +24,22 @@ package database
 import (
 	"context"
 	"database/sql"
+    "time"
+
+    "github.com/golang/protobuf/ptypes"
+    "github.com/golang/protobuf/ptypes/timestamp"
 )
+
+var _ = ptypes.Duration
+var _ = time.Now
+
+func convertTimestamp(t *timestamp.Timestamp) interface{} {
+    if t == nil {
+        return nil
+    }
+    t2, _ := ptypes.Timestamp(t)
+    return t2
+}
 
 {{range .Tables}}
 type {{.CapName}}Ref string
@@ -40,6 +55,7 @@ func Create{{.CapName}}Ref(ref {{.CapName}}Ref) *{{.CapName}}Ref {
 
 func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
 	v := new({{.CapName}})
+    {{.VarList}}
 	err := t.tx.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=?", ref).Scan(&v.Id, {{.ScanList}})
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -47,11 +63,13 @@ func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) 
 		}
 		return nil, err
 	}
+    {{.DecodeList}}
 	return v, nil
 }
 
 func (t *DatabaseTxn) Get{{.CapName}}ForUpdate(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
 	v := new({{.CapName}})
+    {{.VarList}}
 	err := t.tx.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=? FOR UPDATE", ref).Scan(&v.Id, {{.ScanList}})
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -59,6 +77,7 @@ func (t *DatabaseTxn) Get{{.CapName}}ForUpdate(ctx context.Context, ref {{.CapNa
 		}
 		return nil, err
 	}
+    {{.DecodeList}}
 	return v, nil
 }
 
@@ -176,15 +195,20 @@ type tplData struct {
 	Messages []string
 }
 type tplTable struct {
-	Name       string
-	CapName    string
+	Name    string
+	CapName string
+
 	SelList    string
 	UpdateList string
-	ScanList   string
-	ArgList    string
 	InsList    string
 	InsValue   string
-	SqlFields  string
+
+	VarList    string
+	ScanList   string
+	DecodeList string
+	ArgList    string
+
+	SqlFields string
 }
 
 func makeVisitor(d pgs.DebuggerCommon) *visitor {
@@ -210,7 +234,10 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 	var insList []string
 	var insValue []string
 	var sqlFields []string
+	var varList []string
+	var decodeList []string
 	types := make(map[string]string)
+	var vars int
 	for i, f := range m.Fields() {
 		insValue = append(insValue, "?")
 		if i == 0 && f.Name().String() != "id" {
@@ -219,61 +246,84 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 		if f.Type().IsMap() || f.Type().IsRepeated() {
 			return nil, errors.New("Map or repeated fields in a database model is not allowed")
 		}
+		curVar := vars
+		vars++
 		if i != 0 {
 			selList = append(selList, f.Name().String())
 			updateList = append(updateList, f.Name().String()+"=?")
-			argList = append(argList, "v."+f.Name().UpperCamelCase().String())
-			scanList = append(scanList, "&v."+f.Name().UpperCamelCase().String())
+			if f.Type().IsEmbed() && f.Type().Embed().WellKnownType() == pgs.TimestampWKT {
+				varList = append(varList, fmt.Sprintf("var var%d *time.Time", curVar))
+				scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
+				decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil { v.%s, _ = ptypes.TimestampProto(*var%d) } else { v.%s = nil }`, curVar, f.Name().UpperCamelCase().String(), curVar, f.Name().UpperCamelCase().String()))
+				argList = append(argList, fmt.Sprintf("convertTimestamp(v.%s)", f.Name().UpperCamelCase().String()))
+			} else {
+				scanList = append(scanList, "&v."+f.Name().UpperCamelCase().String())
+				argList = append(argList, "v."+f.Name().UpperCamelCase().String())
+			}
 			insList = append(insList, f.Name().String())
 		}
-		if m := f.Type().Embed(); m != nil {
+		if m := f.Type().Embed(); m != nil && !m.IsWellKnown() {
 			v.d.Messages = append(v.d.Messages, m.Name().String())
 		}
 		d := &dbmodel.DbModelField{}
-		var sql string
+		var sqlBuilder strings.Builder
+		sqlBuilder.WriteString(f.Name().String())
 		_, _ = f.Extension(dbmodel.E_Model, d)
-        if i == 0 {
-            sql = "id VARCHAR(16) PRIMARY KEY"
-            types[f.Name().UpperCamelCase().String()] = m.Name().UpperCamelCase().String() + "Ref"
-        } else {
-            t := f.Type().ProtoType()
-            if t.IsInt() {
-                sql = fmt.Sprintf("%s BIGINT", f.Name().String())
-            } else {
-                switch t.Proto() {
-                case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
-                    sql = fmt.Sprintf("%s DOUBLE", f.Name().String())
-                case descriptor.FieldDescriptorProto_TYPE_FLOAT:
-                    sql = fmt.Sprintf("%s FLOAT", f.Name().String())
-                case descriptor.FieldDescriptorProto_TYPE_STRING:
-                    if d.Fkey != nil {
-                        sql = fmt.Sprintf("%s VARCHAR(16)", f.Name().String())
-                    } else {
-                        sql = fmt.Sprintf("%s VARCHAR(255)", f.Name().String())
-                    }
-                case descriptor.FieldDescriptorProto_TYPE_BYTES, descriptor.FieldDescriptorProto_TYPE_MESSAGE:
-                    sql = fmt.Sprintf("%s BLOB", f.Name().String())
-                default:
-                    return nil, errors.New(fmt.Sprintf("Cannot generate SQL statement for %s.%s", m.Name().String(), f.Name().String()))
-                }
-                if d.Fkey != nil {
-                    sql = fmt.Sprintf("%s REFERENCES %s(id)", sql, d.GetFkey())
-                }
-            }
-            if d.Fkey != nil {
-                s := pgs.Name(d.GetFkey())
-                types[f.Name().UpperCamelCase().String()] = s.UpperCamelCase().String() + "Ref"
-            }
-        }
-		if d.Sql != nil {
-			sql = d.GetSql()
+		if i == 0 {
+			sqlBuilder.WriteString(" VARCHAR(16) PRIMARY KEY")
+			types[f.Name().UpperCamelCase().String()] = m.Name().UpperCamelCase().String() + "Ref"
+		} else {
+			t := f.Type().ProtoType()
+			if t.IsInt() {
+				sqlBuilder.WriteString(" BIGINT")
+			} else {
+				switch t.Proto() {
+				case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
+					sqlBuilder.WriteString(" DOUBLE")
+				case descriptor.FieldDescriptorProto_TYPE_FLOAT:
+					sqlBuilder.WriteString(" FLOAT")
+				case descriptor.FieldDescriptorProto_TYPE_STRING:
+					if d.Fkey != nil {
+						sqlBuilder.WriteString(" VARCHAR(16)")
+					} else {
+						sqlBuilder.WriteString(" VARCHAR(255)")
+					}
+				case descriptor.FieldDescriptorProto_TYPE_MESSAGE:
+					if f.Type().IsEmbed() && f.Type().Embed().WellKnownType() == pgs.TimestampWKT {
+						sqlBuilder.WriteString(" DATEIIME")
+						break
+					}
+					fallthrough
+				case descriptor.FieldDescriptorProto_TYPE_BYTES:
+					sqlBuilder.WriteString(" BLOB")
+				default:
+					return nil, errors.New(fmt.Sprintf("Cannot generate SQL statement for %s.%s", m.Name().String(), f.Name().String()))
+				}
+				if d.Fkey != nil {
+					sqlBuilder.WriteString(fmt.Sprintf(" REFERENCES %s(id)", d.GetFkey()))
+				}
+				if d.Index != nil {
+					sqlBuilder.WriteString(" ")
+					sqlBuilder.WriteString(d.GetIndex())
+				}
+			}
+			if d.Fkey != nil {
+				s := pgs.Name(d.GetFkey())
+				types[f.Name().UpperCamelCase().String()] = s.UpperCamelCase().String() + "Ref"
+			}
 		}
-		sqlFields = append(sqlFields, "  "+sql)
+		if d.Sql != nil {
+			sqlBuilder.Reset()
+			sqlBuilder.WriteString(d.GetSql())
+		}
+		sqlFields = append(sqlFields, "  "+sqlBuilder.String())
 	}
 	t.SelList = strings.Join(selList, ", ")
 	t.UpdateList = strings.Join(updateList, ", ")
 	t.ArgList = strings.Join(argList, ", ")
+	t.VarList = strings.Join(varList, "\n")
 	t.ScanList = strings.Join(scanList, ", ")
+	t.DecodeList = strings.Join(decodeList, "\n")
 	t.InsList = strings.Join(insList, ", ")
 	t.InsValue = strings.Join(insValue, ", ")
 	t.SqlFields = strings.Join(sqlFields, ",\n")

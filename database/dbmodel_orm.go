@@ -3,7 +3,22 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
+
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 )
+
+var _ = ptypes.Duration
+var _ = time.Now
+
+func convertTimestamp(t *timestamp.Timestamp) interface{} {
+	if t == nil {
+		return nil
+	}
+	t2, _ := ptypes.Timestamp(t)
+	return t2
+}
 
 type UserRef string
 
@@ -18,24 +33,36 @@ func CreateUserRef(ref UserRef) *UserRef {
 
 func (t *DatabaseTxn) GetUser(ctx context.Context, ref UserRef) (*User, error) {
 	v := new(User)
-	err := t.tx.QueryRowContext(ctx, "SELECT id, user_name, auth FROM user WHERE id=?", ref).Scan(&v.Id, &v.UserName, &v.Auth)
+	var var3 *time.Time
+	err := t.tx.QueryRowContext(ctx, "SELECT id, user_name, auth, register_time FROM user WHERE id=?", ref).Scan(&v.Id, &v.UserName, &v.Auth, &var3)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
+	if var3 != nil {
+		v.RegisterTime, _ = ptypes.TimestampProto(*var3)
+	} else {
+		v.RegisterTime = nil
+	}
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetUserForUpdate(ctx context.Context, ref UserRef) (*User, error) {
 	v := new(User)
-	err := t.tx.QueryRowContext(ctx, "SELECT id, user_name, auth FROM user WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.UserName, &v.Auth)
+	var var3 *time.Time
+	err := t.tx.QueryRowContext(ctx, "SELECT id, user_name, auth, register_time FROM user WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.UserName, &v.Auth, &var3)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
+	}
+	if var3 != nil {
+		v.RegisterTime, _ = ptypes.TimestampProto(*var3)
+	} else {
+		v.RegisterTime = nil
 	}
 	return v, nil
 }
@@ -44,7 +71,7 @@ func (t *DatabaseTxn) UpdateUser(ctx context.Context, ref UserRef, v *User) erro
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE user SET user_name=?, auth=? WHERE id=?", v.UserName, v.Auth, v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE user SET user_name=?, auth=?, register_time=? WHERE id=?", v.UserName, v.Auth, convertTimestamp(v.RegisterTime), v.Id)
 	return err
 }
 
@@ -53,7 +80,7 @@ func (t *DatabaseTxn) InsertUser(ctx context.Context, v *User) error {
 		ref := NewUserRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO user (id, user_name, auth) VALUES (?, ?, ?)", v.Id, v.UserName, v.Auth)
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO user (id, user_name, auth, register_time) VALUES (?, ?, ?, ?)", v.Id, v.UserName, v.Auth, convertTimestamp(v.RegisterTime))
 	return err
 }
 
@@ -75,6 +102,7 @@ func CreateDeviceRef(ref DeviceRef) *DeviceRef {
 
 func (t *DatabaseTxn) GetDevice(ctx context.Context, ref DeviceRef) (*Device, error) {
 	v := new(Device)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, user, info FROM device WHERE id=?", ref).Scan(&v.Id, &v.User, &v.Info)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -82,11 +110,13 @@ func (t *DatabaseTxn) GetDevice(ctx context.Context, ref DeviceRef) (*Device, er
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetDeviceForUpdate(ctx context.Context, ref DeviceRef) (*Device, error) {
 	v := new(Device)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, user, info FROM device WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.User, &v.Info)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -94,6 +124,7 @@ func (t *DatabaseTxn) GetDeviceForUpdate(ctx context.Context, ref DeviceRef) (*D
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
@@ -132,24 +163,36 @@ func CreateProblemRef(ref ProblemRef) *ProblemRef {
 
 func (t *DatabaseTxn) GetProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
 	v := new(Problem)
-	err := t.tx.QueryRowContext(ctx, "SELECT id, title, user FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Title, &v.User)
+	var var3 *time.Time
+	err := t.tx.QueryRowContext(ctx, "SELECT id, title, user, create_time FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Title, &v.User, &var3)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
+	if var3 != nil {
+		v.CreateTime, _ = ptypes.TimestampProto(*var3)
+	} else {
+		v.CreateTime = nil
+	}
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetProblemForUpdate(ctx context.Context, ref ProblemRef) (*Problem, error) {
 	v := new(Problem)
-	err := t.tx.QueryRowContext(ctx, "SELECT id, title, user FROM problem WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Title, &v.User)
+	var var3 *time.Time
+	err := t.tx.QueryRowContext(ctx, "SELECT id, title, user, create_time FROM problem WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Title, &v.User, &var3)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
+	}
+	if var3 != nil {
+		v.CreateTime, _ = ptypes.TimestampProto(*var3)
+	} else {
+		v.CreateTime = nil
 	}
 	return v, nil
 }
@@ -158,7 +201,7 @@ func (t *DatabaseTxn) UpdateProblem(ctx context.Context, ref ProblemRef, v *Prob
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem SET title=?, user=? WHERE id=?", v.Title, v.User, v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE problem SET title=?, user=?, create_time=? WHERE id=?", v.Title, v.User, convertTimestamp(v.CreateTime), v.Id)
 	return err
 }
 
@@ -167,7 +210,7 @@ func (t *DatabaseTxn) InsertProblem(ctx context.Context, v *Problem) error {
 		ref := NewProblemRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem (id, title, user) VALUES (?, ?, ?)", v.Id, v.Title, v.User)
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem (id, title, user, create_time) VALUES (?, ?, ?, ?)", v.Id, v.Title, v.User, convertTimestamp(v.CreateTime))
 	return err
 }
 
@@ -189,6 +232,7 @@ func CreateProblemEntryRef(ref ProblemEntryRef) *ProblemEntryRef {
 
 func (t *DatabaseTxn) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
 	v := new(ProblemEntry)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem FROM problem_entry WHERE id=?", ref).Scan(&v.Id, &v.Problem)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -196,11 +240,13 @@ func (t *DatabaseTxn) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) 
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetProblemEntryForUpdate(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
 	v := new(ProblemEntry)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem FROM problem_entry WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -208,6 +254,7 @@ func (t *DatabaseTxn) GetProblemEntryForUpdate(ctx context.Context, ref ProblemE
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
@@ -246,6 +293,7 @@ func CreateProblemSourceRef(ref ProblemSourceRef) *ProblemSourceRef {
 
 func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
 	v := new(ProblemSource)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, source FROM problem_source WHERE id=?", ref).Scan(&v.Id, &v.Source)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -253,11 +301,13 @@ func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetProblemSourceForUpdate(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
 	v := new(ProblemSource)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, source FROM problem_source WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Source)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -265,6 +315,7 @@ func (t *DatabaseTxn) GetProblemSourceForUpdate(ctx context.Context, ref Problem
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
@@ -303,6 +354,7 @@ func CreateProblemJudgerRef(ref ProblemJudgerRef) *ProblemJudgerRef {
 
 func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
 	v := new(ProblemJudger)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -310,11 +362,13 @@ func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetProblemJudgerForUpdate(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
 	v := new(ProblemJudger)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -322,6 +376,7 @@ func (t *DatabaseTxn) GetProblemJudgerForUpdate(ctx context.Context, ref Problem
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
@@ -360,6 +415,7 @@ func CreateProblemStatementRef(ref ProblemStatementRef) *ProblemStatementRef {
 
 func (t *DatabaseTxn) GetProblemStatement(ctx context.Context, ref ProblemStatementRef) (*ProblemStatement, error) {
 	v := new(ProblemStatement)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_statement WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -367,11 +423,13 @@ func (t *DatabaseTxn) GetProblemStatement(ctx context.Context, ref ProblemStatem
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetProblemStatementForUpdate(ctx context.Context, ref ProblemStatementRef) (*ProblemStatement, error) {
 	v := new(ProblemStatement)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_statement WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -379,6 +437,7 @@ func (t *DatabaseTxn) GetProblemStatementForUpdate(ctx context.Context, ref Prob
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
@@ -417,6 +476,7 @@ func CreateSubmissionRef(ref SubmissionRef) *SubmissionRef {
 
 func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
 	v := new(Submission)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -424,11 +484,13 @@ func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref SubmissionRef) (*Su
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
 func (t *DatabaseTxn) GetSubmissionForUpdate(ctx context.Context, ref SubmissionRef) (*Submission, error) {
 	v := new(Submission)
+
 	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -436,6 +498,7 @@ func (t *DatabaseTxn) GetSubmissionForUpdate(ctx context.Context, ref Submission
 		}
 		return nil, err
 	}
+
 	return v, nil
 }
 
