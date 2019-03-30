@@ -2,7 +2,8 @@ CREATE TABLE user (
   id VARCHAR(16) PRIMARY KEY,
   user_name VARCHAR(255) UNIQUE,
   auth BLOB,
-  register_time DATEIIME INDEX
+  register_time DATETIME,
+INDEX register_time (register_time)
 );
 
 CREATE TABLE device (
@@ -15,7 +16,8 @@ CREATE TABLE problem (
   id VARCHAR(16) PRIMARY KEY,
   title VARCHAR(255),
   user VARCHAR(16) REFERENCES user(id),
-  create_time DATEIIME INDEX
+  create_time DATETIME,
+INDEX create_time (create_time)
 );
 
 CREATE TABLE problem_entry (
@@ -27,7 +29,7 @@ CREATE TABLE problem_source (
   id VARCHAR(16) PRIMARY KEY,
   problem VARCHAR(16) REFERENCES problem(id),
   user VARCHAR(16) REFERENCES user(id),
-  source BLOB
+  data BLOB
 );
 
 CREATE TABLE problem_judger (
@@ -35,7 +37,8 @@ CREATE TABLE problem_judger (
   problem VARCHAR(16) REFERENCES problem(id),
   user VARCHAR(16) REFERENCES user(id),
   type VARCHAR(255),
-  data BLOB
+  judge_data BLOB,
+  judge_info JSON
 );
 
 CREATE TABLE problem_statement (

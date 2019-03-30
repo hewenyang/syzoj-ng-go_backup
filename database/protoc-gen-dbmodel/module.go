@@ -22,20 +22,27 @@ var tplOrm = template.Must(template.New("dbmodel_orm").Parse(`
 package database
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
+	"github.com/golang/protobuf/ptypes/struct"
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
+var _ = bytes.NewBuffer
+var _ = time.Now
+var _ = jsonpb.Unmarshal
 var _ = proto.Marshal
 var _ = ptypes.Duration
 var _ = any.Any{}
-var _ = time.Now
+var _ = structpb.Struct{}
+var _ = timestamp.Timestamp{}
 
 func convertTimestamp(t *timestamp.Timestamp) interface{} {
 	if t == nil {
@@ -43,6 +50,19 @@ func convertTimestamp(t *timestamp.Timestamp) interface{} {
 	}
 	t2, _ := ptypes.Timestamp(t)
 	return t2
+}
+
+var jsonpbMarshaler = &jsonpb.Marshaler{}
+func convertStruct(t *structpb.Struct) interface{} {
+	if t == nil {
+		return nil
+	}
+	var v bytes.Buffer
+	err := jsonpbMarshaler.Marshal(&v, t)
+	if err != nil {
+		panic(err)
+	}
+	return v.Bytes()
 }
 
 func convertAny(t *any.Any) interface{} {
@@ -249,6 +269,7 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 	var insList []string
 	var insValue []string
 	var sqlFields []string
+	var sqlIndexes []string
 	var varList []string
 	var decodeList []string
 	types := make(map[string]string)
@@ -266,15 +287,18 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 		if i != 0 {
 			selList = append(selList, f.Name().String())
 			updateList = append(updateList, f.Name().String()+"=?")
-			if f.Type().IsEmbed() && f.Type().Embed().WellKnownType() == pgs.TimestampWKT {
-				varList = append(varList, fmt.Sprintf("var var%d *time.Time", curVar))
-				scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
-				decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil { v.%s, _ = ptypes.TimestampProto(*var%d) } else { v.%s = nil }`, curVar, f.Name().UpperCamelCase().String(), curVar, f.Name().UpperCamelCase().String()))
-				argList = append(argList, fmt.Sprintf("convertTimestamp(v.%s)", f.Name().UpperCamelCase().String()))
-			} else if f.Type().IsEmbed() && f.Type().Embed().WellKnownType() == pgs.AnyWKT {
-				varList = append(varList, fmt.Sprintf("var var%d []byte", curVar))
-				scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
-				decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil {
+			if f.Type().IsEmbed() {
+				switch f.Type().Embed().WellKnownType() {
+				case pgs.TimestampWKT:
+					varList = append(varList, fmt.Sprintf("var var%d *time.Time", curVar))
+					scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
+					decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil { v.%s, _ = ptypes.TimestampProto(*var%d) } else { v.%s = nil }`, curVar, f.Name().UpperCamelCase().String(), curVar, f.Name().UpperCamelCase().String()))
+					argList = append(argList, fmt.Sprintf("convertTimestamp(v.%s)", f.Name().UpperCamelCase().String()))
+					goto checkWKTDone
+				case pgs.AnyWKT:
+					varList = append(varList, fmt.Sprintf("var var%d []byte", curVar))
+					scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
+					decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil {
 	v.%s = &any.Any{}
 	if err := proto.Unmarshal(var%d, v.%s); err != nil {
 		panic(err)
@@ -282,11 +306,26 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 } else {
 	v.%s = nil
 }`, curVar, f.Name().UpperCamelCase().String(), curVar, f.Name().UpperCamelCase().String(), f.Name().UpperCamelCase().String()))
-				argList = append(argList, fmt.Sprintf("convertAny(v.%s)", f.Name().UpperCamelCase().String()))
-			} else {
-				scanList = append(scanList, "&v."+f.Name().UpperCamelCase().String())
-				argList = append(argList, "v."+f.Name().UpperCamelCase().String())
+					argList = append(argList, fmt.Sprintf("convertAny(v.%s)", f.Name().UpperCamelCase().String()))
+					goto checkWKTDone
+				case pgs.StructWKT:
+					varList = append(varList, fmt.Sprintf("var var%d sql.RawBytes", curVar))
+					scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
+					decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil {
+	v.%s = &structpb.Struct{}
+	if err := jsonpb.Unmarshal(bytes.NewBuffer(var%d), v.%s); err != nil {
+		panic(err)
+	}
+} else {
+	v.%s = nil
+}`, curVar, f.Name().UpperCamelCase().String(), curVar, f.Name().UpperCamelCase().String(), f.Name().UpperCamelCase().String()))
+					argList = append(argList, fmt.Sprintf("convertStruct(v.%s)", f.Name().UpperCamelCase().String()))
+					goto checkWKTDone
+				}
 			}
+			scanList = append(scanList, "&v."+f.Name().UpperCamelCase().String())
+			argList = append(argList, "v."+f.Name().UpperCamelCase().String())
+		checkWKTDone:
 			insList = append(insList, f.Name().String())
 		}
 		if m := f.Type().Embed(); m != nil && !m.IsWellKnown() {
@@ -317,7 +356,10 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 					}
 				case descriptor.FieldDescriptorProto_TYPE_MESSAGE:
 					if f.Type().IsEmbed() && f.Type().Embed().WellKnownType() == pgs.TimestampWKT {
-						sqlBuilder.WriteString(" DATEIIME")
+						sqlBuilder.WriteString(" DATETIME")
+						break
+					} else if f.Type().IsEmbed() && f.Type().Embed().WellKnownType() == pgs.StructWKT {
+						sqlBuilder.WriteString(" JSON")
 						break
 					}
 					fallthrough
@@ -329,9 +371,11 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 				if d.Fkey != nil {
 					sqlBuilder.WriteString(fmt.Sprintf(" REFERENCES %s(id)", d.GetFkey()))
 				}
-				if d.Index != nil {
-					sqlBuilder.WriteString(" ")
-					sqlBuilder.WriteString(d.GetIndex())
+				if d.GetUnique() {
+					sqlBuilder.WriteString(" UNIQUE")
+				}
+				if d.GetIndex() {
+					sqlIndexes = append(sqlIndexes, fmt.Sprintf("INDEX %s (%s)", f.Name().String(), f.Name().String()))
 				}
 			}
 			if d.Fkey != nil {
@@ -353,7 +397,7 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 	t.DecodeList = strings.Join(decodeList, "\n")
 	t.InsList = strings.Join(insList, ", ")
 	t.InsValue = strings.Join(insValue, ", ")
-	t.SqlFields = strings.Join(sqlFields, ",\n")
+	t.SqlFields = strings.Join(append(sqlFields, sqlIndexes...), ",\n")
 	v.d.Tables = append(v.d.Tables, t)
 	v.g.nodes[m.Name().String()] = types
 	return v, nil

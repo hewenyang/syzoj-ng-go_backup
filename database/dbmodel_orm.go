@@ -1,20 +1,27 @@
 package database
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
+	"github.com/golang/protobuf/ptypes/struct"
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
+var _ = bytes.NewBuffer
+var _ = time.Now
+var _ = jsonpb.Unmarshal
 var _ = proto.Marshal
 var _ = ptypes.Duration
 var _ = any.Any{}
-var _ = time.Now
+var _ = structpb.Struct{}
+var _ = timestamp.Timestamp{}
 
 func convertTimestamp(t *timestamp.Timestamp) interface{} {
 	if t == nil {
@@ -22,6 +29,20 @@ func convertTimestamp(t *timestamp.Timestamp) interface{} {
 	}
 	t2, _ := ptypes.Timestamp(t)
 	return t2
+}
+
+var jsonpbMarshaler = &jsonpb.Marshaler{}
+
+func convertStruct(t *structpb.Struct) interface{} {
+	if t == nil {
+		return nil
+	}
+	var v bytes.Buffer
+	err := jsonpbMarshaler.Marshal(&v, t)
+	if err != nil {
+		panic(err)
+	}
+	return v.Bytes()
 }
 
 func convertAny(t *any.Any) interface{} {
@@ -309,7 +330,7 @@ func CreateProblemSourceRef(ref ProblemSourceRef) *ProblemSourceRef {
 func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
 	v := new(ProblemSource)
 
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, source FROM problem_source WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Source)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_source WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -323,7 +344,7 @@ func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef
 func (t *DatabaseTxn) GetProblemSourceForUpdate(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
 	v := new(ProblemSource)
 
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, source FROM problem_source WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Source)
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_source WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -338,7 +359,7 @@ func (t *DatabaseTxn) UpdateProblemSource(ctx context.Context, ref ProblemSource
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_source SET problem=?, user=?, source=? WHERE id=?", v.Problem, v.User, v.Source, v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE problem_source SET problem=?, user=?, data=? WHERE id=?", v.Problem, v.User, v.Data, v.Id)
 	return err
 }
 
@@ -347,7 +368,7 @@ func (t *DatabaseTxn) InsertProblemSource(ctx context.Context, v *ProblemSource)
 		ref := NewProblemSourceRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_source (id, problem, user, source) VALUES (?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Source)
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_source (id, problem, user, data) VALUES (?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Data)
 	return err
 }
 
@@ -370,7 +391,8 @@ func CreateProblemJudgerRef(ref ProblemJudgerRef) *ProblemJudgerRef {
 func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
 	v := new(ProblemJudger)
 	var var4 []byte
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &var4)
+	var var5 sql.RawBytes
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, judge_data, judge_info FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &var4, &var5)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -378,12 +400,20 @@ func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef
 		return nil, err
 	}
 	if var4 != nil {
-		v.Data = &any.Any{}
-		if err := proto.Unmarshal(var4, v.Data); err != nil {
+		v.JudgeData = &any.Any{}
+		if err := proto.Unmarshal(var4, v.JudgeData); err != nil {
 			panic(err)
 		}
 	} else {
-		v.Data = nil
+		v.JudgeData = nil
+	}
+	if var5 != nil {
+		v.JudgeInfo = &structpb.Struct{}
+		if err := jsonpb.Unmarshal(bytes.NewBuffer(var5), v.JudgeInfo); err != nil {
+			panic(err)
+		}
+	} else {
+		v.JudgeInfo = nil
 	}
 	return v, nil
 }
@@ -391,7 +421,8 @@ func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef
 func (t *DatabaseTxn) GetProblemJudgerForUpdate(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
 	v := new(ProblemJudger)
 	var var4 []byte
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, data FROM problem_judger WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &var4)
+	var var5 sql.RawBytes
+	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, judge_data, judge_info FROM problem_judger WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &var4, &var5)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -399,12 +430,20 @@ func (t *DatabaseTxn) GetProblemJudgerForUpdate(ctx context.Context, ref Problem
 		return nil, err
 	}
 	if var4 != nil {
-		v.Data = &any.Any{}
-		if err := proto.Unmarshal(var4, v.Data); err != nil {
+		v.JudgeData = &any.Any{}
+		if err := proto.Unmarshal(var4, v.JudgeData); err != nil {
 			panic(err)
 		}
 	} else {
-		v.Data = nil
+		v.JudgeData = nil
+	}
+	if var5 != nil {
+		v.JudgeInfo = &structpb.Struct{}
+		if err := jsonpb.Unmarshal(bytes.NewBuffer(var5), v.JudgeInfo); err != nil {
+			panic(err)
+		}
+	} else {
+		v.JudgeInfo = nil
 	}
 	return v, nil
 }
@@ -413,7 +452,7 @@ func (t *DatabaseTxn) UpdateProblemJudger(ctx context.Context, ref ProblemJudger
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_judger SET problem=?, user=?, type=?, data=? WHERE id=?", v.Problem, v.User, v.Type, convertAny(v.Data), v.Id)
+	_, err := t.tx.ExecContext(ctx, "UPDATE problem_judger SET problem=?, user=?, type=?, judge_data=?, judge_info=? WHERE id=?", v.Problem, v.User, v.Type, convertAny(v.JudgeData), convertStruct(v.JudgeInfo), v.Id)
 	return err
 }
 
@@ -422,7 +461,7 @@ func (t *DatabaseTxn) InsertProblemJudger(ctx context.Context, v *ProblemJudger)
 		ref := NewProblemJudgerRef()
 		v.Id = &ref
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_judger (id, problem, user, type, data) VALUES (?, ?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Type, convertAny(v.Data))
+	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_judger (id, problem, user, type, judge_data, judge_info) VALUES (?, ?, ?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Type, convertAny(v.JudgeData), convertStruct(v.JudgeInfo))
 	return err
 }
 
