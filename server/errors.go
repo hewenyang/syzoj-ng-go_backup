@@ -14,5 +14,6 @@ var ErrPermissionDenied = errors.New("Permission denied")
 var ErrAlreadyLoggedIn = errors.New("Already logged in")
 var ErrUserNotFound = errors.New("User not found")
 var ErrPasswordIncorrect = errors.New("Password incorrect")
+var ErrDuplicateUserName = errors.New("Duplicate user name")
 
 var ErrNotLoggedIn = errors.New("Not logged in")

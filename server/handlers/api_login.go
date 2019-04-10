@@ -18,17 +18,15 @@ func Get_Login(ctx context.Context) error {
 	return nil
 }
 
-func Handle_Login(ctx context.Context, req *model.LoginPage_LoginRequest) error {
+func Handle_Login(ctx context.Context) error {
 	var err error
 	s := server.GetServer(ctx)
 	c := server.GetApiContext(ctx)
-	txn, err := s.GetDB().OpenTxn(ctx)
-	if err != nil {
-		log.WithError(err).Error("Failed to open transaction")
-		return server.ErrBusy
+	req := &model.LoginPage_LoginRequest{}
+	if err := c.ReadBody(req); err != nil {
+		return err
 	}
-	defer txn.Rollback()
-	if dev, err := device.GetDevice(ctx, txn); err != device.ErrDeviceNotFound {
+	if dev, err := device.GetDevice(ctx); err != device.ErrDeviceNotFound {
 		if err != nil {
 			log.WithError(err).Error("Failed to find device")
 			return server.ErrBusy
@@ -38,7 +36,7 @@ func Handle_Login(ctx context.Context, req *model.LoginPage_LoginRequest) error 
 		}
 	}
 	var userRef database.UserRef
-	if err = txn.QueryRowContext(ctx, "SELECT id FROM user WHERE user_name=?", req.GetUserName()).Scan(&userRef); err != nil {
+	if err = s.GetDB().QueryRowContext(ctx, "SELECT id FROM user WHERE user_name=?", req.GetUserName()).Scan(&userRef); err != nil {
 		if err == sql.ErrNoRows {
 			return server.ErrUserNotFound
 		}
@@ -46,7 +44,7 @@ func Handle_Login(ctx context.Context, req *model.LoginPage_LoginRequest) error 
 		return server.ErrBusy
 	}
 	var user *database.User
-	if user, err = txn.GetUser(ctx, userRef); err != nil || user == nil {
+	if user, err = s.GetDB().GetUser(ctx, userRef); err != nil || user == nil {
 		log.WithError(err).Error("Handle_Login query failed")
 		return server.ErrBusy
 	}
@@ -57,20 +55,20 @@ func Handle_Login(ctx context.Context, req *model.LoginPage_LoginRequest) error 
 	if bcrypt.CompareHashAndPassword(user.Auth.PasswordHash, []byte(req.GetPassword())) != nil {
 		return server.ErrPasswordIncorrect
 	}
-	dev, err := device.NewDevice(ctx, txn)
+	dev, err := device.NewDevice(ctx)
 	if err != nil && err != device.ErrDeviceNotFound {
 		log.WithError(err).Error("Failed to create device")
 		return server.ErrBusy
 	} else {
 		err = nil
 	}
-	dev.User = database.CreateUserRef(userRef)
-	if err = txn.UpdateDevice(ctx, dev.GetId(), dev); err != nil {
+	if _, err = s.GetDB().UpdateDevice(ctx, dev.GetId(), func(dev *database.Device) *database.Device {
+		dev2 := &database.Device{}
+		*dev2 = *dev
+		dev2.User = database.CreateUserRef(userRef)
+		return dev2
+	}); err != nil {
 		log.WithError(err).Error("Failed to update device")
-		return server.ErrBusy
-	}
-	if err = txn.Commit(ctx); err != nil {
-		log.WithError(err).Error("Failed to commit transaction")
 		return server.ErrBusy
 	}
 	c.Redirect("/")

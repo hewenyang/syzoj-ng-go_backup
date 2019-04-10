@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"net/http"
-	"reflect"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -80,37 +80,9 @@ func (s *ApiServer) Router() *mux.Router {
 	return s.router
 }
 
-func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
+func (s *ApiServer) WrapHandler(h func(context.Context) error, checkToken bool) http.Handler {
 	if s.debug {
 		checkToken = false
-	}
-	val := reflect.ValueOf(h)
-	if val.Kind() != reflect.Func {
-		panic("wrapHandler: Invalid handler passed in")
-	}
-	t := val.Type()
-	var reqType reflect.Type
-	if t.NumIn() == 1 {
-		if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
-			panic("wrapHandler: Type of first argument is not context.Context")
-		}
-	} else if t.NumIn() == 2 {
-		if t.In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
-			panic("wrapHandler: Type of first argument is not context.Context")
-		}
-		reqType = t.In(1)
-		if !reqType.Implements(reflect.TypeOf((*proto.Message)(nil)).Elem()) {
-			panic("wrapHandler: Type of the second input argument does not implement proto.Message")
-		}
-	} else {
-		panic("wrapHandler: Number of input arguments is neither 1 nor 2")
-	}
-	if t.NumOut() == 1 {
-		if t.Out(0) != reflect.TypeOf((*error)(nil)).Elem() {
-			panic("wrapHandler: Type of output is not error")
-		}
-	} else {
-		panic("wrapHandler: Number of outputs is not 1")
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c := &ApiContext{r: r, w: w, s: s}
@@ -126,20 +98,9 @@ func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
 				return
 			}
 		}
-		var out []reflect.Value
-		if reqType != nil {
-			reqValue := reflect.New(reqType.Elem())
-			err := c.ReadBody(reqValue.Interface().(proto.Message))
-			if err != nil {
-				c.SendError(err)
-				return
-			}
-			out = val.Call([]reflect.Value{reflect.ValueOf(ctx), reqValue})
-		} else {
-			out = val.Call([]reflect.Value{reflect.ValueOf(ctx)})
-		}
-		if out[0].Interface() != nil {
-			c.SendError(out[0].Interface().(error))
+		err := h(ctx)
+		if err != nil {
+			c.SendError(err)
 		}
 	})
 }
@@ -147,6 +108,12 @@ func (s *ApiServer) WrapHandler(h interface{}, checkToken bool) http.Handler {
 func (s *ApiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.wg.Add(1)
 	defer s.wg.Done()
+	curTime := time.Now()
+	defer func() {
+		d := time.Now().Sub(curTime)
+		log.Info(r)
+		log.Info("Request spent ", d, int64(d))
+	}()
 	if s.debug {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)

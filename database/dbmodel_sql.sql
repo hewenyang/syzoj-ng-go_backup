@@ -14,38 +14,16 @@ CREATE TABLE device (
 
 CREATE TABLE problem (
   id VARCHAR(16) PRIMARY KEY,
-  title VARCHAR(255),
   user VARCHAR(16) REFERENCES user(id),
   create_time DATETIME,
+  title VARCHAR(255),
 INDEX create_time (create_time)
 );
 
 CREATE TABLE problem_entry (
   id VARCHAR(16) PRIMARY KEY,
+  title VARCHAR(255),
   problem VARCHAR(16) REFERENCES problem(id)
-);
-
-CREATE TABLE problem_source (
-  id VARCHAR(16) PRIMARY KEY,
-  problem VARCHAR(16) REFERENCES problem(id),
-  user VARCHAR(16) REFERENCES user(id),
-  data BLOB
-);
-
-CREATE TABLE problem_judger (
-  id VARCHAR(16) PRIMARY KEY,
-  problem VARCHAR(16) REFERENCES problem(id),
-  user VARCHAR(16) REFERENCES user(id),
-  type VARCHAR(255),
-  judge_data BLOB,
-  judge_info JSON
-);
-
-CREATE TABLE problem_statement (
-  id VARCHAR(16) PRIMARY KEY,
-  problem VARCHAR(16) REFERENCES problem(id),
-  user VARCHAR(16) REFERENCES user(id),
-  data BLOB
 );
 
 CREATE TABLE submission (

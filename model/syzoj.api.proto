@@ -3,6 +3,7 @@ syntax = "proto2";
 package syzoj.api;
 
 import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
 import "syzoj.model.proto";
 
 option go_package = "github.com/syzoj/syzoj-ng-go/model";
@@ -49,7 +50,6 @@ message RegisterPage {
     }
 }
 
-// problem
 message ProblemCreatePage {
     message CreateRequest {
         optional string problem_title = 16;
@@ -73,7 +73,7 @@ message ProblemViewPage {
     message ProblemJudgeEntry {
         optional string id = 1;
         optional string type = 2;
-        optional google.protobuf.Any data = 3;
+        optional google.protobuf.Struct info = 3;
     }
     message ProblemEntry {
         optional string id = 1;
@@ -81,7 +81,15 @@ message ProblemViewPage {
     message AddStatementRequest {
         optional syzoj.model.ProblemStatement statement = 1;
     }
+    message AddSourceRequest {
+    	optional syzoj.model.ProblemSource source = 1;
+    }
     message SetPublicRequest {
+    }
+    message AddJudgeTraditionalRequest {
+    }
+    message SubmitJudgeTraditionalRequest {
+    	optional syzoj.model.TraditionalJudgeCode data = 1;
     }
 }
 

@@ -67,10 +67,10 @@ func CreateUserRef(ref UserRef) *UserRef {
 	return &x
 }
 
-func (t *DatabaseTxn) GetUser(ctx context.Context, ref UserRef) (*User, error) {
+func (d *Database) getUser(ctx context.Context, ref UserRef) (*User, error) {
 	v := new(User)
 	var var3 *time.Time
-	err := t.tx.QueryRowContext(ctx, "SELECT id, user_name, auth, register_time FROM user WHERE id=?", ref).Scan(&v.Id, &v.UserName, &v.Auth, &var3)
+	err := d.QueryRowContext(ctx, "SELECT id, user_name, auth, register_time FROM user WHERE id=?", ref).Scan(&v.Id, &v.UserName, &v.Auth, &var3)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -85,43 +85,144 @@ func (t *DatabaseTxn) GetUser(ctx context.Context, ref UserRef) (*User, error) {
 	return v, nil
 }
 
-func (t *DatabaseTxn) GetUserForUpdate(ctx context.Context, ref UserRef) (*User, error) {
-	v := new(User)
-	var var3 *time.Time
-	err := t.tx.QueryRowContext(ctx, "SELECT id, user_name, auth, register_time FROM user WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.UserName, &v.Auth, &var3)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	if var3 != nil {
-		v.RegisterTime, _ = ptypes.TimestampProto(*var3)
-	} else {
-		v.RegisterTime = nil
-	}
-	return v, nil
-}
-
-func (t *DatabaseTxn) UpdateUser(ctx context.Context, ref UserRef, v *User) error {
+func (d *Database) updateUser(ctx context.Context, ref UserRef, v *User) {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE user SET user_name=?, auth=?, register_time=? WHERE id=?", v.UserName, v.Auth, convertTimestamp(v.RegisterTime), v.Id)
-	return err
-}
-
-func (t *DatabaseTxn) InsertUser(ctx context.Context, v *User) error {
-	if v.Id == nil {
-		ref := NewUserRef()
-		v.Id = &ref
+	_, err := d.ExecContext(ctx, "UPDATE user SET user_name=?, auth=?, register_time=? WHERE id=?", v.UserName, v.Auth, convertTimestamp(v.RegisterTime), v.Id)
+	if err != nil {
+		log.WithError(err).Error("Failed to update User")
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO user (id, user_name, auth, register_time) VALUES (?, ?, ?, ?)", v.Id, v.UserName, v.Auth, convertTimestamp(v.RegisterTime))
+}
+
+func (d *Database) insertUser(ctx context.Context, v *User) {
+	_, err := d.ExecContext(ctx, "INSERT INTO user (id, user_name, auth, register_time) VALUES (?, ?, ?, ?)", v.Id, v.UserName, v.Auth, convertTimestamp(v.RegisterTime))
+	if err != nil {
+		log.WithError(err).Error("Failed to insert User")
+	}
+}
+
+func (d *Database) deleteUser(ctx context.Context, ref UserRef) {
+	_, err := d.ExecContext(ctx, "DELETE FROM user WHERE id=?", ref)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete User")
+	}
+}
+
+func (d *Database) GetUser(ctx context.Context, ref UserRef) (*User, error) {
+	d.m.Lock()
+	entry, found := d.cache[ref]
+	if found {
+		d.m.Unlock()
+		return entry.curData.(*User), nil
+	}
+	// slow path
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found = d.cache[ref]
+	if found {
+		d.done(ref)
+		d.m.Unlock()
+		return entry.curData.(*User), nil
+	}
+	d.m.Unlock()
+	var err error
+	entry.prevData, err = d.getUser(ctx, ref)
+	d.m.Lock()
+	if err != nil {
+		d.done(ref)
+		d.m.Unlock()
+		return nil, err
+	}
+	entry.curData = entry.prevData
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	return entry.curData.(*User), nil
+}
+
+func (d *Database) UpdateUser(ctx context.Context, ref UserRef, updater func(*User) *User) (*User, error) {
+	d.m.Lock()
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found := d.cache[ref]
+	if !found {
+		d.m.Unlock()
+		var err error
+		entry.curData, err = d.getUser(ctx, ref)
+		if err != nil {
+			d.m.Lock()
+			d.done(ref)
+			d.m.Unlock()
+			return nil, err
+		}
+		entry.prevData = entry.curData
+		d.m.Lock()
+		d.cache[ref] = entry
+	}
+	entry.curData = updater(entry.curData.(*User))
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	d.wg.Add(1)
+	time.AfterFunc(time.Millisecond*5, func() {
+		defer d.wg.Done()
+		d.FlushUser(d.ctx, ref)
+	})
+	return entry.curData.(*User), nil
+}
+
+func (d *Database) FlushUser(ctx context.Context, ref UserRef) {
+	d.m.Lock()
+	if err := d.optWait(d.ctx, ref); err != nil {
+		return
+	}
+	entry, found := d.cache[ref]
+	if !found || entry.prevData == entry.curData {
+		d.done(ref)
+		d.m.Unlock()
+		return
+	}
+	prevData := entry.prevData.(*User)
+	curData := entry.curData.(*User)
+	d.m.Unlock()
+	if prevData == nil {
+		if curData != nil {
+			d.insertUser(d.ctx, curData)
+		}
+	} else {
+		if curData == nil {
+			d.deleteUser(d.ctx, ref)
+		} else {
+			d.updateUser(d.ctx, ref, curData)
+		}
+	}
+	entry.prevData = entry.curData
+	d.m.Lock()
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+}
+
+func (d *Database) InsertUser(ctx context.Context, v *User) error {
+	if v.Id == nil {
+		v.Id = CreateUserRef(NewUserRef())
+	}
+	_, err := d.UpdateUser(ctx, v.GetId(), func(p *User) *User {
+		if p != nil {
+			panic("database.InsertUser: Duplicate primary key")
+		}
+		return v
+	})
 	return err
 }
 
-func (t *DatabaseTxn) DeleteUser(ctx context.Context, ref UserRef) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM user WHERE id=?", ref)
+func (d *Database) DeleteUser(ctx context.Context, ref UserRef) error {
+	_, err := d.UpdateUser(ctx, ref, func(p *User) *User {
+		return nil
+	})
 	return err
 }
 
@@ -136,10 +237,10 @@ func CreateDeviceRef(ref DeviceRef) *DeviceRef {
 	return &x
 }
 
-func (t *DatabaseTxn) GetDevice(ctx context.Context, ref DeviceRef) (*Device, error) {
+func (d *Database) getDevice(ctx context.Context, ref DeviceRef) (*Device, error) {
 	v := new(Device)
 
-	err := t.tx.QueryRowContext(ctx, "SELECT id, user, info FROM device WHERE id=?", ref).Scan(&v.Id, &v.User, &v.Info)
+	err := d.QueryRowContext(ctx, "SELECT id, user, info FROM device WHERE id=?", ref).Scan(&v.Id, &v.User, &v.Info)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -150,39 +251,144 @@ func (t *DatabaseTxn) GetDevice(ctx context.Context, ref DeviceRef) (*Device, er
 	return v, nil
 }
 
-func (t *DatabaseTxn) GetDeviceForUpdate(ctx context.Context, ref DeviceRef) (*Device, error) {
-	v := new(Device)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, user, info FROM device WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.User, &v.Info)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return v, nil
-}
-
-func (t *DatabaseTxn) UpdateDevice(ctx context.Context, ref DeviceRef, v *Device) error {
+func (d *Database) updateDevice(ctx context.Context, ref DeviceRef, v *Device) {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE device SET user=?, info=? WHERE id=?", v.User, v.Info, v.Id)
-	return err
-}
-
-func (t *DatabaseTxn) InsertDevice(ctx context.Context, v *Device) error {
-	if v.Id == nil {
-		ref := NewDeviceRef()
-		v.Id = &ref
+	_, err := d.ExecContext(ctx, "UPDATE device SET user=?, info=? WHERE id=?", v.User, v.Info, v.Id)
+	if err != nil {
+		log.WithError(err).Error("Failed to update Device")
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO device (id, user, info) VALUES (?, ?, ?)", v.Id, v.User, v.Info)
+}
+
+func (d *Database) insertDevice(ctx context.Context, v *Device) {
+	_, err := d.ExecContext(ctx, "INSERT INTO device (id, user, info) VALUES (?, ?, ?)", v.Id, v.User, v.Info)
+	if err != nil {
+		log.WithError(err).Error("Failed to insert Device")
+	}
+}
+
+func (d *Database) deleteDevice(ctx context.Context, ref DeviceRef) {
+	_, err := d.ExecContext(ctx, "DELETE FROM device WHERE id=?", ref)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete Device")
+	}
+}
+
+func (d *Database) GetDevice(ctx context.Context, ref DeviceRef) (*Device, error) {
+	d.m.Lock()
+	entry, found := d.cache[ref]
+	if found {
+		d.m.Unlock()
+		return entry.curData.(*Device), nil
+	}
+	// slow path
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found = d.cache[ref]
+	if found {
+		d.done(ref)
+		d.m.Unlock()
+		return entry.curData.(*Device), nil
+	}
+	d.m.Unlock()
+	var err error
+	entry.prevData, err = d.getDevice(ctx, ref)
+	d.m.Lock()
+	if err != nil {
+		d.done(ref)
+		d.m.Unlock()
+		return nil, err
+	}
+	entry.curData = entry.prevData
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	return entry.curData.(*Device), nil
+}
+
+func (d *Database) UpdateDevice(ctx context.Context, ref DeviceRef, updater func(*Device) *Device) (*Device, error) {
+	d.m.Lock()
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found := d.cache[ref]
+	if !found {
+		d.m.Unlock()
+		var err error
+		entry.curData, err = d.getDevice(ctx, ref)
+		if err != nil {
+			d.m.Lock()
+			d.done(ref)
+			d.m.Unlock()
+			return nil, err
+		}
+		entry.prevData = entry.curData
+		d.m.Lock()
+		d.cache[ref] = entry
+	}
+	entry.curData = updater(entry.curData.(*Device))
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	d.wg.Add(1)
+	time.AfterFunc(time.Millisecond*5, func() {
+		defer d.wg.Done()
+		d.FlushDevice(d.ctx, ref)
+	})
+	return entry.curData.(*Device), nil
+}
+
+func (d *Database) FlushDevice(ctx context.Context, ref DeviceRef) {
+	d.m.Lock()
+	if err := d.optWait(d.ctx, ref); err != nil {
+		return
+	}
+	entry, found := d.cache[ref]
+	if !found || entry.prevData == entry.curData {
+		d.done(ref)
+		d.m.Unlock()
+		return
+	}
+	prevData := entry.prevData.(*Device)
+	curData := entry.curData.(*Device)
+	d.m.Unlock()
+	if prevData == nil {
+		if curData != nil {
+			d.insertDevice(d.ctx, curData)
+		}
+	} else {
+		if curData == nil {
+			d.deleteDevice(d.ctx, ref)
+		} else {
+			d.updateDevice(d.ctx, ref, curData)
+		}
+	}
+	entry.prevData = entry.curData
+	d.m.Lock()
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+}
+
+func (d *Database) InsertDevice(ctx context.Context, v *Device) error {
+	if v.Id == nil {
+		v.Id = CreateDeviceRef(NewDeviceRef())
+	}
+	_, err := d.UpdateDevice(ctx, v.GetId(), func(p *Device) *Device {
+		if p != nil {
+			panic("database.InsertDevice: Duplicate primary key")
+		}
+		return v
+	})
 	return err
 }
 
-func (t *DatabaseTxn) DeleteDevice(ctx context.Context, ref DeviceRef) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM device WHERE id=?", ref)
+func (d *Database) DeleteDevice(ctx context.Context, ref DeviceRef) error {
+	_, err := d.UpdateDevice(ctx, ref, func(p *Device) *Device {
+		return nil
+	})
 	return err
 }
 
@@ -197,61 +403,162 @@ func CreateProblemRef(ref ProblemRef) *ProblemRef {
 	return &x
 }
 
-func (t *DatabaseTxn) GetProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
+func (d *Database) getProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
 	v := new(Problem)
-	var var3 *time.Time
-	err := t.tx.QueryRowContext(ctx, "SELECT id, title, user, create_time FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Title, &v.User, &var3)
+	var var2 *time.Time
+	err := d.QueryRowContext(ctx, "SELECT id, user, create_time, title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.User, &var2, &v.Title)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-	if var3 != nil {
-		v.CreateTime, _ = ptypes.TimestampProto(*var3)
+	if var2 != nil {
+		v.CreateTime, _ = ptypes.TimestampProto(*var2)
 	} else {
 		v.CreateTime = nil
 	}
 	return v, nil
 }
 
-func (t *DatabaseTxn) GetProblemForUpdate(ctx context.Context, ref ProblemRef) (*Problem, error) {
-	v := new(Problem)
-	var var3 *time.Time
-	err := t.tx.QueryRowContext(ctx, "SELECT id, title, user, create_time FROM problem WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Title, &v.User, &var3)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	if var3 != nil {
-		v.CreateTime, _ = ptypes.TimestampProto(*var3)
-	} else {
-		v.CreateTime = nil
-	}
-	return v, nil
-}
-
-func (t *DatabaseTxn) UpdateProblem(ctx context.Context, ref ProblemRef, v *Problem) error {
+func (d *Database) updateProblem(ctx context.Context, ref ProblemRef, v *Problem) {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem SET title=?, user=?, create_time=? WHERE id=?", v.Title, v.User, convertTimestamp(v.CreateTime), v.Id)
-	return err
-}
-
-func (t *DatabaseTxn) InsertProblem(ctx context.Context, v *Problem) error {
-	if v.Id == nil {
-		ref := NewProblemRef()
-		v.Id = &ref
+	_, err := d.ExecContext(ctx, "UPDATE problem SET user=?, create_time=?, title=? WHERE id=?", v.User, convertTimestamp(v.CreateTime), v.Title, v.Id)
+	if err != nil {
+		log.WithError(err).Error("Failed to update Problem")
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem (id, title, user, create_time) VALUES (?, ?, ?, ?)", v.Id, v.Title, v.User, convertTimestamp(v.CreateTime))
+}
+
+func (d *Database) insertProblem(ctx context.Context, v *Problem) {
+	_, err := d.ExecContext(ctx, "INSERT INTO problem (id, user, create_time, title) VALUES (?, ?, ?, ?)", v.Id, v.User, convertTimestamp(v.CreateTime), v.Title)
+	if err != nil {
+		log.WithError(err).Error("Failed to insert Problem")
+	}
+}
+
+func (d *Database) deleteProblem(ctx context.Context, ref ProblemRef) {
+	_, err := d.ExecContext(ctx, "DELETE FROM problem WHERE id=?", ref)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete Problem")
+	}
+}
+
+func (d *Database) GetProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
+	d.m.Lock()
+	entry, found := d.cache[ref]
+	if found {
+		d.m.Unlock()
+		return entry.curData.(*Problem), nil
+	}
+	// slow path
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found = d.cache[ref]
+	if found {
+		d.done(ref)
+		d.m.Unlock()
+		return entry.curData.(*Problem), nil
+	}
+	d.m.Unlock()
+	var err error
+	entry.prevData, err = d.getProblem(ctx, ref)
+	d.m.Lock()
+	if err != nil {
+		d.done(ref)
+		d.m.Unlock()
+		return nil, err
+	}
+	entry.curData = entry.prevData
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	return entry.curData.(*Problem), nil
+}
+
+func (d *Database) UpdateProblem(ctx context.Context, ref ProblemRef, updater func(*Problem) *Problem) (*Problem, error) {
+	d.m.Lock()
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found := d.cache[ref]
+	if !found {
+		d.m.Unlock()
+		var err error
+		entry.curData, err = d.getProblem(ctx, ref)
+		if err != nil {
+			d.m.Lock()
+			d.done(ref)
+			d.m.Unlock()
+			return nil, err
+		}
+		entry.prevData = entry.curData
+		d.m.Lock()
+		d.cache[ref] = entry
+	}
+	entry.curData = updater(entry.curData.(*Problem))
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	d.wg.Add(1)
+	time.AfterFunc(time.Millisecond*5, func() {
+		defer d.wg.Done()
+		d.FlushProblem(d.ctx, ref)
+	})
+	return entry.curData.(*Problem), nil
+}
+
+func (d *Database) FlushProblem(ctx context.Context, ref ProblemRef) {
+	d.m.Lock()
+	if err := d.optWait(d.ctx, ref); err != nil {
+		return
+	}
+	entry, found := d.cache[ref]
+	if !found || entry.prevData == entry.curData {
+		d.done(ref)
+		d.m.Unlock()
+		return
+	}
+	prevData := entry.prevData.(*Problem)
+	curData := entry.curData.(*Problem)
+	d.m.Unlock()
+	if prevData == nil {
+		if curData != nil {
+			d.insertProblem(d.ctx, curData)
+		}
+	} else {
+		if curData == nil {
+			d.deleteProblem(d.ctx, ref)
+		} else {
+			d.updateProblem(d.ctx, ref, curData)
+		}
+	}
+	entry.prevData = entry.curData
+	d.m.Lock()
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+}
+
+func (d *Database) InsertProblem(ctx context.Context, v *Problem) error {
+	if v.Id == nil {
+		v.Id = CreateProblemRef(NewProblemRef())
+	}
+	_, err := d.UpdateProblem(ctx, v.GetId(), func(p *Problem) *Problem {
+		if p != nil {
+			panic("database.InsertProblem: Duplicate primary key")
+		}
+		return v
+	})
 	return err
 }
 
-func (t *DatabaseTxn) DeleteProblem(ctx context.Context, ref ProblemRef) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem WHERE id=?", ref)
+func (d *Database) DeleteProblem(ctx context.Context, ref ProblemRef) error {
+	_, err := d.UpdateProblem(ctx, ref, func(p *Problem) *Problem {
+		return nil
+	})
 	return err
 }
 
@@ -266,10 +573,10 @@ func CreateProblemEntryRef(ref ProblemEntryRef) *ProblemEntryRef {
 	return &x
 }
 
-func (t *DatabaseTxn) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
+func (d *Database) getProblemEntry(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
 	v := new(ProblemEntry)
 
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem FROM problem_entry WHERE id=?", ref).Scan(&v.Id, &v.Problem)
+	err := d.QueryRowContext(ctx, "SELECT id, title, problem FROM problem_entry WHERE id=?", ref).Scan(&v.Id, &v.Title, &v.Problem)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -280,254 +587,144 @@ func (t *DatabaseTxn) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) 
 	return v, nil
 }
 
-func (t *DatabaseTxn) GetProblemEntryForUpdate(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
-	v := new(ProblemEntry)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem FROM problem_entry WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return v, nil
-}
-
-func (t *DatabaseTxn) UpdateProblemEntry(ctx context.Context, ref ProblemEntryRef, v *ProblemEntry) error {
+func (d *Database) updateProblemEntry(ctx context.Context, ref ProblemEntryRef, v *ProblemEntry) {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_entry SET problem=? WHERE id=?", v.Problem, v.Id)
-	return err
-}
-
-func (t *DatabaseTxn) InsertProblemEntry(ctx context.Context, v *ProblemEntry) error {
-	if v.Id == nil {
-		ref := NewProblemEntryRef()
-		v.Id = &ref
-	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_entry (id, problem) VALUES (?, ?)", v.Id, v.Problem)
-	return err
-}
-
-func (t *DatabaseTxn) DeleteProblemEntry(ctx context.Context, ref ProblemEntryRef) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem_entry WHERE id=?", ref)
-	return err
-}
-
-type ProblemSourceRef string
-
-func NewProblemSourceRef() ProblemSourceRef {
-	return ProblemSourceRef(newId())
-}
-
-func CreateProblemSourceRef(ref ProblemSourceRef) *ProblemSourceRef {
-	x := ref
-	return &x
-}
-
-func (t *DatabaseTxn) GetProblemSource(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
-	v := new(ProblemSource)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_source WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
+	_, err := d.ExecContext(ctx, "UPDATE problem_entry SET title=?, problem=? WHERE id=?", v.Title, v.Problem, v.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
+		log.WithError(err).Error("Failed to update ProblemEntry")
+	}
+}
+
+func (d *Database) insertProblemEntry(ctx context.Context, v *ProblemEntry) {
+	_, err := d.ExecContext(ctx, "INSERT INTO problem_entry (id, title, problem) VALUES (?, ?, ?)", v.Id, v.Title, v.Problem)
+	if err != nil {
+		log.WithError(err).Error("Failed to insert ProblemEntry")
+	}
+}
+
+func (d *Database) deleteProblemEntry(ctx context.Context, ref ProblemEntryRef) {
+	_, err := d.ExecContext(ctx, "DELETE FROM problem_entry WHERE id=?", ref)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete ProblemEntry")
+	}
+}
+
+func (d *Database) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
+	d.m.Lock()
+	entry, found := d.cache[ref]
+	if found {
+		d.m.Unlock()
+		return entry.curData.(*ProblemEntry), nil
+	}
+	// slow path
+	if err := d.optWait(ctx, ref); err != nil {
 		return nil, err
 	}
-
-	return v, nil
-}
-
-func (t *DatabaseTxn) GetProblemSourceForUpdate(ctx context.Context, ref ProblemSourceRef) (*ProblemSource, error) {
-	v := new(ProblemSource)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_source WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
+	entry, found = d.cache[ref]
+	if found {
+		d.done(ref)
+		d.m.Unlock()
+		return entry.curData.(*ProblemEntry), nil
+	}
+	d.m.Unlock()
+	var err error
+	entry.prevData, err = d.getProblemEntry(ctx, ref)
+	d.m.Lock()
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
+		d.done(ref)
+		d.m.Unlock()
 		return nil, err
 	}
-
-	return v, nil
+	entry.curData = entry.prevData
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	return entry.curData.(*ProblemEntry), nil
 }
 
-func (t *DatabaseTxn) UpdateProblemSource(ctx context.Context, ref ProblemSourceRef, v *ProblemSource) error {
-	if v.Id == nil || v.GetId() != ref {
-		panic("ref and v does not match")
-	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_source SET problem=?, user=?, data=? WHERE id=?", v.Problem, v.User, v.Data, v.Id)
-	return err
-}
-
-func (t *DatabaseTxn) InsertProblemSource(ctx context.Context, v *ProblemSource) error {
-	if v.Id == nil {
-		ref := NewProblemSourceRef()
-		v.Id = &ref
-	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_source (id, problem, user, data) VALUES (?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Data)
-	return err
-}
-
-func (t *DatabaseTxn) DeleteProblemSource(ctx context.Context, ref ProblemSourceRef) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem_source WHERE id=?", ref)
-	return err
-}
-
-type ProblemJudgerRef string
-
-func NewProblemJudgerRef() ProblemJudgerRef {
-	return ProblemJudgerRef(newId())
-}
-
-func CreateProblemJudgerRef(ref ProblemJudgerRef) *ProblemJudgerRef {
-	x := ref
-	return &x
-}
-
-func (t *DatabaseTxn) GetProblemJudger(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
-	v := new(ProblemJudger)
-	var var4 []byte
-	var var5 sql.RawBytes
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, judge_data, judge_info FROM problem_judger WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &var4, &var5)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
+func (d *Database) UpdateProblemEntry(ctx context.Context, ref ProblemEntryRef, updater func(*ProblemEntry) *ProblemEntry) (*ProblemEntry, error) {
+	d.m.Lock()
+	if err := d.optWait(ctx, ref); err != nil {
 		return nil, err
 	}
-	if var4 != nil {
-		v.JudgeData = &any.Any{}
-		if err := proto.Unmarshal(var4, v.JudgeData); err != nil {
-			panic(err)
+	entry, found := d.cache[ref]
+	if !found {
+		d.m.Unlock()
+		var err error
+		entry.curData, err = d.getProblemEntry(ctx, ref)
+		if err != nil {
+			d.m.Lock()
+			d.done(ref)
+			d.m.Unlock()
+			return nil, err
+		}
+		entry.prevData = entry.curData
+		d.m.Lock()
+		d.cache[ref] = entry
+	}
+	entry.curData = updater(entry.curData.(*ProblemEntry))
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	d.wg.Add(1)
+	time.AfterFunc(time.Millisecond*5, func() {
+		defer d.wg.Done()
+		d.FlushProblemEntry(d.ctx, ref)
+	})
+	return entry.curData.(*ProblemEntry), nil
+}
+
+func (d *Database) FlushProblemEntry(ctx context.Context, ref ProblemEntryRef) {
+	d.m.Lock()
+	if err := d.optWait(d.ctx, ref); err != nil {
+		return
+	}
+	entry, found := d.cache[ref]
+	if !found || entry.prevData == entry.curData {
+		d.done(ref)
+		d.m.Unlock()
+		return
+	}
+	prevData := entry.prevData.(*ProblemEntry)
+	curData := entry.curData.(*ProblemEntry)
+	d.m.Unlock()
+	if prevData == nil {
+		if curData != nil {
+			d.insertProblemEntry(d.ctx, curData)
 		}
 	} else {
-		v.JudgeData = nil
-	}
-	if var5 != nil {
-		v.JudgeInfo = &structpb.Struct{}
-		if err := jsonpb.Unmarshal(bytes.NewBuffer(var5), v.JudgeInfo); err != nil {
-			panic(err)
+		if curData == nil {
+			d.deleteProblemEntry(d.ctx, ref)
+		} else {
+			d.updateProblemEntry(d.ctx, ref, curData)
 		}
-	} else {
-		v.JudgeInfo = nil
 	}
-	return v, nil
+	entry.prevData = entry.curData
+	d.m.Lock()
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
 }
 
-func (t *DatabaseTxn) GetProblemJudgerForUpdate(ctx context.Context, ref ProblemJudgerRef) (*ProblemJudger, error) {
-	v := new(ProblemJudger)
-	var var4 []byte
-	var var5 sql.RawBytes
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, type, judge_data, judge_info FROM problem_judger WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Type, &var4, &var5)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	if var4 != nil {
-		v.JudgeData = &any.Any{}
-		if err := proto.Unmarshal(var4, v.JudgeData); err != nil {
-			panic(err)
-		}
-	} else {
-		v.JudgeData = nil
-	}
-	if var5 != nil {
-		v.JudgeInfo = &structpb.Struct{}
-		if err := jsonpb.Unmarshal(bytes.NewBuffer(var5), v.JudgeInfo); err != nil {
-			panic(err)
-		}
-	} else {
-		v.JudgeInfo = nil
-	}
-	return v, nil
-}
-
-func (t *DatabaseTxn) UpdateProblemJudger(ctx context.Context, ref ProblemJudgerRef, v *ProblemJudger) error {
-	if v.Id == nil || v.GetId() != ref {
-		panic("ref and v does not match")
-	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_judger SET problem=?, user=?, type=?, judge_data=?, judge_info=? WHERE id=?", v.Problem, v.User, v.Type, convertAny(v.JudgeData), convertStruct(v.JudgeInfo), v.Id)
-	return err
-}
-
-func (t *DatabaseTxn) InsertProblemJudger(ctx context.Context, v *ProblemJudger) error {
+func (d *Database) InsertProblemEntry(ctx context.Context, v *ProblemEntry) error {
 	if v.Id == nil {
-		ref := NewProblemJudgerRef()
-		v.Id = &ref
+		v.Id = CreateProblemEntryRef(NewProblemEntryRef())
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_judger (id, problem, user, type, judge_data, judge_info) VALUES (?, ?, ?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Type, convertAny(v.JudgeData), convertStruct(v.JudgeInfo))
-	return err
-}
-
-func (t *DatabaseTxn) DeleteProblemJudger(ctx context.Context, ref ProblemJudgerRef) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem_judger WHERE id=?", ref)
-	return err
-}
-
-type ProblemStatementRef string
-
-func NewProblemStatementRef() ProblemStatementRef {
-	return ProblemStatementRef(newId())
-}
-
-func CreateProblemStatementRef(ref ProblemStatementRef) *ProblemStatementRef {
-	x := ref
-	return &x
-}
-
-func (t *DatabaseTxn) GetProblemStatement(ctx context.Context, ref ProblemStatementRef) (*ProblemStatement, error) {
-	v := new(ProblemStatement)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_statement WHERE id=?", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
+	_, err := d.UpdateProblemEntry(ctx, v.GetId(), func(p *ProblemEntry) *ProblemEntry {
+		if p != nil {
+			panic("database.InsertProblemEntry: Duplicate primary key")
 		}
-		return nil, err
-	}
-
-	return v, nil
-}
-
-func (t *DatabaseTxn) GetProblemStatementForUpdate(ctx context.Context, ref ProblemStatementRef) (*ProblemStatement, error) {
-	v := new(ProblemStatement)
-
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem, user, data FROM problem_statement WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.Problem, &v.User, &v.Data)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return v, nil
-}
-
-func (t *DatabaseTxn) UpdateProblemStatement(ctx context.Context, ref ProblemStatementRef, v *ProblemStatement) error {
-	if v.Id == nil || v.GetId() != ref {
-		panic("ref and v does not match")
-	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE problem_statement SET problem=?, user=?, data=? WHERE id=?", v.Problem, v.User, v.Data, v.Id)
+		return v
+	})
 	return err
 }
 
-func (t *DatabaseTxn) InsertProblemStatement(ctx context.Context, v *ProblemStatement) error {
-	if v.Id == nil {
-		ref := NewProblemStatementRef()
-		v.Id = &ref
-	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO problem_statement (id, problem, user, data) VALUES (?, ?, ?, ?)", v.Id, v.Problem, v.User, v.Data)
-	return err
-}
-
-func (t *DatabaseTxn) DeleteProblemStatement(ctx context.Context, ref ProblemStatementRef) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM problem_statement WHERE id=?", ref)
+func (d *Database) DeleteProblemEntry(ctx context.Context, ref ProblemEntryRef) error {
+	_, err := d.UpdateProblemEntry(ctx, ref, func(p *ProblemEntry) *ProblemEntry {
+		return nil
+	})
 	return err
 }
 
@@ -542,10 +739,10 @@ func CreateSubmissionRef(ref SubmissionRef) *SubmissionRef {
 	return &x
 }
 
-func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
+func (d *Database) getSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
 	v := new(Submission)
 	var var3 []byte
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &var3)
+	err := d.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &var3)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -563,45 +760,143 @@ func (t *DatabaseTxn) GetSubmission(ctx context.Context, ref SubmissionRef) (*Su
 	return v, nil
 }
 
-func (t *DatabaseTxn) GetSubmissionForUpdate(ctx context.Context, ref SubmissionRef) (*Submission, error) {
-	v := new(Submission)
-	var var3 []byte
-	err := t.tx.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=? FOR UPDATE", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &var3)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	if var3 != nil {
-		v.Data = &any.Any{}
-		if err := proto.Unmarshal(var3, v.Data); err != nil {
-			panic(err)
-		}
-	} else {
-		v.Data = nil
-	}
-	return v, nil
-}
-
-func (t *DatabaseTxn) UpdateSubmission(ctx context.Context, ref SubmissionRef, v *Submission) error {
+func (d *Database) updateSubmission(ctx context.Context, ref SubmissionRef, v *Submission) {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE submission SET problem_judger=?, user=?, data=? WHERE id=?", v.ProblemJudger, v.User, convertAny(v.Data), v.Id)
-	return err
-}
-
-func (t *DatabaseTxn) InsertSubmission(ctx context.Context, v *Submission) error {
-	if v.Id == nil {
-		ref := NewSubmissionRef()
-		v.Id = &ref
+	_, err := d.ExecContext(ctx, "UPDATE submission SET problem_judger=?, user=?, data=? WHERE id=?", v.ProblemJudger, v.User, convertAny(v.Data), v.Id)
+	if err != nil {
+		log.WithError(err).Error("Failed to update Submission")
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO submission (id, problem_judger, user, data) VALUES (?, ?, ?, ?)", v.Id, v.ProblemJudger, v.User, convertAny(v.Data))
+}
+
+func (d *Database) insertSubmission(ctx context.Context, v *Submission) {
+	_, err := d.ExecContext(ctx, "INSERT INTO submission (id, problem_judger, user, data) VALUES (?, ?, ?, ?)", v.Id, v.ProblemJudger, v.User, convertAny(v.Data))
+	if err != nil {
+		log.WithError(err).Error("Failed to insert Submission")
+	}
+}
+
+func (d *Database) deleteSubmission(ctx context.Context, ref SubmissionRef) {
+	_, err := d.ExecContext(ctx, "DELETE FROM submission WHERE id=?", ref)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete Submission")
+	}
+}
+
+func (d *Database) GetSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
+	d.m.Lock()
+	entry, found := d.cache[ref]
+	if found {
+		d.m.Unlock()
+		return entry.curData.(*Submission), nil
+	}
+	// slow path
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found = d.cache[ref]
+	if found {
+		d.done(ref)
+		d.m.Unlock()
+		return entry.curData.(*Submission), nil
+	}
+	d.m.Unlock()
+	var err error
+	entry.prevData, err = d.getSubmission(ctx, ref)
+	d.m.Lock()
+	if err != nil {
+		d.done(ref)
+		d.m.Unlock()
+		return nil, err
+	}
+	entry.curData = entry.prevData
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	return entry.curData.(*Submission), nil
+}
+
+func (d *Database) UpdateSubmission(ctx context.Context, ref SubmissionRef, updater func(*Submission) *Submission) (*Submission, error) {
+	d.m.Lock()
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found := d.cache[ref]
+	if !found {
+		d.m.Unlock()
+		var err error
+		entry.curData, err = d.getSubmission(ctx, ref)
+		if err != nil {
+			d.m.Lock()
+			d.done(ref)
+			d.m.Unlock()
+			return nil, err
+		}
+		entry.prevData = entry.curData
+		d.m.Lock()
+		d.cache[ref] = entry
+	}
+	entry.curData = updater(entry.curData.(*Submission))
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	d.wg.Add(1)
+	time.AfterFunc(time.Millisecond*5, func() {
+		defer d.wg.Done()
+		d.FlushSubmission(d.ctx, ref)
+	})
+	return entry.curData.(*Submission), nil
+}
+
+func (d *Database) FlushSubmission(ctx context.Context, ref SubmissionRef) {
+	d.m.Lock()
+	if err := d.optWait(d.ctx, ref); err != nil {
+		return
+	}
+	entry, found := d.cache[ref]
+	if !found || entry.prevData == entry.curData {
+		d.done(ref)
+		d.m.Unlock()
+		return
+	}
+	prevData := entry.prevData.(*Submission)
+	curData := entry.curData.(*Submission)
+	d.m.Unlock()
+	if prevData == nil {
+		if curData != nil {
+			d.insertSubmission(d.ctx, curData)
+		}
+	} else {
+		if curData == nil {
+			d.deleteSubmission(d.ctx, ref)
+		} else {
+			d.updateSubmission(d.ctx, ref, curData)
+		}
+	}
+	entry.prevData = entry.curData
+	d.m.Lock()
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+}
+
+func (d *Database) InsertSubmission(ctx context.Context, v *Submission) error {
+	if v.Id == nil {
+		v.Id = CreateSubmissionRef(NewSubmissionRef())
+	}
+	_, err := d.UpdateSubmission(ctx, v.GetId(), func(p *Submission) *Submission {
+		if p != nil {
+			panic("database.InsertSubmission: Duplicate primary key")
+		}
+		return v
+	})
 	return err
 }
 
-func (t *DatabaseTxn) DeleteSubmission(ctx context.Context, ref SubmissionRef) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM submission WHERE id=?", ref)
+func (d *Database) DeleteSubmission(ctx context.Context, ref SubmissionRef) error {
+	_, err := d.UpdateSubmission(ctx, ref, func(p *Submission) *Submission {
+		return nil
+	})
 	return err
 }

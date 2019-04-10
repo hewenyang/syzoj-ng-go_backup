@@ -88,10 +88,10 @@ func Create{{.CapName}}Ref(ref {{.CapName}}Ref) *{{.CapName}}Ref {
 	return &x
 }
 
-func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
+func (d *Database) get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
 	v := new({{.CapName}})
 	{{.VarList}}
-	err := t.tx.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=?", ref).Scan(&v.Id, {{.ScanList}})
+	err := d.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=?", ref).Scan(&v.Id, {{.ScanList}})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -102,41 +102,147 @@ func (t *DatabaseTxn) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) 
 	return v, nil
 }
 
-func (t *DatabaseTxn) Get{{.CapName}}ForUpdate(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
-	v := new({{.CapName}})
-	{{.VarList}}
-	err := t.tx.QueryRowContext(ctx, "SELECT id, {{.SelList}} FROM {{.Name}} WHERE id=? FOR UPDATE", ref).Scan(&v.Id, {{.ScanList}})
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	{{.DecodeList}}
-	return v, nil
-}
-
-func (t *DatabaseTxn) Update{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref, v *{{.CapName}}) error {
+func (d *Database) update{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref, v *{{.CapName}}) {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := t.tx.ExecContext(ctx, "UPDATE {{.Name}} SET {{.UpdateList}} WHERE id=?", {{.ArgList}}, v.Id)
-	return err
-}
-
-func (t *DatabaseTxn) Insert{{.CapName}}(ctx context.Context, v *{{.CapName}}) error {
-	if v.Id == nil {
-		ref := New{{.CapName}}Ref()
-		v.Id = &ref
+	_, err := d.ExecContext(ctx, "UPDATE {{.Name}} SET {{.UpdateList}} WHERE id=?", {{.ArgList}}, v.Id)
+	if err != nil {
+		log.WithError(err).Error("Failed to update {{.CapName}}")
 	}
-	_, err := t.tx.ExecContext(ctx, "INSERT INTO {{.Name}} (id, {{.InsList}}) VALUES ({{.InsValue}})", v.Id, {{.ArgList}})
+}
+
+func (d *Database) insert{{.CapName}}(ctx context.Context, v *{{.CapName}}) {
+	_, err := d.ExecContext(ctx, "INSERT INTO {{.Name}} (id, {{.InsList}}) VALUES ({{.InsValue}})", v.Id, {{.ArgList}})
+	if err != nil {
+		log.WithError(err).Error("Failed to insert {{.CapName}}")
+	}
+}
+
+func (d *Database) delete{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) {
+	_, err := d.ExecContext(ctx, "DELETE FROM {{.Name}} WHERE id=?", ref)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete {{.CapName}}")
+	}
+}
+
+func (d *Database) Get{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) (*{{.CapName}}, error) {
+	d.m.Lock()
+	entry, found := d.cache[ref]
+	if found {
+		d.m.Unlock()
+		return entry.curData.(*{{.CapName}}), nil
+	}
+	// slow path
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found = d.cache[ref]
+	if found {
+		d.done(ref)
+		d.m.Unlock()
+		return entry.curData.(*{{.CapName}}), nil
+	}
+	d.m.Unlock()
+	var err error
+	entry.prevData, err = d.get{{.CapName}}(ctx, ref)
+	d.m.Lock()
+	if err != nil {
+		d.done(ref)
+		d.m.Unlock()
+		return nil, err
+	}
+	entry.curData = entry.prevData
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	return entry.curData.(*{{.CapName}}), nil
+}
+
+func (d *Database) Update{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref, updater func(*{{.CapName}}) *{{.CapName}}) (*{{.CapName}}, error) {
+	d.m.Lock()
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found := d.cache[ref]
+	if !found {
+		d.m.Unlock()
+		var err error
+		entry.curData, err = d.get{{.CapName}}(ctx, ref)
+		if err != nil {
+			d.m.Lock()
+			d.done(ref)
+			d.m.Unlock()
+			return nil, err
+		}
+		entry.prevData = entry.curData
+		d.m.Lock()
+		d.cache[ref] = entry
+	}
+	entry.curData = updater(entry.curData.(*{{.CapName}}))
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	d.wg.Add(1)
+	time.AfterFunc(time.Millisecond * 5, func() {
+		defer d.wg.Done()
+		d.Flush{{.CapName}}(d.ctx, ref)
+	})
+	return entry.curData.(*{{.CapName}}), nil
+}
+
+func (d *Database) Flush{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) {
+	d.m.Lock()
+	if err := d.optWait(d.ctx, ref); err != nil {
+		return
+	}
+	entry, found := d.cache[ref]
+	if !found || entry.prevData == entry.curData {
+		d.done(ref)
+		d.m.Unlock()
+		return
+	}
+	prevData := entry.prevData.(*{{.CapName}})
+	curData := entry.curData.(*{{.CapName}})
+	d.m.Unlock()
+	if prevData == nil {
+		if curData != nil {
+			d.insert{{.CapName}}(d.ctx, curData)
+		}
+	} else {
+		if curData == nil {
+			d.delete{{.CapName}}(d.ctx, ref)
+		} else {
+			d.update{{.CapName}}(d.ctx, ref, curData)
+		}
+	}
+	entry.prevData = entry.curData
+	d.m.Lock()
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+}
+
+func (d *Database) Insert{{.CapName}}(ctx context.Context, v *{{.CapName}}) error {
+	if v.Id == nil {
+		v.Id = Create{{.CapName}}Ref(New{{.CapName}}Ref())
+	}
+	_, err := d.Update{{.CapName}}(ctx, v.GetId(), func(p *{{.CapName}}) *{{.CapName}} {
+		if p != nil {
+			panic("database.Insert{{.CapName}}: Duplicate primary key")
+		}
+		return v
+	})
 	return err
 }
 
-func (t *DatabaseTxn) Delete{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) error {
-	_, err := t.tx.ExecContext(ctx, "DELETE FROM {{.Name}} WHERE id=?", ref)
+func (d *Database) Delete{{.CapName}}(ctx context.Context, ref {{.CapName}}Ref) error {
+	_, err := d.Update{{.CapName}}(ctx, ref, func(p *{{.CapName}}) *{{.CapName}} {
+		return nil
+	})
 	return err
 }
+
 {{end}}
 `))
 var tplModel = template.Must(template.New("dbmodel_model").Parse(`
@@ -152,6 +258,9 @@ var ErrInvalidType = errors.New("Can only scan []byte into protobuf message")
 
 {{range .Messages}}
 func (m *{{.}}) Value() (driver.Value, error) {
+	if m == nil {
+		return nil, nil
+	}
 	return proto.Marshal(m)
 }
 
@@ -309,7 +418,7 @@ func (v *visitor) VisitMessage(m pgs.Message) (pgs.Visitor, error) {
 					argList = append(argList, fmt.Sprintf("convertAny(v.%s)", f.Name().UpperCamelCase().String()))
 					goto checkWKTDone
 				case pgs.StructWKT:
-					varList = append(varList, fmt.Sprintf("var var%d sql.RawBytes", curVar))
+					varList = append(varList, fmt.Sprintf("var var%d []byte", curVar))
 					scanList = append(scanList, fmt.Sprintf("&var%d", curVar))
 					decodeList = append(decodeList, fmt.Sprintf(`if var%d != nil {
 	v.%s = &structpb.Struct{}

@@ -14,6 +14,7 @@ type Server struct {
 	db         *database.Database
 	ctx        context.Context
 	cancelFunc func()
+	oracle     *Oracle
 
 	apiServer *ApiServer
 }
@@ -30,6 +31,7 @@ func NewServer(db *database.Database, cfg *ServerConfig) *Server {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, serverKey{}, server)
 	server.ctx, server.cancelFunc = context.WithCancel(ctx)
+	server.oracle = NewOracle()
 	server.apiServer = server.newApiServer(&cfg.API)
 	return server
 }
@@ -40,6 +42,10 @@ func GetServer(ctx context.Context) *Server {
 
 func (s *Server) GetDB() *database.Database {
 	return s.db
+}
+
+func (s *Server) GetOracle() *Oracle {
+	return s.oracle
 }
 
 func (s *Server) Close() error {

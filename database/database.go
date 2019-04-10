@@ -5,8 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"reflect"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -16,12 +15,18 @@ import (
 )
 
 type Database struct {
-	db *sql.DB
+	db  *sql.DB
+	ctx context.Context // context for all database operations
+
+	m       sync.Mutex
+	waiters map[interface{}][]chan struct{}
+	cache   map[interface{}]cacheEntry
+	wg      sync.WaitGroup
 }
 
-type DatabaseTxn struct {
-	tx   *sql.Tx
-	done int32
+type cacheEntry struct {
+	curData  interface{}
+	prevData interface{}
 }
 
 var log = logrus.StandardLogger()
@@ -31,71 +36,89 @@ func Open(driverName, dataSourceName string) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Database{db: db}, nil
+	d := &Database{db: db}
+	d.ctx = context.Background()
+	d.waiters = make(map[interface{}][]chan struct{})
+	d.cache = make(map[interface{}]cacheEntry)
+	d.wg.Add(1)
+	return d, nil
 }
 
 func (d *Database) Close() error {
+	d.wg.Done()
+	d.wg.Wait()
 	return d.db.Close()
 }
 
-func (d *Database) OpenTxn(ctx context.Context) (*DatabaseTxn, error) {
-	tx, err := d.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelSerializable,
-		ReadOnly:  false,
-	})
-	if err != nil {
-		return nil, err
-	}
-	tx2 := &DatabaseTxn{tx: tx}
-	go func() {
-		<-ctx.Done()
-		if atomic.LoadInt32(&tx2.done) == 0 {
-			log.Warning("Detected a transaction that wasn't closed before context done")
+func (d *Database) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	return d.db.ExecContext(ctx, query, args...)
+}
+
+func (d *Database) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	return d.db.QueryContext(ctx, query, args...)
+}
+
+func (d *Database) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	return d.db.QueryRowContext(ctx, query, args...)
+}
+
+func (d *Database) getWaiter(key interface{}) chan struct{} {
+	c := make(chan struct{}, 1)
+	q := append(d.waiters[key], c)
+	d.waiters[key] = q
+	if len(q) == 1 {
+		select {
+		case c <- struct{}{}:
+		default:
 		}
-	}()
-	return tx2, nil
-}
-
-func (d *Database) OpenReadonlyTxn(ctx context.Context) (*DatabaseTxn, error) {
-	tx, err := d.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelSerializable,
-		ReadOnly:  true,
-	})
-	if err != nil {
-		return nil, err
 	}
-	tx2 := &DatabaseTxn{tx: tx}
-	go func() {
-		<-ctx.Done()
-		if atomic.LoadInt32(&tx2.done) == 0 {
-			log.Warning("Detected a transaction that wasn't closed before context done")
+	return c
+}
+
+func (d *Database) done(key interface{}) {
+	q := d.waiters[key]
+	if len(q) == 0 {
+		panic("done: empty waiter queue")
+	}
+	q = q[1:]
+	if len(q) == 0 {
+		delete(d.waiters, key)
+	} else {
+		select {
+		case q[0] <- struct{}{}:
+		default:
 		}
-	}()
-	return tx2, nil
+		d.waiters[key] = q
+	}
 }
 
-func (t *DatabaseTxn) Commit(context.Context) error {
-	atomic.StoreInt32(&t.done, 1)
-	return t.tx.Commit()
-}
-
-func (t *DatabaseTxn) Rollback() {
-	if atomic.CompareAndSwapInt32(&t.done, 0, 1) {
+func (d *Database) wait(ctx context.Context, key interface{}, waiter chan struct{}) error {
+	select {
+	case <-ctx.Done():
 		go func() {
-			err := t.tx.Rollback()
-			if err != nil {
-				log.WithError(err).Error("Failed to rollback transaction")
-			}
+			<-waiter
+			d.m.Lock()
+			d.done(key)
+			d.m.Unlock()
 		}()
+		return ctx.Err()
+	case <-waiter:
+		return nil
 	}
 }
 
-func (t *DatabaseTxn) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	return t.tx.QueryContext(ctx, query, args...)
-}
-
-func (t *DatabaseTxn) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	return t.tx.QueryRowContext(ctx, query, args...)
+func (d *Database) optWait(ctx context.Context, key interface{}) error {
+	w := d.getWaiter(key)
+	if len(d.waiters[key]) == 1 {
+		<-w
+		return nil
+	}
+	d.m.Unlock()
+	if err := d.wait(ctx, key, w); err != nil {
+		return err
+	}
+	d.m.Lock()
+	return nil
 }
 
 func newId() string {
@@ -104,33 +127,6 @@ func newId() string {
 		panic(err)
 	}
 	return base64.URLEncoding.EncodeToString(b[:])
-}
-
-func ScanAll(r *sql.Rows, v interface{}) error {
-	val := reflect.ValueOf(v)
-	if val.Type().Kind() != reflect.Ptr {
-		panic("database: ScanAll: must be a pointer to a slice")
-	}
-	val = val.Elem()
-	if val.Type().Kind() != reflect.Slice {
-		panic("database: ScanAll: must be a pointer to a slice")
-	}
-	slice := reflect.Zero(val.Type())
-	elType := val.Type().Elem()
-	var i int
-	for r.Next() {
-		slice = reflect.Append(slice, reflect.Zero(elType))
-		err := r.Scan(slice.Index(i).Addr().Interface())
-		if err != nil {
-			return err
-		}
-		i++
-	}
-	if err := r.Err(); err != nil {
-		return err
-	}
-	val.Set(slice)
-	return nil
 }
 
 type TimestampType = timestamp.Timestamp

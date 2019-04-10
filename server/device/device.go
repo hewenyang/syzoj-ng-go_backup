@@ -27,8 +27,9 @@ func newToken() string {
 
 // Gets the current device from the request.
 // May return ErrDeviceNotFound in case the device is not found.
-func GetDevice(ctx context.Context, txn *database.DatabaseTxn) (*database.Device, error) {
+func GetDevice(ctx context.Context) (*database.Device, error) {
 	c := server.GetApiContext(ctx)
+	db := server.GetServer(ctx).GetDB()
 	k, err := c.GetCookie("SYZOJDEVICE")
 	if err == http.ErrNoCookie {
 		return nil, ErrDeviceNotFound
@@ -37,7 +38,7 @@ func GetDevice(ctx context.Context, txn *database.DatabaseTxn) (*database.Device
 	} else if len(k.Value) != 48 {
 		return nil, ErrDeviceNotFound
 	}
-	dev, err := txn.GetDevice(ctx, database.DeviceRef(k.Value[:16]))
+	dev, err := db.GetDevice(ctx, database.DeviceRef(k.Value[:16]))
 	if err != nil {
 		return nil, err
 	} else if dev == nil || dev.Info == nil {
@@ -53,14 +54,15 @@ func GetDevice(ctx context.Context, txn *database.DatabaseTxn) (*database.Device
 
 // Gets the current device from the request.
 // Creates a new one in case it doesn't exist.
-func NewDevice(ctx context.Context, txn *database.DatabaseTxn) (*database.Device, error) {
-	d, err := GetDevice(ctx, txn)
+func NewDevice(ctx context.Context) (*database.Device, error) {
+	d, err := GetDevice(ctx)
 	if err == nil {
 		return d, nil
 	} else if err != ErrDeviceNotFound {
 		return nil, err
 	}
 	c := server.GetApiContext(ctx)
+	db := server.GetServer(ctx).GetDB()
 	token := newToken()
 	d = &database.Device{
 		Info: &model.DeviceInfo{
@@ -69,7 +71,7 @@ func NewDevice(ctx context.Context, txn *database.DatabaseTxn) (*database.Device
 			RemoteAddr: proto.String(c.GetRemoteAddr()),
 		},
 	}
-	if err = txn.InsertDevice(ctx, d); err != nil {
+	if err = db.InsertDevice(ctx, d); err != nil {
 		return nil, err
 	}
 	k := &http.Cookie{

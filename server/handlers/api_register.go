@@ -16,39 +16,70 @@ func Get_Register(ctx context.Context) error {
 	return nil
 }
 
-func Handle_Register(ctx context.Context, req *model.RegisterPage_RegisterRequest) error {
-	var err error
+func Handle_Register(ctx context.Context) error {
 	s := server.GetServer(ctx)
 	c := server.GetApiContext(ctx)
-	txn, err := s.GetDB().OpenTxn(ctx)
-	if err != nil {
-		log.WithError(err).Error("Failed to open transaction")
-		return server.ErrBusy
+	req := &model.RegisterPage_RegisterRequest{}
+	if err := c.ReadBody(req); err != nil {
+		return err
 	}
-	defer txn.Rollback()
-	user := new(database.User)
-	if req.UserName == nil || !model.CheckUserName(req.GetUserName()) {
+	if req.UserName == nil || !model.CheckUserName(req.GetUserName()) || req.Password == nil {
 		return server.ErrBadRequest
 	}
-	user.UserName = req.UserName
-	user.Auth = new(model.UserAuth)
-	if req.Password == nil {
-		return server.ErrBadRequest
+
+	// Lock username
+	userName := req.GetUserName()
+	o := s.GetOracle()
+	o.Lock()
+	for {
+		_, found := o.Map[server.UserNameKey(userName)]
+		if !found {
+			break
+		}
+		if err := o.Wait(ctx); err != nil {
+			log.WithError(err).Error("Failed to wait for oracle")
+			return err
+		}
 	}
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.GetPassword()), 0)
-	if err != nil {
-		log.WithError(err).Error("Failed to generate passowrd")
-		return server.ErrBusy
-	}
-	user.Auth.PasswordHash = passwordHash
-	if err = txn.InsertUser(ctx, user); err != nil {
-		log.WithError(err).Error("Handle_Register query failed")
-		return server.ErrBusy
-	}
-	if err = txn.Commit(ctx); err != nil {
-		log.WithError(err).Error("Handle_Register query failed")
-		return server.ErrBusy
-	}
-	c.Redirect("/login")
-	return nil
+	o.Map[server.UserNameKey(userName)] = nil
+	o.Unlock()
+
+	err := func() error {
+		// Check for duplicate username
+		rows, err := s.GetDB().QueryContext(ctx, "SELECT id FROM user WHERE user_name = ? LIMIT 1", userName)
+		if err != nil {
+			log.WithError(err).Error("Failed to lookup user name")
+			return server.ErrBusy
+		}
+		var found bool
+		for rows.Next() {
+			found = true
+		}
+		if found {
+			return server.ErrDuplicateUserName
+		}
+		// Insert user
+		user := &database.User{}
+		user.UserName = req.UserName
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.GetPassword()), 0)
+		if err != nil {
+			log.WithError(err).Error("Failed to generate passowrd")
+			return server.ErrBusy
+		}
+		user.Auth = &model.UserAuth{}
+		user.Auth.PasswordHash = passwordHash
+		if err := s.GetDB().InsertUser(ctx, user); err != nil {
+			log.WithError(err).Error("Failed to insert user")
+			return server.ErrBusy
+		}
+		c.Redirect("/login")
+		return nil
+	}()
+
+	// Unlock username
+	o.Lock()
+	delete(o.Map, server.UserNameKey(userName))
+	o.Broadcast()
+	o.Unlock()
+	return err
 }
