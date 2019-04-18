@@ -11,7 +11,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:141280184bb730010cc915fa7bb9b1e4ed7f8a834c5217db7e001ff3cae4c7f3"
+  digest = "1:bd7697bc64e2a13ddc9be471e06ad24373c5270c781df245aed2e89aa95fefd9"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -23,7 +23,6 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
-    "ptypes/empty",
     "ptypes/struct",
     "ptypes/timestamp",
   ]
@@ -83,14 +82,6 @@
   pruneopts = "UT"
   revision = "f4711e4db9e9a1d3887343acb72b2bbfc2f686f5"
   version = "v1.2.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:9205f1f2c3422d03dcaf43a02ac0dee602bd897df463ba993be5d5ff0de15536"
-  name = "github.com/syzoj/protoc-gen-gotype"
-  packages = ["gotype"]
-  pruneopts = "UT"
-  revision = "82610c037be18fd1d5ea5ecc67d5903458164ecc"
 
 [[projects]]
   branch = "master"
@@ -222,13 +213,13 @@
     "github.com/golang/protobuf/protoc-gen-go/descriptor",
     "github.com/golang/protobuf/ptypes",
     "github.com/golang/protobuf/ptypes/any",
-    "github.com/golang/protobuf/ptypes/empty",
+    "github.com/golang/protobuf/ptypes/struct",
+    "github.com/golang/protobuf/ptypes/timestamp",
     "github.com/gorilla/mux",
     "github.com/gorilla/websocket",
     "github.com/lyft/protoc-gen-star",
     "github.com/lyft/protoc-gen-star/lang/go",
     "github.com/sirupsen/logrus",
-    "github.com/syzoj/protoc-gen-gotype/gotype",
     "golang.org/x/crypto/bcrypt",
     "google.golang.org/grpc",
     "google.golang.org/grpc/reflection",

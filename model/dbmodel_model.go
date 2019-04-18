@@ -26,6 +26,23 @@ func (m *DeviceInfo) Scan(v interface{}) error {
 	return ErrInvalidType
 }
 
+func (m *Problem) Value() (driver.Value, error) {
+	if m == nil {
+		return nil, nil
+	}
+	return proto.Marshal(m)
+}
+
+func (m *Problem) Scan(v interface{}) error {
+	if v == nil {
+		return nil
+	}
+	if b, ok := v.([]byte); ok {
+		return proto.Unmarshal(b, m)
+	}
+	return ErrInvalidType
+}
+
 func (m *UserAuth) Value() (driver.Value, error) {
 	if m == nil {
 		return nil, nil

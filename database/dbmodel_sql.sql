@@ -16,6 +16,7 @@ CREATE TABLE problem (
   id VARCHAR(16) PRIMARY KEY,
   user VARCHAR(16) REFERENCES user(id),
   create_time DATETIME,
+  problem BLOB,
   title VARCHAR(255),
 INDEX create_time (create_time)
 );
@@ -31,6 +32,11 @@ CREATE TABLE submission (
   problem_judger VARCHAR(255),
   user VARCHAR(16) REFERENCES user(id),
   data BLOB
+);
+
+CREATE TABLE judger (
+  id VARCHAR(16) PRIMARY KEY,
+  token VARCHAR(255)
 );
 
 

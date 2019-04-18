@@ -2,8 +2,6 @@ syntax = "proto2";
 
 package syzoj.model;
 
-import "google/protobuf/any.proto";
-
 option go_package = "github.com/syzoj/syzoj-ng-go/model";
 
 // UserAuth defines all the information necessary to authenticate a user.
@@ -23,7 +21,13 @@ message Problem {
 	optional string title = 1;
 	optional ProblemStatement statement = 2;
 	repeated ProblemSource source = 3;
-	optional google.protobuf.Any judge = 4;
+	optional ProblemJudge judge = 4;
+}
+
+message ProblemJudge {
+	oneof judge {
+		TraditionalJudgeData traditional = 1;
+	}
 }
 
 // ProblemSource defines the content of a problem's source.
@@ -47,7 +51,6 @@ message MarkdownLatexDocument {
 message TraditionalJudgeData {
 	optional int64 time_limit = 16; // in nanoseconds
 	optional int64 memory_limit = 17; // in bytes
-	optional string testfile_folder = 18;
 }
 
 message TraditionalJudgeCode {

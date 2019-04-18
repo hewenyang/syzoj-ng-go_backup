@@ -406,7 +406,7 @@ func CreateProblemRef(ref ProblemRef) *ProblemRef {
 func (d *Database) getProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
 	v := new(Problem)
 	var var2 *time.Time
-	err := d.QueryRowContext(ctx, "SELECT id, user, create_time, title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.User, &var2, &v.Title)
+	err := d.QueryRowContext(ctx, "SELECT id, user, create_time, problem, title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.User, &var2, &v.Problem, &v.Title)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -425,14 +425,14 @@ func (d *Database) updateProblem(ctx context.Context, ref ProblemRef, v *Problem
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := d.ExecContext(ctx, "UPDATE problem SET user=?, create_time=?, title=? WHERE id=?", v.User, convertTimestamp(v.CreateTime), v.Title, v.Id)
+	_, err := d.ExecContext(ctx, "UPDATE problem SET user=?, create_time=?, problem=?, title=? WHERE id=?", v.User, convertTimestamp(v.CreateTime), v.Problem, v.Title, v.Id)
 	if err != nil {
 		log.WithError(err).Error("Failed to update Problem")
 	}
 }
 
 func (d *Database) insertProblem(ctx context.Context, v *Problem) {
-	_, err := d.ExecContext(ctx, "INSERT INTO problem (id, user, create_time, title) VALUES (?, ?, ?, ?)", v.Id, v.User, convertTimestamp(v.CreateTime), v.Title)
+	_, err := d.ExecContext(ctx, "INSERT INTO problem (id, user, create_time, problem, title) VALUES (?, ?, ?, ?, ?)", v.Id, v.User, convertTimestamp(v.CreateTime), v.Problem, v.Title)
 	if err != nil {
 		log.WithError(err).Error("Failed to insert Problem")
 	}
@@ -896,6 +896,172 @@ func (d *Database) InsertSubmission(ctx context.Context, v *Submission) error {
 
 func (d *Database) DeleteSubmission(ctx context.Context, ref SubmissionRef) error {
 	_, err := d.UpdateSubmission(ctx, ref, func(p *Submission) *Submission {
+		return nil
+	})
+	return err
+}
+
+type JudgerRef string
+
+func NewJudgerRef() JudgerRef {
+	return JudgerRef(newId())
+}
+
+func CreateJudgerRef(ref JudgerRef) *JudgerRef {
+	x := ref
+	return &x
+}
+
+func (d *Database) getJudger(ctx context.Context, ref JudgerRef) (*Judger, error) {
+	v := new(Judger)
+
+	err := d.QueryRowContext(ctx, "SELECT id, token FROM judger WHERE id=?", ref).Scan(&v.Id, &v.Token)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return v, nil
+}
+
+func (d *Database) updateJudger(ctx context.Context, ref JudgerRef, v *Judger) {
+	if v.Id == nil || v.GetId() != ref {
+		panic("ref and v does not match")
+	}
+	_, err := d.ExecContext(ctx, "UPDATE judger SET token=? WHERE id=?", v.Token, v.Id)
+	if err != nil {
+		log.WithError(err).Error("Failed to update Judger")
+	}
+}
+
+func (d *Database) insertJudger(ctx context.Context, v *Judger) {
+	_, err := d.ExecContext(ctx, "INSERT INTO judger (id, token) VALUES (?, ?)", v.Id, v.Token)
+	if err != nil {
+		log.WithError(err).Error("Failed to insert Judger")
+	}
+}
+
+func (d *Database) deleteJudger(ctx context.Context, ref JudgerRef) {
+	_, err := d.ExecContext(ctx, "DELETE FROM judger WHERE id=?", ref)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete Judger")
+	}
+}
+
+func (d *Database) GetJudger(ctx context.Context, ref JudgerRef) (*Judger, error) {
+	d.m.Lock()
+	entry, found := d.cache[ref]
+	if found {
+		d.m.Unlock()
+		return entry.curData.(*Judger), nil
+	}
+	// slow path
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found = d.cache[ref]
+	if found {
+		d.done(ref)
+		d.m.Unlock()
+		return entry.curData.(*Judger), nil
+	}
+	d.m.Unlock()
+	var err error
+	entry.prevData, err = d.getJudger(ctx, ref)
+	d.m.Lock()
+	if err != nil {
+		d.done(ref)
+		d.m.Unlock()
+		return nil, err
+	}
+	entry.curData = entry.prevData
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	return entry.curData.(*Judger), nil
+}
+
+func (d *Database) UpdateJudger(ctx context.Context, ref JudgerRef, updater func(*Judger) *Judger) (*Judger, error) {
+	d.m.Lock()
+	if err := d.optWait(ctx, ref); err != nil {
+		return nil, err
+	}
+	entry, found := d.cache[ref]
+	if !found {
+		d.m.Unlock()
+		var err error
+		entry.curData, err = d.getJudger(ctx, ref)
+		if err != nil {
+			d.m.Lock()
+			d.done(ref)
+			d.m.Unlock()
+			return nil, err
+		}
+		entry.prevData = entry.curData
+		d.m.Lock()
+		d.cache[ref] = entry
+	}
+	entry.curData = updater(entry.curData.(*Judger))
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+	d.wg.Add(1)
+	time.AfterFunc(time.Millisecond*5, func() {
+		defer d.wg.Done()
+		d.FlushJudger(d.ctx, ref)
+	})
+	return entry.curData.(*Judger), nil
+}
+
+func (d *Database) FlushJudger(ctx context.Context, ref JudgerRef) {
+	d.m.Lock()
+	if err := d.optWait(d.ctx, ref); err != nil {
+		return
+	}
+	entry, found := d.cache[ref]
+	if !found || entry.prevData == entry.curData {
+		d.done(ref)
+		d.m.Unlock()
+		return
+	}
+	prevData := entry.prevData.(*Judger)
+	curData := entry.curData.(*Judger)
+	d.m.Unlock()
+	if prevData == nil {
+		if curData != nil {
+			d.insertJudger(d.ctx, curData)
+		}
+	} else {
+		if curData == nil {
+			d.deleteJudger(d.ctx, ref)
+		} else {
+			d.updateJudger(d.ctx, ref, curData)
+		}
+	}
+	entry.prevData = entry.curData
+	d.m.Lock()
+	d.cache[ref] = entry
+	d.done(ref)
+	d.m.Unlock()
+}
+
+func (d *Database) InsertJudger(ctx context.Context, v *Judger) error {
+	if v.Id == nil {
+		v.Id = CreateJudgerRef(NewJudgerRef())
+	}
+	_, err := d.UpdateJudger(ctx, v.GetId(), func(p *Judger) *Judger {
+		if p != nil {
+			panic("database.InsertJudger: Duplicate primary key")
+		}
+		return v
+	})
+	return err
+}
+
+func (d *Database) DeleteJudger(ctx context.Context, ref JudgerRef) error {
+	_, err := d.UpdateJudger(ctx, ref, func(p *Judger) *Judger {
 		return nil
 	})
 	return err

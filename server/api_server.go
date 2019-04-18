@@ -44,20 +44,20 @@ type ApiConfig struct {
 }
 
 func (s *Server) newApiServer(cfg *ApiConfig) *ApiServer {
-	ApiServer := new(ApiServer)
-	ApiServer.s = s
+	server := &ApiServer{}
+	server.s = s
 	if cfg.Debug {
-		ApiServer.debug = true
+		server.debug = true
 	}
 	router := mux.NewRouter()
 	router.PathPrefix("/api").Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", "OPTIONS, GET, HEAD, POST")
 		w.WriteHeader(200)
 	})
-	ApiServer.router = router
-	ApiServer.ctx, ApiServer.cancelFunc = context.WithCancel(s.ctx)
-	ApiServer.wg.Add(1)
-	return ApiServer
+	server.router = router
+	server.ctx, server.cancelFunc = context.WithCancel(s.WithServer(context.Background()))
+	server.wg.Add(1)
+	return server
 }
 
 func (s *Server) ApiServer() *ApiServer {
@@ -98,6 +98,25 @@ func (s *ApiServer) WrapHandler(h func(context.Context) error, checkToken bool) 
 				return
 			}
 		}
+		err := h(ctx)
+		if err != nil {
+			c.SendError(err)
+		}
+	})
+}
+
+func (s *ApiServer) WrapDebugHandler(h func(context.Context) error) http.Handler {
+	if !s.debug {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		})
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c := &ApiContext{r: r, w: w, s: s}
+		ctx := s.ctx
+		ctx, cancelFunc := context.WithCancel(ctx)
+		defer cancelFunc()
+		ctx = context.WithValue(ctx, apiContextKey{}, c)
+		defer c.Send()
 		err := h(ctx)
 		if err != nil {
 			c.SendError(err)

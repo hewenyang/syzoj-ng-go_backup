@@ -3,7 +3,6 @@ syntax = "proto2";
 package syzoj.api;
 
 import "google/protobuf/any.proto";
-import "google/protobuf/struct.proto";
 import "syzoj.model.proto";
 
 option go_package = "github.com/syzoj/syzoj-ng-go/model";
@@ -58,23 +57,10 @@ message ProblemCreatePage {
 
 message ProblemViewPage {
     optional string problem_title = 16;
-    repeated ProblemStatementEntry problem_statement = 17;
-    repeated ProblemSourceEntry problem_source = 18;
-    repeated ProblemJudgeEntry problem_judge = 19;
+    optional syzoj.model.ProblemStatement problem_statement = 17;
+    repeated syzoj.model.ProblemSource problem_source = 18;
+    optional syzoj.model.ProblemJudge problem_judge = 19;
     repeated ProblemEntry problem_entry = 20;
-    message ProblemStatementEntry {
-        optional string id = 1;
-        optional syzoj.model.ProblemStatement statement = 2;
-    }
-    message ProblemSourceEntry {
-        optional string id = 1;
-        optional syzoj.model.ProblemSource source = 2;
-    }
-    message ProblemJudgeEntry {
-        optional string id = 1;
-        optional string type = 2;
-        optional google.protobuf.Struct info = 3;
-    }
     message ProblemEntry {
         optional string id = 1;
     }
@@ -87,9 +73,12 @@ message ProblemViewPage {
     message SetPublicRequest {
     }
     message AddJudgeTraditionalRequest {
+    	optional syzoj.model.TraditionalJudgeData data = 1;
     }
     message SubmitJudgeTraditionalRequest {
-    	optional syzoj.model.TraditionalJudgeCode data = 1;
+    	optional syzoj.model.TraditionalJudgeCode code = 1;
+    }
+    message SubmitJudgeTraditionalResponse {
     }
 }
 
@@ -100,4 +89,16 @@ message ProblemsPage {
         optional string problem_id = 2;
         optional string problem_title = 3;
     }
+    message AddProblemRequest {
+    	optional string problem_id = 1;
+    }
+}
+
+// Debug API
+message DebugAddJudgerRequest {
+}
+
+message DebugAddJudgerResponse {
+    optional string judger_id = 1;
+    optional string judger_token = 2;
 }

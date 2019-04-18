@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/syzoj/syzoj-ng-go/database"
+	"github.com/syzoj/syzoj-ng-go/model/judge"
 	"github.com/syzoj/syzoj-ng-go/server"
 	"github.com/syzoj/syzoj-ng-go/server/handlers"
 )
@@ -81,14 +82,14 @@ func cmdRun() {
 	log.Info("Start SYZOJ")
 	var s *server.Server
 	s = server.NewServer(db, &config.Server)
-	handlers.RegisterHandlers(s.ApiServer())
 	defer func() {
 		log.Info("Stopping SYZOJ")
 		s.Close()
 	}()
+	judge.RegisterJudgeServiceServer(grpcServer, s.GetJudge().GetService())
 	reflection.Register(grpcServer)
 	go func() {
-		log.Info("Setting up gRPC service")
+		log.WithField("rpcAddr", config.RpcAddr).Info("Setting up gRPC service")
 		lis, err := net.Listen("tcp", config.RpcAddr)
 		if err != nil {
 			log.Fatal("Failed to listen: ", err)
@@ -99,6 +100,7 @@ func cmdRun() {
 	}()
 
 	log.Info("Setting up HTTP server")
+	handlers.RegisterHandlers(s.ApiServer())
 	router := mux.NewRouter()
 	router.PathPrefix("/api").Handler(s.ApiServer())
 	router.Handle("/", http.FileServer(http.Dir("static")))

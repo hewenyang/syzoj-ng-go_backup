@@ -11,12 +11,11 @@ import (
 var log = logrus.StandardLogger()
 
 type Server struct {
-	db         *database.Database
-	ctx        context.Context
-	cancelFunc func()
-	oracle     *Oracle
+	db     *database.Database
+	oracle *Oracle
 
-	apiServer *ApiServer
+	apiServer   *ApiServer
+	judgeServer *JudgeServer
 }
 
 type serverKey struct{}
@@ -28,12 +27,14 @@ type ServerConfig struct {
 func NewServer(db *database.Database, cfg *ServerConfig) *Server {
 	server := new(Server)
 	server.db = db
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, serverKey{}, server)
-	server.ctx, server.cancelFunc = context.WithCancel(ctx)
 	server.oracle = NewOracle()
 	server.apiServer = server.newApiServer(&cfg.API)
+	server.judgeServer = server.newJudgeServer()
 	return server
+}
+
+func (s *Server) WithServer(ctx context.Context) context.Context {
+	return context.WithValue(ctx, serverKey{}, s)
 }
 
 func GetServer(ctx context.Context) *Server {
@@ -48,7 +49,12 @@ func (s *Server) GetOracle() *Oracle {
 	return s.oracle
 }
 
+func (s *Server) GetJudge() *JudgeServer {
+	return s.judgeServer
+}
+
 func (s *Server) Close() error {
 	s.apiServer.close()
+	s.judgeServer.close()
 	return nil
 }
