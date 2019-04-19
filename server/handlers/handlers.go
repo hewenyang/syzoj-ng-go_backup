@@ -21,7 +21,7 @@ func RegisterHandlers(s *server.ApiServer) {
 	router.Path("/api/page/problem/create/create").Methods("POST").Handler(s.WrapHandler(Handle_Problem_Create, true))
 	router.Path("/api/page/problem/{problem_id:[0-9A-Za-z-_]{16}}").Methods("GET").Handler(s.WrapHandler(Get_Problem, true))
 	router.Path("/api/page/problem/{problem_id:[0-9A-Za-z-_]{16}}/add-judge-traditional").Methods("POST").Handler(s.WrapHandler(Handle_Problem_Add_Judge_Traditional, true))
-	router.Path("/api/page/problem/{problem_id:[0-9A-Za-z-_]{16}}/judge/traditional/submit").Methods("POST").Handler(s.WrapHandler(Handle_Problem_Submit_Judge_Traditional, true))
+	router.Path("/api/page/problem/{problem_id:[0-9A-Za-z-_]{16}}/judge/traditional/submit").Methods("GET").Handler(s.WrapWsHandler(Handle_Problem_Submit_Judge_Traditional))
 	router.Path("/api/page/debug/add-judger").Methods("POST").Handler(s.WrapDebugHandler(Handle_Debug_Add_Judger))
 	router.PathPrefix("/api").Methods("GET").Handler(s.WrapHandler(Handle_Not_Found, true))
 }

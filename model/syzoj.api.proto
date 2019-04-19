@@ -58,12 +58,7 @@ message ProblemCreatePage {
 message ProblemViewPage {
     optional string problem_title = 16;
     optional syzoj.model.ProblemStatement problem_statement = 17;
-    repeated syzoj.model.ProblemSource problem_source = 18;
     optional syzoj.model.ProblemJudge problem_judge = 19;
-    repeated ProblemEntry problem_entry = 20;
-    message ProblemEntry {
-        optional string id = 1;
-    }
     message AddStatementRequest {
         optional syzoj.model.ProblemStatement statement = 1;
     }

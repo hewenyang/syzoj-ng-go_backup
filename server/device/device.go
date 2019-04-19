@@ -53,6 +53,33 @@ func GetDevice(ctx context.Context) (*database.Device, error) {
 }
 
 // Gets the current device from the request.
+// May return ErrDeviceNotFound in case the device is not found.
+func GetDeviceWs(ctx context.Context) (*database.Device, error) {
+	c := server.GetWsApiContext(ctx)
+	db := server.GetServer(ctx).GetDB()
+	k, err := c.GetCookie("SYZOJDEVICE")
+	if err == http.ErrNoCookie {
+		return nil, ErrDeviceNotFound
+	} else if err != nil {
+		return nil, err
+	} else if len(k.Value) != 48 {
+		return nil, ErrDeviceNotFound
+	}
+	dev, err := db.GetDevice(ctx, database.DeviceRef(k.Value[:16]))
+	if err != nil {
+		return nil, err
+	} else if dev == nil || dev.Info == nil {
+		return nil, ErrDeviceNotFound
+	}
+	info := dev.Info
+	token := k.Value[16:48]
+	if info.Token == nil || *info.Token != token { // || info.UserAgent == nil || *info.UserAgent != c.GetHeader("User-Agent") {
+		return nil, ErrDeviceNotFound
+	}
+	return dev, nil
+}
+
+// Gets the current device from the request.
 // Creates a new one in case it doesn't exist.
 func NewDevice(ctx context.Context) (*database.Device, error) {
 	d, err := GetDevice(ctx)

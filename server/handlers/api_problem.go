@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/golang/protobuf/proto"
 
@@ -187,13 +186,13 @@ func Handle_Problem_Add_Judge_Traditional(ctx context.Context) error {
 }
 
 func Handle_Problem_Submit_Judge_Traditional(ctx context.Context) error {
-	c := server.GetApiContext(ctx)
+	c := server.GetWsApiContext(ctx)
 	s := server.GetServer(ctx)
 	req := &model.ProblemViewPage_SubmitJudgeTraditionalRequest{}
 	if err := c.ReadBody(req); err != nil {
 		return server.ErrBadRequest
 	}
-	dev, err := device.GetDevice(ctx)
+	dev, err := device.GetDeviceWs(ctx)
 	if err != nil && err != device.ErrDeviceNotFound {
 		log.WithError(err).Error("Failed to find device")
 		return server.ErrBusy
@@ -228,7 +227,7 @@ func Handle_Problem_Submit_Judge_Traditional(ctx context.Context) error {
 		return server.ErrBusy
 	}
 	result, _ := j.GetResult()
-	c.Mutate(fmt.Sprintf("/page/problem/%s/judge/traditional", string(problemId)), "setResult", result)
+	c.SendValue(result)
 	return nil
 }
 
