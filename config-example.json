@@ -1,7 +1,7 @@
 {
     "mysql": "root@/syzoj",
     "addr": ":5900",
-    "judge_addr": "0.0.0.0:3073",
+    "rpc_addr": "0.0.0.0:3073",
     "server": {
         "api": {
             "debug": false

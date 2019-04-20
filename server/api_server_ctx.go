@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/types"
 	"github.com/gorilla/mux"
 
 	"github.com/syzoj/syzoj-ng-go/model"
@@ -96,7 +96,7 @@ func (c *ApiContext) ReadBody(val proto.Message) error {
 }
 
 func (c *ApiContext) Mutate(path string, method string, val proto.Message) {
-	m, err := ptypes.MarshalAny(val)
+	m, err := types.MarshalAny(val)
 	if err != nil {
 		log.WithError(err).Error("Failed to marshal message into any")
 		return

@@ -49,8 +49,20 @@ message RegisterPage {
     }
 }
 
-message ProblemCreatePage {
+message ProblemsetCreatePage {
     message CreateRequest {
+        optional string problemset_title = 16;
+    }
+}
+
+message ProblemsetPage {
+    repeated ProblemEntry problem_entry = 16;
+    message ProblemEntry {
+        optional string id = 1;
+        optional string problem_id = 2;
+        optional string problem_title = 3;
+    }
+    message CreateProblemRequest {
         optional string problem_title = 16;
     }
 }
@@ -59,13 +71,10 @@ message ProblemViewPage {
     optional string problem_title = 16;
     optional syzoj.model.ProblemStatement problem_statement = 17;
     optional syzoj.model.ProblemJudge problem_judge = 19;
-    message AddStatementRequest {
+    message EditStatementRequest {
         optional syzoj.model.ProblemStatement statement = 1;
     }
-    message AddSourceRequest {
-    	optional syzoj.model.ProblemSource source = 1;
-    }
-    message SetPublicRequest {
+    message RemoveJudgeRequest {
     }
     message AddJudgeTraditionalRequest {
     	optional syzoj.model.TraditionalJudgeData data = 1;
@@ -77,19 +86,10 @@ message ProblemViewPage {
     }
 }
 
-message ProblemsPage {
-    repeated ProblemEntry problem_entry = 16;
-    message ProblemEntry {
-        optional string id = 1;
-        optional string problem_id = 2;
-        optional string problem_title = 3;
-    }
-    message AddProblemRequest {
-    	optional string problem_id = 1;
-    }
+// Debug API
+message DebugPage {
 }
 
-// Debug API
 message DebugAddJudgerRequest {
 }
 

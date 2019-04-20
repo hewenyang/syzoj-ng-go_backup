@@ -405,16 +405,16 @@ func CreateProblemRef(ref ProblemRef) *ProblemRef {
 
 func (d *Database) getProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
 	v := new(Problem)
-	var var2 *time.Time
-	err := d.QueryRowContext(ctx, "SELECT id, user, create_time, problem, title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.User, &var2, &v.Problem, &v.Title)
+	var var3 *time.Time
+	err := d.QueryRowContext(ctx, "SELECT id, problemset, user, create_time, problem, title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Problemset, &v.User, &var3, &v.Problem, &v.Title)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-	if var2 != nil {
-		v.CreateTime, _ = ptypes.TimestampProto(*var2)
+	if var3 != nil {
+		v.CreateTime, _ = ptypes.TimestampProto(*var3)
 	} else {
 		v.CreateTime = nil
 	}
@@ -425,14 +425,14 @@ func (d *Database) updateProblem(ctx context.Context, ref ProblemRef, v *Problem
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := d.ExecContext(ctx, "UPDATE problem SET user=?, create_time=?, problem=?, title=? WHERE id=?", v.User, convertTimestamp(v.CreateTime), v.Problem, v.Title, v.Id)
+	_, err := d.ExecContext(ctx, "UPDATE problem SET problemset=?, user=?, create_time=?, problem=?, title=? WHERE id=?", v.Problemset, v.User, convertTimestamp(v.CreateTime), v.Problem, v.Title, v.Id)
 	if err != nil {
 		log.WithError(err).Error("Failed to update Problem")
 	}
 }
 
 func (d *Database) insertProblem(ctx context.Context, v *Problem) {
-	_, err := d.ExecContext(ctx, "INSERT INTO problem (id, user, create_time, problem, title) VALUES (?, ?, ?, ?, ?)", v.Id, v.User, convertTimestamp(v.CreateTime), v.Problem, v.Title)
+	_, err := d.ExecContext(ctx, "INSERT INTO problem (id, problemset, user, create_time, problem, title) VALUES (?, ?, ?, ?, ?, ?)", v.Id, v.Problemset, v.User, convertTimestamp(v.CreateTime), v.Problem, v.Title)
 	if err != nil {
 		log.WithError(err).Error("Failed to insert Problem")
 	}
@@ -562,21 +562,21 @@ func (d *Database) DeleteProblem(ctx context.Context, ref ProblemRef) error {
 	return err
 }
 
-type ProblemEntryRef string
+type ProblemsetRef string
 
-func NewProblemEntryRef() ProblemEntryRef {
-	return ProblemEntryRef(newId())
+func NewProblemsetRef() ProblemsetRef {
+	return ProblemsetRef(newId())
 }
 
-func CreateProblemEntryRef(ref ProblemEntryRef) *ProblemEntryRef {
+func CreateProblemsetRef(ref ProblemsetRef) *ProblemsetRef {
 	x := ref
 	return &x
 }
 
-func (d *Database) getProblemEntry(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
-	v := new(ProblemEntry)
+func (d *Database) getProblemset(ctx context.Context, ref ProblemsetRef) (*Problemset, error) {
+	v := new(Problemset)
 
-	err := d.QueryRowContext(ctx, "SELECT id, title, problem FROM problem_entry WHERE id=?", ref).Scan(&v.Id, &v.Title, &v.Problem)
+	err := d.QueryRowContext(ctx, "SELECT id, title, user FROM problemset WHERE id=?", ref).Scan(&v.Id, &v.Title, &v.User)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -587,36 +587,36 @@ func (d *Database) getProblemEntry(ctx context.Context, ref ProblemEntryRef) (*P
 	return v, nil
 }
 
-func (d *Database) updateProblemEntry(ctx context.Context, ref ProblemEntryRef, v *ProblemEntry) {
+func (d *Database) updateProblemset(ctx context.Context, ref ProblemsetRef, v *Problemset) {
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := d.ExecContext(ctx, "UPDATE problem_entry SET title=?, problem=? WHERE id=?", v.Title, v.Problem, v.Id)
+	_, err := d.ExecContext(ctx, "UPDATE problemset SET title=?, user=? WHERE id=?", v.Title, v.User, v.Id)
 	if err != nil {
-		log.WithError(err).Error("Failed to update ProblemEntry")
+		log.WithError(err).Error("Failed to update Problemset")
 	}
 }
 
-func (d *Database) insertProblemEntry(ctx context.Context, v *ProblemEntry) {
-	_, err := d.ExecContext(ctx, "INSERT INTO problem_entry (id, title, problem) VALUES (?, ?, ?)", v.Id, v.Title, v.Problem)
+func (d *Database) insertProblemset(ctx context.Context, v *Problemset) {
+	_, err := d.ExecContext(ctx, "INSERT INTO problemset (id, title, user) VALUES (?, ?, ?)", v.Id, v.Title, v.User)
 	if err != nil {
-		log.WithError(err).Error("Failed to insert ProblemEntry")
+		log.WithError(err).Error("Failed to insert Problemset")
 	}
 }
 
-func (d *Database) deleteProblemEntry(ctx context.Context, ref ProblemEntryRef) {
-	_, err := d.ExecContext(ctx, "DELETE FROM problem_entry WHERE id=?", ref)
+func (d *Database) deleteProblemset(ctx context.Context, ref ProblemsetRef) {
+	_, err := d.ExecContext(ctx, "DELETE FROM problemset WHERE id=?", ref)
 	if err != nil {
-		log.WithError(err).Error("Failed to delete ProblemEntry")
+		log.WithError(err).Error("Failed to delete Problemset")
 	}
 }
 
-func (d *Database) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) (*ProblemEntry, error) {
+func (d *Database) GetProblemset(ctx context.Context, ref ProblemsetRef) (*Problemset, error) {
 	d.m.Lock()
 	entry, found := d.cache[ref]
 	if found {
 		d.m.Unlock()
-		return entry.curData.(*ProblemEntry), nil
+		return entry.curData.(*Problemset), nil
 	}
 	// slow path
 	if err := d.optWait(ctx, ref); err != nil {
@@ -626,11 +626,11 @@ func (d *Database) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) (*P
 	if found {
 		d.done(ref)
 		d.m.Unlock()
-		return entry.curData.(*ProblemEntry), nil
+		return entry.curData.(*Problemset), nil
 	}
 	d.m.Unlock()
 	var err error
-	entry.prevData, err = d.getProblemEntry(ctx, ref)
+	entry.prevData, err = d.getProblemset(ctx, ref)
 	d.m.Lock()
 	if err != nil {
 		d.done(ref)
@@ -641,10 +641,10 @@ func (d *Database) GetProblemEntry(ctx context.Context, ref ProblemEntryRef) (*P
 	d.cache[ref] = entry
 	d.done(ref)
 	d.m.Unlock()
-	return entry.curData.(*ProblemEntry), nil
+	return entry.curData.(*Problemset), nil
 }
 
-func (d *Database) UpdateProblemEntry(ctx context.Context, ref ProblemEntryRef, updater func(*ProblemEntry) *ProblemEntry) (*ProblemEntry, error) {
+func (d *Database) UpdateProblemset(ctx context.Context, ref ProblemsetRef, updater func(*Problemset) *Problemset) (*Problemset, error) {
 	d.m.Lock()
 	if err := d.optWait(ctx, ref); err != nil {
 		return nil, err
@@ -653,7 +653,7 @@ func (d *Database) UpdateProblemEntry(ctx context.Context, ref ProblemEntryRef, 
 	if !found {
 		d.m.Unlock()
 		var err error
-		entry.curData, err = d.getProblemEntry(ctx, ref)
+		entry.curData, err = d.getProblemset(ctx, ref)
 		if err != nil {
 			d.m.Lock()
 			d.done(ref)
@@ -664,19 +664,19 @@ func (d *Database) UpdateProblemEntry(ctx context.Context, ref ProblemEntryRef, 
 		d.m.Lock()
 		d.cache[ref] = entry
 	}
-	entry.curData = updater(entry.curData.(*ProblemEntry))
+	entry.curData = updater(entry.curData.(*Problemset))
 	d.cache[ref] = entry
 	d.done(ref)
 	d.m.Unlock()
 	d.wg.Add(1)
 	time.AfterFunc(time.Millisecond*5, func() {
 		defer d.wg.Done()
-		d.FlushProblemEntry(d.ctx, ref)
+		d.FlushProblemset(d.ctx, ref)
 	})
-	return entry.curData.(*ProblemEntry), nil
+	return entry.curData.(*Problemset), nil
 }
 
-func (d *Database) FlushProblemEntry(ctx context.Context, ref ProblemEntryRef) {
+func (d *Database) FlushProblemset(ctx context.Context, ref ProblemsetRef) {
 	d.m.Lock()
 	if err := d.optWait(d.ctx, ref); err != nil {
 		return
@@ -687,18 +687,18 @@ func (d *Database) FlushProblemEntry(ctx context.Context, ref ProblemEntryRef) {
 		d.m.Unlock()
 		return
 	}
-	prevData := entry.prevData.(*ProblemEntry)
-	curData := entry.curData.(*ProblemEntry)
+	prevData := entry.prevData.(*Problemset)
+	curData := entry.curData.(*Problemset)
 	d.m.Unlock()
 	if prevData == nil {
 		if curData != nil {
-			d.insertProblemEntry(d.ctx, curData)
+			d.insertProblemset(d.ctx, curData)
 		}
 	} else {
 		if curData == nil {
-			d.deleteProblemEntry(d.ctx, ref)
+			d.deleteProblemset(d.ctx, ref)
 		} else {
-			d.updateProblemEntry(d.ctx, ref, curData)
+			d.updateProblemset(d.ctx, ref, curData)
 		}
 	}
 	entry.prevData = entry.curData
@@ -708,21 +708,21 @@ func (d *Database) FlushProblemEntry(ctx context.Context, ref ProblemEntryRef) {
 	d.m.Unlock()
 }
 
-func (d *Database) InsertProblemEntry(ctx context.Context, v *ProblemEntry) error {
+func (d *Database) InsertProblemset(ctx context.Context, v *Problemset) error {
 	if v.Id == nil {
-		v.Id = CreateProblemEntryRef(NewProblemEntryRef())
+		v.Id = CreateProblemsetRef(NewProblemsetRef())
 	}
-	_, err := d.UpdateProblemEntry(ctx, v.GetId(), func(p *ProblemEntry) *ProblemEntry {
+	_, err := d.UpdateProblemset(ctx, v.GetId(), func(p *Problemset) *Problemset {
 		if p != nil {
-			panic("database.InsertProblemEntry: Duplicate primary key")
+			panic("database.InsertProblemset: Duplicate primary key")
 		}
 		return v
 	})
 	return err
 }
 
-func (d *Database) DeleteProblemEntry(ctx context.Context, ref ProblemEntryRef) error {
-	_, err := d.UpdateProblemEntry(ctx, ref, func(p *ProblemEntry) *ProblemEntry {
+func (d *Database) DeleteProblemset(ctx context.Context, ref ProblemsetRef) error {
+	_, err := d.UpdateProblemset(ctx, ref, func(p *Problemset) *Problemset {
 		return nil
 	})
 	return err

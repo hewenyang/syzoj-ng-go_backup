@@ -12,6 +12,12 @@ import (
 	"github.com/syzoj/syzoj-ng-go/server"
 )
 
+func Get_Debug(ctx context.Context) error {
+	c := server.GetApiContext(ctx)
+	c.SendBody(&model.DebugPage{})
+	return nil
+}
+
 func Handle_Debug_Add_Judger(ctx context.Context) error {
 	s := server.GetServer(ctx)
 	c := server.GetApiContext(ctx)
@@ -27,7 +33,7 @@ func Handle_Debug_Add_Judger(ctx context.Context) error {
 		log.WithError(err).Error("Failed to insert judger")
 		return server.ErrBusy
 	}
-	c.Mutate("", "", &model.DebugAddJudgerResponse{
+	c.Mutate("/page/debug/add-judger", "setResult", &model.DebugAddJudgerResponse{
 		JudgerId:    proto.String(string(j.GetId())),
 		JudgerToken: j.Token,
 	})

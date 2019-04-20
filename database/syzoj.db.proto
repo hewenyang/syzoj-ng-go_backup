@@ -29,17 +29,17 @@ message Device {
 
 message Problem {
     optional string id = 1;
+    optional string problemset = 2 [(dbmodel.model).fkey = "problemset"];
     optional string user = 3 [(dbmodel.model).fkey = "user"];
     optional google.protobuf.Timestamp create_time = 4 [(dbmodel.model).index = true];
     optional syzoj.model.Problem problem = 5;
     optional string title = 6;
 }
 
-// A problem displayed in public.
-message ProblemEntry {
+message Problemset {
     optional string id = 1;
     optional string title = 2;
-    optional string problem = 3 [(dbmodel.model).fkey = "problem"];
+    optional string user = 3 [(dbmodel.model).fkey = "user"];
 }
 
 message Submission {

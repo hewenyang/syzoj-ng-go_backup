@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"errors"
+	"io"
 	"sync"
 
 	"github.com/golang/protobuf/proto"
@@ -20,25 +21,28 @@ type JudgeServer struct {
 	cancelFunc func()
 	wg         sync.WaitGroup
 
-	mutex      sync.Mutex // hold when changing judger or queue state
-	condQueue  sync.Cond  // notified when judger or queue state changes
-	abort      bool
-	judgers    map[database.JudgerRef]*judger
-	judgerList list.List // The list of judgers waiting for a task. Type: *judger
-	judgeQueue list.List // The list of jge requests. Type: *JudgeRequest
+	mutex         sync.Mutex // hold when changing judger or queue state
+	taskCnt       int        // for taskId only
+	condQueue     sync.Cond  // notified when judger or queue state changes
+	abort         bool       // Whether the judge server is shutting down. When this is set to true, all operations will fail
+	judgers       map[database.JudgerRef]*judger
+	judgeRequests map[int]*JudgeRequest
+	judgerList    list.List // The list of judgers waiting for a task. Type: *judger
+	judgeQueue    list.List // The list of jge requests. Type: *JudgeRequest
 }
 
 type judger struct {
 	*JudgeServer
 	id        database.JudgerRef
 	condState sync.Cond     // notified when judger state changes
+	state     int           // 0 is just initialized, 1 is fetching tasks, 2 is judging, -1 is aborted
 	e         *list.Element // Set to nil when judger is removed from queue
-	abort     bool
 	req       *JudgeRequest
 }
 
 type JudgeRequest struct {
 	s         *JudgeServer
+	taskId    int
 	condState sync.Cond     // notified when judge request state changes
 	e         *list.Element // Set to nil when request is removed from queue
 	req       *judge.JudgeRequest
@@ -54,28 +58,34 @@ func (s *Server) newJudgeServer() *JudgeServer {
 	return j
 }
 
-func (j *JudgeServer) newJudger(id database.JudgerRef) *judger {
+// Methods that must be called with lock held.
+func (j *JudgeServer) getJudger(id database.JudgerRef) *judger {
+	if o, found := j.judgers[id]; found {
+		return o
+	}
 	o := &judger{}
+	o.JudgeServer = j
 	o.id = id
 	o.condState.L = &j.mutex
+	j.judgers[id] = o
 	return o
 }
 
 func (j *JudgeServer) newJudgeRequest() *JudgeRequest {
 	req := &JudgeRequest{}
 	req.s = j
+	req.taskId = j.taskCnt
+	j.taskCnt++
 	req.condState.L = &j.mutex
+	j.judgeRequests[req.taskId] = req
 	return req
 }
 
-// Primitive methods that must be called with lock held.
 func (j *JudgeServer) removeJudger(x *judger) {
-	if x.e == nil {
-		panic("removeJudger: judger not in queue")
+	if x.state != 1 {
+		panic("removeJudger: judger state is not 1")
 	}
-	if x != j.judgerList.Remove(x.e).(*judger) {
-		panic("removeJudger: invalid judger list iterator")
-	}
+	j.judgerList.Remove(x.e)
 	x.e = nil
 }
 
@@ -83,16 +93,15 @@ func (j *JudgeServer) removeRequest(req *JudgeRequest) {
 	if req.e == nil {
 		panic("removeRequest: request not in queue")
 	}
-	if req != j.judgeQueue.Remove(req.e).(*JudgeRequest) {
-		panic("removeRequest: invalid judge request list iterator")
-	}
+	j.judgeQueue.Remove(req.e)
 	req.e = nil
 }
 
 func (j *JudgeServer) pushJudger(x *judger) {
-	if x.e != nil {
-		panic("pushJudger: already in queue")
+	if x.state != 0 {
+		panic("pushJudger: judger state is not 0")
 	}
+	x.state = 1
 	x.e = j.judgerList.PushBack(x)
 	j.condQueue.Broadcast()
 }
@@ -105,23 +114,57 @@ func (j *JudgeServer) pushRequest(req *JudgeRequest) {
 	j.condQueue.Broadcast()
 }
 
-func (req *JudgeRequest) setResponse(resp *judge.JudgeResponse) {
-	if req.done {
+func (j *JudgeRequest) setResponse(resp *judge.JudgeResponse) {
+	if j.done {
 		panic("setMessage: judge already done")
 	}
-	req.done = true
-	req.resp = resp
-	req.condState.Broadcast()
+	j.done = true
+	j.resp = resp
+	j.condState.Broadcast()
 }
 
-func (req *JudgeRequest) setMessage(msg string) {
-	req.setResponse(&judge.JudgeResponse{Response: &judge.JudgeResponse_String_{String_: &judge.JudgeStringResponse{Message: proto.String(msg)}}})
+func (j *JudgeRequest) setProgress(resp *judge.JudgeResponse) {
+	if j.done {
+		panic("setMessage: judge already done")
+	}
+	j.resp = resp
+	j.condState.Broadcast()
+}
+
+func (j *JudgeRequest) setMessage(msg string) {
+	j.setResponse(&judge.JudgeResponse{Response: &judge.JudgeResponse_String_{String_: &judge.JudgeStringResponse{Message: proto.String(msg)}}})
+}
+
+func (j *JudgeRequest) abort() {
+	if j.e != nil {
+		j.s.judgeQueue.Remove(j.e)
+		j.e = nil
+	}
+	if !j.done {
+		j.setMessage("judge aborted")
+	}
+	delete(j.s.judgeRequests, j.taskId)
+}
+
+func (j *judger) abort() {
+	j.state = -1
+	if j.e != nil {
+		j.judgerList.Remove(j.e)
+	}
+	if j.req != nil {
+		if !j.req.done {
+			j.req.setMessage("judge aborted")
+		}
+		j.req = nil
+	}
+	delete(j.judgers, j.id)
 }
 
 func (j *JudgeServer) init() {
 	j.ctx, j.cancelFunc = context.WithCancel(context.Background())
 	j.condQueue.L = &j.mutex
 	j.judgers = make(map[database.JudgerRef]*judger)
+	j.judgeRequests = make(map[int]*JudgeRequest)
 	// Abort at context done.
 	go func() {
 		<-j.ctx.Done()
@@ -144,33 +187,24 @@ func (j *JudgeServer) init() {
 			case j.judgerList.Len() > 0 && j.judgeQueue.Len() > 0:
 				judger := j.judgerList.Front().Value.(*judger)
 				req := j.judgeQueue.Front().Value.(*JudgeRequest)
+				if judger.state != 1 {
+					panic("judge: judger in queue but state is not 1")
+				}
 				j.removeJudger(judger)
 				j.removeRequest(req)
 				judger.req = req
+				judger.state = 2
 				judger.condState.Broadcast()
 			default:
 				j.condQueue.Wait()
 			}
 		}
 		// The queue is aborted, tell all judgers and judge requests
-		for {
-			switch {
-			case j.judgerList.Front() != nil:
-				e := j.judgerList.Front()
-				judger := e.Value.(*judger)
-				judger.abort = true
-				judger.condState.Broadcast()
-				j.judgerList.Remove(e)
-			case j.judgeQueue.Front() != nil:
-				e := j.judgeQueue.Front()
-				req := e.Value.(*JudgeRequest)
-				if !req.done {
-					req.setMessage("judge aborted")
-				}
-				j.judgeQueue.Remove(e)
-			default:
-				return
-			}
+		for _, judger := range j.judgers {
+			judger.abort()
+		}
+		for _, req := range j.judgeRequests {
+			req.abort()
 		}
 	}()
 }
@@ -185,22 +219,19 @@ func (j *JudgeServer) close() {
 func (j *JudgeServer) JudgeSubmission(ctx context.Context, req *judge.JudgeRequest) (*JudgeRequest, error) {
 	r := j.newJudgeRequest()
 	r.req = req
-	ctx, cancelFunc := context.WithCancel(ctx)
 	j.mutex.Lock()
+	if j.abort {
+		j.mutex.Unlock()
+		return nil, ErrAborted
+	}
 	j.pushRequest(r)
 	j.mutex.Unlock()
+	ctx, cancelFunc := context.WithCancel(ctx)
 	// Abort the judge request when context is cancelled.
 	go func() {
 		<-ctx.Done()
 		j.mutex.Lock()
-		// Remove the judge request from the queue.
-		if r.e != nil {
-			j.removeRequest(r)
-		}
-		// Cancel the request.
-		if !r.done {
-			r.setMessage("judge aborted")
-		}
+		r.abort()
 		j.mutex.Unlock()
 	}()
 	go func() {
@@ -214,14 +245,18 @@ func (j *JudgeServer) JudgeSubmission(ctx context.Context, req *judge.JudgeReque
 	return r, nil
 }
 
-func (r *JudgeRequest) GetResult() (*judge.JudgeResponse, error) {
+func (r *JudgeRequest) GetResult(last *judge.JudgeResponse) (*judge.JudgeResponse, error) {
 	r.s.mutex.Lock()
-	for !r.done {
+	for r.resp == last && !r.done {
 		r.condState.Wait()
 	}
 	res := r.resp
 	r.s.mutex.Unlock()
-	return res, nil
+	if res != last {
+		return res, nil
+	} else {
+		return nil, io.EOF
+	}
 }
 
 // RPC service
@@ -238,33 +273,33 @@ func (j judgeService) FetchTask(ctx context.Context, req *judge.FetchTaskRequest
 	if !succ {
 		return nil, errors.New("Judger auth failed")
 	}
-	judger := j.newJudger(judgerRef)
-	j.wg.Add(1)
-	defer j.wg.Done()
 	j.mutex.Lock()
 	defer j.mutex.Unlock()
-	if _, found := j.judgers[judgerRef]; found {
-		return nil, errors.New("Conflicting judger detected")
+	judger := j.getJudger(judgerRef)
+	if judger.state != 0 {
+		return nil, ErrAborted
 	}
-	j.judgers[judgerRef] = judger
 	j.pushJudger(judger)
 	// Remove judger from queue if context is cancelled.
 	ctx2, cancelFunc := context.WithCancel(ctx)
+	succ = false
 	go func() {
 		<-ctx2.Done()
 		j.mutex.Lock()
 		defer j.mutex.Unlock()
-		if judger.e != nil {
-			j.removeJudger(judger)
-			delete(j.judgers, judgerRef)
+		if !succ {
+			judger.abort()
 		}
 	}()
 wait:
-	switch {
-	case judger.abort:
+	switch judger.state {
+	case -1:
 		cancelFunc()
 		return nil, errors.New("Aborted")
-	case judger.req != nil:
+	case 0:
+		panic("FetchTask: invalid state")
+	case 2:
+		succ = true
 		cancelFunc()
 		return &judge.FetchTaskResponse{Task: judger.req.req}, nil
 	default:
@@ -273,29 +308,60 @@ wait:
 	}
 }
 
-func (j judgeService) HandleTask(ctx context.Context, req *judge.HandleTaskRequest) (*judge.HandleTaskResponse, error) {
-	if req.Response == nil {
-		return nil, errors.New("Bad request")
+func (j judgeService) HandleTask(s judge.JudgeService_HandleTaskServer) error {
+	ctx := j.ctx
+	req, err := s.Recv()
+	if err != nil {
+		return err
 	}
 	judgerRef, succ := j.authJudger(ctx, req.Auth)
 	if !succ {
-		return nil, errors.New("Judger auth failed")
+		return errors.New("Judger auth failed")
 	}
 	j.mutex.Lock()
-	defer j.mutex.Unlock()
 	judger, found := j.judgers[judgerRef]
 	if !found {
-		return nil, errors.New("HandleTask without a task")
+		return errors.New("HandleTask without a task")
 	}
-	if judger.req == nil {
-		return nil, errors.New("HandleTask without a task")
+	if judger.state != 2 {
+		return errors.New("HandleTask without a task")
 	}
-	r := judger.req
-	r.done = true
-	r.resp = req.Response
-	delete(j.judgers, judgerRef)
-	r.condState.Broadcast()
-	return &judge.HandleTaskResponse{}, nil
+	j.mutex.Unlock()
+	for {
+		req, err := s.Recv()
+		if err != nil {
+			goto fail
+		}
+		j.mutex.Lock()
+		if judger.state == -1 {
+			j.mutex.Unlock()
+			return ErrAborted
+		}
+		if judger.state != 2 {
+			panic("HandleTask: state is not 2")
+		}
+		if judger.req.done {
+			break
+		}
+		if req.GetDone() {
+			judger.req.setResponse(req.Response)
+			j.mutex.Unlock()
+			break
+		} else {
+			judger.req.setProgress(req.Response)
+			j.mutex.Unlock()
+		}
+	}
+	j.mutex.Lock()
+	judger.abort()
+	j.mutex.Unlock()
+	s.SendAndClose(&judge.HandleTaskResponse{})
+	return nil
+fail:
+	j.mutex.Lock()
+	judger.abort()
+	j.mutex.Unlock()
+	return ErrAborted
 }
 
 //// Helper methods

@@ -14,6 +14,7 @@ CREATE TABLE device (
 
 CREATE TABLE problem (
   id VARCHAR(16) PRIMARY KEY,
+  problemset VARCHAR(16) REFERENCES problemset(id),
   user VARCHAR(16) REFERENCES user(id),
   create_time DATETIME,
   problem BLOB,
@@ -21,10 +22,10 @@ CREATE TABLE problem (
 INDEX create_time (create_time)
 );
 
-CREATE TABLE problem_entry (
+CREATE TABLE problemset (
   id VARCHAR(16) PRIMARY KEY,
   title VARCHAR(255),
-  problem VARCHAR(16) REFERENCES problem(id)
+  user VARCHAR(16) REFERENCES user(id)
 );
 
 CREATE TABLE submission (

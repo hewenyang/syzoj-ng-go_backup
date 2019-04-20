@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -37,14 +38,32 @@ func main() {
 		}
 		task := resp.Task
 		log.Info("Fetched task: ", task)
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("Enter result: ")
-		text, _ := reader.ReadString('\n')
-		_, err = client.HandleTask(ctx, &judge.HandleTaskRequest{Auth: auth, Response: &judge.JudgeResponse{Response: &judge.JudgeResponse_String_{String_: &judge.JudgeStringResponse{Message: proto.String(text)}}}})
+		stream, err := client.HandleTask(ctx)
 		if err != nil {
 			log.WithError(err).Error("Failed to handle task")
-			continue
 		}
+		reader := bufio.NewReader(os.Stdin)
+		var res *judge.JudgeResponse
+		for {
+			fmt.Print("Enter result: ")
+			text, _ := reader.ReadString('\n')
+			text = strings.Trim(text, "\n")
+			var done bool
+			if text != "" {
+				res = &judge.JudgeResponse{Response: &judge.JudgeResponse_String_{String_: &judge.JudgeStringResponse{Message: proto.String(text)}}}
+				done = false
+			} else {
+				done = true
+			}
+			err = stream.Send(&judge.HandleTaskRequest{Auth: auth, Response: res, Done: proto.Bool(done)})
+			if err != nil {
+				log.WithError(err).Error("Failed to handle task")
+				continue
+			}
+			if done {
+				break
+			}
+		}
+		resp2, err := stream.CloseAndRecv()
 	}
-	fmt.Println("vim-go")
 }

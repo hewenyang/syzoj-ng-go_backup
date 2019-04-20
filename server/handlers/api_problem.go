@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"io"
 
 	"github.com/golang/protobuf/proto"
 
@@ -12,63 +13,12 @@ import (
 	"github.com/syzoj/syzoj-ng-go/server/device"
 )
 
-func Get_Problems(ctx context.Context) error {
+func Handle_Problemset_Create_Problem(ctx context.Context) error {
 	c := server.GetApiContext(ctx)
 	s := server.GetServer(ctx)
-	page := new(model.ProblemsPage)
-	rows, err := s.GetDB().QueryContext(ctx, "SELECT id FROM problem_entry")
-	if err != nil {
-		log.WithError(err).Error("Failed to get problem entries")
-		return server.ErrBusy
-	}
-	for rows.Next() {
-		var ref database.ProblemEntryRef
-		if err := rows.Scan(&ref); err != nil {
-			log.WithError(err).Error("Failed to get problem entry id")
-			return server.ErrBusy
-		}
-		problemEntry, err := s.GetDB().GetProblemEntry(ctx, ref)
-		if err != nil || problemEntry == nil {
-			log.WithError(err).Error("Failed to get problem entry")
-			return server.ErrBusy
-		}
-		problem, err := s.GetDB().GetProblem(ctx, problemEntry.GetProblem())
-		if err != nil || problemEntry == nil {
-			log.WithError(err).Error("Failed to get problem")
-			return server.ErrBusy
-		}
-		page.ProblemEntry = append(page.ProblemEntry, &model.ProblemsPage_ProblemEntry{
-			Id:           proto.String(string(ref)),
-			ProblemId:    proto.String(string(problemEntry.GetProblem())),
-			ProblemTitle: problem.Title,
-		})
-	}
-	if rows.Err() != nil {
-		log.WithError(err).Error("Failed to get problem entries")
-		return server.ErrBusy
-	}
-	c.SendBody(page)
-	return nil
-}
-
-func Get_Problem_Create(ctx context.Context) error {
-	c := server.GetApiContext(ctx)
-	dev, err := device.GetDevice(ctx)
-	if err != nil && err != device.ErrDeviceNotFound {
-		log.WithError(err).Error("Failed to find device")
-		return server.ErrBusy
-	} else if err == device.ErrDeviceNotFound || dev.User == nil {
-		c.Redirect("/login")
-		return nil
-	}
-	c.SendBody(&model.ProblemCreatePage{})
-	return nil
-}
-
-func Handle_Problem_Create(ctx context.Context) error {
-	c := server.GetApiContext(ctx)
-	s := server.GetServer(ctx)
-	req := &model.ProblemCreatePage_CreateRequest{}
+	vars := c.Vars()
+	problemsetRef := database.ProblemsetRef(vars["problemset_id"])
+	req := &model.ProblemsetPage_CreateProblemRequest{}
 	if err := c.ReadBody(req); err != nil {
 		return server.ErrBadRequest
 	}
@@ -82,9 +32,21 @@ func Handle_Problem_Create(ctx context.Context) error {
 	} else if err == device.ErrDeviceNotFound || dev.User == nil {
 		return server.ErrNotLoggedIn
 	}
-	pb := new(database.Problem)
+	problemset, err := s.GetDB().GetProblemset(ctx, problemsetRef)
+	if err != nil {
+		log.WithError(err).Error("Failed to get problemset")
+		return server.ErrBusy
+	}
+	if problemset == nil {
+		return server.ErrNotFound
+	}
+	if problemset.User == nil || dev.User == nil || problemset.GetUser() != dev.GetUser() {
+		return server.ErrPermissionDenied
+	}
+	pb := &database.Problem{}
 	pb.Title = req.ProblemTitle
 	pb.User = dev.User
+	pb.Problemset = problemset.Id
 	pb.Problem = &model.Problem{}
 	if err := s.GetDB().InsertProblem(ctx, pb); err != nil {
 		log.WithError(err).Error("Failed to insert problem")
@@ -94,10 +56,10 @@ func Handle_Problem_Create(ctx context.Context) error {
 	return nil
 }
 
-func Handle_Problems_Add_Problem(ctx context.Context) error {
+func Handle_Problem_Remove_Judge(ctx context.Context) error {
 	c := server.GetApiContext(ctx)
 	s := server.GetServer(ctx)
-	req := &model.ProblemsPage_AddProblemRequest{}
+	req := &model.ProblemViewPage_RemoveJudgeRequest{}
 	if err := c.ReadBody(req); err != nil {
 		return server.ErrBadRequest
 	}
@@ -108,25 +70,94 @@ func Handle_Problems_Add_Problem(ctx context.Context) error {
 	} else if err == device.ErrDeviceNotFound || dev.User == nil {
 		return server.ErrNotLoggedIn
 	}
-	problemId := database.ProblemRef(req.GetProblemId())
+	vars := c.Vars()
+	problemId := database.ProblemRef(vars["problem_id"])
 	problem, err := s.GetDB().GetProblem(ctx, problemId)
 	if err != nil {
 		log.WithError(err).Error("Failed to get problem")
 		return server.ErrBusy
-	} else if problem == nil {
+	}
+	if problem == nil {
 		return server.ErrNotFound
 	}
 	if problem.User == nil || dev.User == nil || problem.GetUser() != dev.GetUser() {
 		return server.ErrPermissionDenied
 	}
-	entry := &database.ProblemEntry{}
-	entry.Problem = database.CreateProblemRef(problemId)
-	if err := s.GetDB().InsertProblemEntry(ctx, entry); err != nil {
-		log.WithError(err).Error("Failed to insert problem entry")
+
+	var f error
+	_, err = s.GetDB().UpdateProblem(ctx, problemId, func(m *database.Problem) *database.Problem {
+		if m == nil {
+			f = server.ErrNotFound
+			return m
+		} else {
+			m2 := &database.Problem{}
+			*m2 = *m
+			m2.Problem = &model.Problem{}
+			*m2.Problem = *m.Problem
+			m2.Problem.Judge = nil
+			return m2
+		}
+	})
+	if err != nil {
+		log.WithError(err).Error("Failed to update problem")
+		return server.ErrBusy
+	} else if f != nil {
+		return f
+	} else {
+		return Get_Problem(ctx)
+	}
+}
+
+func Handle_Problem_Edit_Statement(ctx context.Context) error {
+	c := server.GetApiContext(ctx)
+	s := server.GetServer(ctx)
+	req := &model.ProblemViewPage_EditStatementRequest{}
+	if err := c.ReadBody(req); err != nil {
+		return server.ErrBadRequest
+	}
+	dev, err := device.GetDevice(ctx)
+	if err != nil && err != device.ErrDeviceNotFound {
+		log.WithError(err).Error("Failed to find device")
+		return server.ErrBusy
+	} else if err == device.ErrDeviceNotFound || dev.User == nil {
+		return server.ErrNotLoggedIn
+	}
+	vars := c.Vars()
+	problemId := database.ProblemRef(vars["problem_id"])
+	problem, err := s.GetDB().GetProblem(ctx, problemId)
+	if err != nil {
+		log.WithError(err).Error("Failed to get problem")
 		return server.ErrBusy
 	}
-	s.GetDB().FlushProblemEntry(ctx, entry.GetId())
-	return Get_Problems(ctx)
+	if problem == nil {
+		return server.ErrNotFound
+	}
+	if problem.User == nil || dev.User == nil || problem.GetUser() != dev.GetUser() {
+		return server.ErrPermissionDenied
+	}
+
+	var f error
+	_, err = s.GetDB().UpdateProblem(ctx, problemId, func(m *database.Problem) *database.Problem {
+		if m == nil {
+			f = server.ErrNotFound
+			return m
+		} else {
+			m2 := &database.Problem{}
+			*m2 = *m
+			m2.Problem = &model.Problem{}
+			*m2.Problem = *m.Problem
+			m2.Problem.Statement = req.Statement
+			return m2
+		}
+	})
+	if err != nil {
+		log.WithError(err).Error("Failed to update problem")
+		return server.ErrBusy
+	} else if f != nil {
+		return f
+	} else {
+		return Get_Problem(ctx)
+	}
 }
 
 func Handle_Problem_Add_Judge_Traditional(ctx context.Context) error {
@@ -149,7 +180,8 @@ func Handle_Problem_Add_Judge_Traditional(ctx context.Context) error {
 	if err != nil {
 		log.WithError(err).Error("Failed to get problem")
 		return server.ErrBusy
-	} else if problem == nil {
+	}
+	if problem == nil {
 		return server.ErrNotFound
 	}
 	if problem.User == nil || dev.User == nil || problem.GetUser() != dev.GetUser() {
@@ -205,7 +237,8 @@ func Handle_Problem_Submit_Judge_Traditional(ctx context.Context) error {
 	if err != nil {
 		log.WithError(err).Error("Failed to get problem")
 		return server.ErrBusy
-	} else if problem == nil {
+	}
+	if problem == nil {
 		return server.ErrNotFound
 	}
 	jdata := problem.GetProblem().GetJudge()
@@ -226,8 +259,17 @@ func Handle_Problem_Submit_Judge_Traditional(ctx context.Context) error {
 		log.WithError(err).Error("Failed to judge submission")
 		return server.ErrBusy
 	}
-	result, _ := j.GetResult()
-	c.SendValue(result)
+	var result *judge.JudgeResponse
+	for {
+		result, err = j.GetResult(result)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.WithError(err).Error("Failed to get judge result")
+			return server.ErrBusy
+		}
+		c.SendValue(result)
+	}
 	return nil
 }
 
@@ -241,35 +283,13 @@ func Get_Problem(ctx context.Context) error {
 		log.WithError(err).Error("Failed to get problem")
 		return server.ErrBusy
 	}
+	if p == nil {
+		return server.ErrNotFound
+	}
 	page := &model.ProblemViewPage{}
 	page.ProblemTitle = p.Title
 	page.ProblemStatement = p.Problem.Statement
-	page.ProblemSource = p.Problem.Source
 	page.ProblemJudge = p.Problem.Judge
-	{
-		rows, err := s.GetDB().QueryContext(ctx, "SELECT id FROM problem_entry WHERE problem=?", problemId)
-		if err != nil {
-			log.WithError(err).Error("Failed to get problem entry")
-			return server.ErrBusy
-		}
-		for rows.Next() {
-			var ref database.ProblemEntryRef
-			if err := rows.Scan(&ref); err != nil {
-				log.WithError(err).Error("Failed to get problem entries")
-				return server.ErrBusy
-			}
-			problemEntry, err := s.GetDB().GetProblemEntry(ctx, ref)
-			if err != nil || problemEntry == nil {
-				log.WithError(err).Error("Failed to get problem entry")
-				return server.ErrBusy
-			}
-			page.ProblemEntry = append(page.ProblemEntry, &model.ProblemViewPage_ProblemEntry{Id: proto.String(string(ref))})
-		}
-		if rows.Err() != nil {
-			log.WithError(err).Error("Failed to get problem entries")
-			return server.ErrBusy
-		}
-	}
 	c.SendBody(page)
 	return nil
 }

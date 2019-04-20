@@ -49,8 +49,8 @@ message MarkdownLatexDocument {
 }
 
 message TraditionalJudgeData {
-	optional int64 time_limit = 16; // in nanoseconds
-	optional int64 memory_limit = 17; // in bytes
+	optional double time_limit = 16; // in seconds
+	optional double memory_limit = 17; // in megabytes
 }
 
 message TraditionalJudgeCode {
