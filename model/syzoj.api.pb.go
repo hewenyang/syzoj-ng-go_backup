@@ -7,6 +7,7 @@ import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import types "github.com/gogo/protobuf/types"
+import _ "github.com/syzoj/syzoj-ng-go/model/judge"
 
 import io "io"
 
@@ -23,17 +24,18 @@ const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
 // //////// Basic messages
 type Response struct {
-	Mutations            []*Mutation `protobuf:"bytes,3,rep,name=mutations" json:"mutations,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+	Result               *types.Any `protobuf:"bytes,1,opt,name=result" json:"result,omitempty"`
+	Error                *string    `protobuf:"bytes,2,opt,name=error" json:"error,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
 func (m *Response) Reset()         { *m = Response{} }
 func (m *Response) String() string { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()    {}
 func (*Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{0}
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{0}
 }
 func (m *Response) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -62,288 +64,21 @@ func (m *Response) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Response proto.InternalMessageInfo
 
-func (m *Response) GetMutations() []*Mutation {
+func (m *Response) GetResult() *types.Any {
 	if m != nil {
-		return m.Mutations
+		return m.Result
 	}
 	return nil
 }
 
-type Mutation struct {
-	Path                 *string    `protobuf:"bytes,1,opt,name=path" json:"path,omitempty"`
-	Method               *string    `protobuf:"bytes,2,opt,name=method" json:"method,omitempty"`
-	Value                *types.Any `protobuf:"bytes,3,opt,name=value" json:"value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
-}
-
-func (m *Mutation) Reset()         { *m = Mutation{} }
-func (m *Mutation) String() string { return proto.CompactTextString(m) }
-func (*Mutation) ProtoMessage()    {}
-func (*Mutation) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{1}
-}
-func (m *Mutation) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Mutation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Mutation.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *Mutation) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Mutation.Merge(dst, src)
-}
-func (m *Mutation) XXX_Size() int {
-	return m.Size()
-}
-func (m *Mutation) XXX_DiscardUnknown() {
-	xxx_messageInfo_Mutation.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Mutation proto.InternalMessageInfo
-
-func (m *Mutation) GetPath() string {
-	if m != nil && m.Path != nil {
-		return *m.Path
-	}
-	return ""
-}
-
-func (m *Mutation) GetMethod() string {
-	if m != nil && m.Method != nil {
-		return *m.Method
-	}
-	return ""
-}
-
-func (m *Mutation) GetValue() *types.Any {
-	if m != nil {
-		return m.Value
-	}
-	return nil
-}
-
-type Error struct {
-	Error                *string  `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Error) Reset()         { *m = Error{} }
-func (m *Error) String() string { return proto.CompactTextString(m) }
-func (*Error) ProtoMessage()    {}
-func (*Error) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{2}
-}
-func (m *Error) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Error) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Error.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *Error) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Error.Merge(dst, src)
-}
-func (m *Error) XXX_Size() int {
-	return m.Size()
-}
-func (m *Error) XXX_DiscardUnknown() {
-	xxx_messageInfo_Error.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Error proto.InternalMessageInfo
-
-func (m *Error) GetError() string {
+func (m *Response) GetError() string {
 	if m != nil && m.Error != nil {
 		return *m.Error
 	}
 	return ""
 }
 
-type Path struct {
-	Path                 *string  `protobuf:"bytes,1,opt,name=path" json:"path,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Path) Reset()         { *m = Path{} }
-func (m *Path) String() string { return proto.CompactTextString(m) }
-func (*Path) ProtoMessage()    {}
-func (*Path) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{3}
-}
-func (m *Path) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Path) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Path.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *Path) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Path.Merge(dst, src)
-}
-func (m *Path) XXX_Size() int {
-	return m.Size()
-}
-func (m *Path) XXX_DiscardUnknown() {
-	xxx_messageInfo_Path.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Path proto.InternalMessageInfo
-
-func (m *Path) GetPath() string {
-	if m != nil && m.Path != nil {
-		return *m.Path
-	}
-	return ""
-}
-
-type NotFoundPage struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *NotFoundPage) Reset()         { *m = NotFoundPage{} }
-func (m *NotFoundPage) String() string { return proto.CompactTextString(m) }
-func (*NotFoundPage) ProtoMessage()    {}
-func (*NotFoundPage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{4}
-}
-func (m *NotFoundPage) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *NotFoundPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_NotFoundPage.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *NotFoundPage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NotFoundPage.Merge(dst, src)
-}
-func (m *NotFoundPage) XXX_Size() int {
-	return m.Size()
-}
-func (m *NotFoundPage) XXX_DiscardUnknown() {
-	xxx_messageInfo_NotFoundPage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_NotFoundPage proto.InternalMessageInfo
-
-type IndexPage struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *IndexPage) Reset()         { *m = IndexPage{} }
-func (m *IndexPage) String() string { return proto.CompactTextString(m) }
-func (*IndexPage) ProtoMessage()    {}
-func (*IndexPage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{5}
-}
-func (m *IndexPage) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *IndexPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_IndexPage.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *IndexPage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IndexPage.Merge(dst, src)
-}
-func (m *IndexPage) XXX_Size() int {
-	return m.Size()
-}
-func (m *IndexPage) XXX_DiscardUnknown() {
-	xxx_messageInfo_IndexPage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_IndexPage proto.InternalMessageInfo
-
-type LoginPage struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *LoginPage) Reset()         { *m = LoginPage{} }
-func (m *LoginPage) String() string { return proto.CompactTextString(m) }
-func (*LoginPage) ProtoMessage()    {}
-func (*LoginPage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{6}
-}
-func (m *LoginPage) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *LoginPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_LoginPage.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *LoginPage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LoginPage.Merge(dst, src)
-}
-func (m *LoginPage) XXX_Size() int {
-	return m.Size()
-}
-func (m *LoginPage) XXX_DiscardUnknown() {
-	xxx_messageInfo_LoginPage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LoginPage proto.InternalMessageInfo
-
-type LoginPage_LoginRequest struct {
+type LoginRequest struct {
 	UserName             *string  `protobuf:"bytes,1,opt,name=user_name,json=userName" json:"user_name,omitempty"`
 	Password             *string  `protobuf:"bytes,2,opt,name=password" json:"password,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -351,18 +86,18 @@ type LoginPage_LoginRequest struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *LoginPage_LoginRequest) Reset()         { *m = LoginPage_LoginRequest{} }
-func (m *LoginPage_LoginRequest) String() string { return proto.CompactTextString(m) }
-func (*LoginPage_LoginRequest) ProtoMessage()    {}
-func (*LoginPage_LoginRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{6, 0}
+func (m *LoginRequest) Reset()         { *m = LoginRequest{} }
+func (m *LoginRequest) String() string { return proto.CompactTextString(m) }
+func (*LoginRequest) ProtoMessage()    {}
+func (*LoginRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{1}
 }
-func (m *LoginPage_LoginRequest) XXX_Unmarshal(b []byte) error {
+func (m *LoginRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *LoginPage_LoginRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *LoginRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_LoginPage_LoginRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_LoginRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -372,50 +107,52 @@ func (m *LoginPage_LoginRequest) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (dst *LoginPage_LoginRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LoginPage_LoginRequest.Merge(dst, src)
+func (dst *LoginRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LoginRequest.Merge(dst, src)
 }
-func (m *LoginPage_LoginRequest) XXX_Size() int {
+func (m *LoginRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *LoginPage_LoginRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_LoginPage_LoginRequest.DiscardUnknown(m)
+func (m *LoginRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_LoginRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_LoginPage_LoginRequest proto.InternalMessageInfo
+var xxx_messageInfo_LoginRequest proto.InternalMessageInfo
 
-func (m *LoginPage_LoginRequest) GetUserName() string {
+func (m *LoginRequest) GetUserName() string {
 	if m != nil && m.UserName != nil {
 		return *m.UserName
 	}
 	return ""
 }
 
-func (m *LoginPage_LoginRequest) GetPassword() string {
+func (m *LoginRequest) GetPassword() string {
 	if m != nil && m.Password != nil {
 		return *m.Password
 	}
 	return ""
 }
 
-type RegisterPage struct {
+type LoginResponse struct {
+	Success              *bool    `protobuf:"varint,1,opt,name=success" json:"success,omitempty"`
+	Reason               *string  `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RegisterPage) Reset()         { *m = RegisterPage{} }
-func (m *RegisterPage) String() string { return proto.CompactTextString(m) }
-func (*RegisterPage) ProtoMessage()    {}
-func (*RegisterPage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{7}
+func (m *LoginResponse) Reset()         { *m = LoginResponse{} }
+func (m *LoginResponse) String() string { return proto.CompactTextString(m) }
+func (*LoginResponse) ProtoMessage()    {}
+func (*LoginResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{2}
 }
-func (m *RegisterPage) XXX_Unmarshal(b []byte) error {
+func (m *LoginResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *RegisterPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *LoginResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_RegisterPage.Marshal(b, m, deterministic)
+		return xxx_messageInfo_LoginResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -425,19 +162,33 @@ func (m *RegisterPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (dst *RegisterPage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RegisterPage.Merge(dst, src)
+func (dst *LoginResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LoginResponse.Merge(dst, src)
 }
-func (m *RegisterPage) XXX_Size() int {
+func (m *LoginResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *RegisterPage) XXX_DiscardUnknown() {
-	xxx_messageInfo_RegisterPage.DiscardUnknown(m)
+func (m *LoginResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_LoginResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RegisterPage proto.InternalMessageInfo
+var xxx_messageInfo_LoginResponse proto.InternalMessageInfo
 
-type RegisterPage_RegisterRequest struct {
+func (m *LoginResponse) GetSuccess() bool {
+	if m != nil && m.Success != nil {
+		return *m.Success
+	}
+	return false
+}
+
+func (m *LoginResponse) GetReason() string {
+	if m != nil && m.Reason != nil {
+		return *m.Reason
+	}
+	return ""
+}
+
+type RegisterRequest struct {
 	UserName             *string  `protobuf:"bytes,1,opt,name=user_name,json=userName" json:"user_name,omitempty"`
 	Password             *string  `protobuf:"bytes,2,opt,name=password" json:"password,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -445,18 +196,18 @@ type RegisterPage_RegisterRequest struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RegisterPage_RegisterRequest) Reset()         { *m = RegisterPage_RegisterRequest{} }
-func (m *RegisterPage_RegisterRequest) String() string { return proto.CompactTextString(m) }
-func (*RegisterPage_RegisterRequest) ProtoMessage()    {}
-func (*RegisterPage_RegisterRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{7, 0}
+func (m *RegisterRequest) Reset()         { *m = RegisterRequest{} }
+func (m *RegisterRequest) String() string { return proto.CompactTextString(m) }
+func (*RegisterRequest) ProtoMessage()    {}
+func (*RegisterRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{3}
 }
-func (m *RegisterPage_RegisterRequest) XXX_Unmarshal(b []byte) error {
+func (m *RegisterRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *RegisterPage_RegisterRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *RegisterRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_RegisterPage_RegisterRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_RegisterRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -466,50 +217,52 @@ func (m *RegisterPage_RegisterRequest) XXX_Marshal(b []byte, deterministic bool)
 		return b[:n], nil
 	}
 }
-func (dst *RegisterPage_RegisterRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RegisterPage_RegisterRequest.Merge(dst, src)
+func (dst *RegisterRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RegisterRequest.Merge(dst, src)
 }
-func (m *RegisterPage_RegisterRequest) XXX_Size() int {
+func (m *RegisterRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *RegisterPage_RegisterRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RegisterPage_RegisterRequest.DiscardUnknown(m)
+func (m *RegisterRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_RegisterRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RegisterPage_RegisterRequest proto.InternalMessageInfo
+var xxx_messageInfo_RegisterRequest proto.InternalMessageInfo
 
-func (m *RegisterPage_RegisterRequest) GetUserName() string {
+func (m *RegisterRequest) GetUserName() string {
 	if m != nil && m.UserName != nil {
 		return *m.UserName
 	}
 	return ""
 }
 
-func (m *RegisterPage_RegisterRequest) GetPassword() string {
+func (m *RegisterRequest) GetPassword() string {
 	if m != nil && m.Password != nil {
 		return *m.Password
 	}
 	return ""
 }
 
-type ProblemsetCreatePage struct {
+type RegisterResponse struct {
+	Success              *bool    `protobuf:"varint,1,opt,name=success" json:"success,omitempty"`
+	Reason               *string  `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProblemsetCreatePage) Reset()         { *m = ProblemsetCreatePage{} }
-func (m *ProblemsetCreatePage) String() string { return proto.CompactTextString(m) }
-func (*ProblemsetCreatePage) ProtoMessage()    {}
-func (*ProblemsetCreatePage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{8}
+func (m *RegisterResponse) Reset()         { *m = RegisterResponse{} }
+func (m *RegisterResponse) String() string { return proto.CompactTextString(m) }
+func (*RegisterResponse) ProtoMessage()    {}
+func (*RegisterResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{4}
 }
-func (m *ProblemsetCreatePage) XXX_Unmarshal(b []byte) error {
+func (m *RegisterResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ProblemsetCreatePage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *RegisterResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ProblemsetCreatePage.Marshal(b, m, deterministic)
+		return xxx_messageInfo_RegisterResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -519,84 +272,51 @@ func (m *ProblemsetCreatePage) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (dst *ProblemsetCreatePage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemsetCreatePage.Merge(dst, src)
+func (dst *RegisterResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RegisterResponse.Merge(dst, src)
 }
-func (m *ProblemsetCreatePage) XXX_Size() int {
+func (m *RegisterResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *ProblemsetCreatePage) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemsetCreatePage.DiscardUnknown(m)
+func (m *RegisterResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_RegisterResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProblemsetCreatePage proto.InternalMessageInfo
+var xxx_messageInfo_RegisterResponse proto.InternalMessageInfo
 
-type ProblemsetCreatePage_CreateRequest struct {
-	ProblemsetTitle      *string  `protobuf:"bytes,16,opt,name=problemset_title,json=problemsetTitle" json:"problemset_title,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ProblemsetCreatePage_CreateRequest) Reset()         { *m = ProblemsetCreatePage_CreateRequest{} }
-func (m *ProblemsetCreatePage_CreateRequest) String() string { return proto.CompactTextString(m) }
-func (*ProblemsetCreatePage_CreateRequest) ProtoMessage()    {}
-func (*ProblemsetCreatePage_CreateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{8, 0}
-}
-func (m *ProblemsetCreatePage_CreateRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ProblemsetCreatePage_CreateRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ProblemsetCreatePage_CreateRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
+func (m *RegisterResponse) GetSuccess() bool {
+	if m != nil && m.Success != nil {
+		return *m.Success
 	}
-}
-func (dst *ProblemsetCreatePage_CreateRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemsetCreatePage_CreateRequest.Merge(dst, src)
-}
-func (m *ProblemsetCreatePage_CreateRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *ProblemsetCreatePage_CreateRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemsetCreatePage_CreateRequest.DiscardUnknown(m)
+	return false
 }
 
-var xxx_messageInfo_ProblemsetCreatePage_CreateRequest proto.InternalMessageInfo
-
-func (m *ProblemsetCreatePage_CreateRequest) GetProblemsetTitle() string {
-	if m != nil && m.ProblemsetTitle != nil {
-		return *m.ProblemsetTitle
+func (m *RegisterResponse) GetReason() string {
+	if m != nil && m.Reason != nil {
+		return *m.Reason
 	}
 	return ""
 }
 
-type ProblemsetPage struct {
-	ProblemEntry         []*ProblemsetPage_ProblemEntry `protobuf:"bytes,16,rep,name=problem_entry,json=problemEntry" json:"problem_entry,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
-	XXX_unrecognized     []byte                         `json:"-"`
-	XXX_sizecache        int32                          `json:"-"`
+type ProblemsetCreateRequest struct {
+	Problemset           *Problemset `protobuf:"bytes,1,opt,name=problemset" json:"problemset,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
 }
 
-func (m *ProblemsetPage) Reset()         { *m = ProblemsetPage{} }
-func (m *ProblemsetPage) String() string { return proto.CompactTextString(m) }
-func (*ProblemsetPage) ProtoMessage()    {}
-func (*ProblemsetPage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{9}
+func (m *ProblemsetCreateRequest) Reset()         { *m = ProblemsetCreateRequest{} }
+func (m *ProblemsetCreateRequest) String() string { return proto.CompactTextString(m) }
+func (*ProblemsetCreateRequest) ProtoMessage()    {}
+func (*ProblemsetCreateRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{5}
 }
-func (m *ProblemsetPage) XXX_Unmarshal(b []byte) error {
+func (m *ProblemsetCreateRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ProblemsetPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ProblemsetCreateRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ProblemsetPage.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ProblemsetCreateRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -606,46 +326,170 @@ func (m *ProblemsetPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (dst *ProblemsetPage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemsetPage.Merge(dst, src)
+func (dst *ProblemsetCreateRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemsetCreateRequest.Merge(dst, src)
 }
-func (m *ProblemsetPage) XXX_Size() int {
+func (m *ProblemsetCreateRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *ProblemsetPage) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemsetPage.DiscardUnknown(m)
+func (m *ProblemsetCreateRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemsetCreateRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProblemsetPage proto.InternalMessageInfo
+var xxx_messageInfo_ProblemsetCreateRequest proto.InternalMessageInfo
 
-func (m *ProblemsetPage) GetProblemEntry() []*ProblemsetPage_ProblemEntry {
+func (m *ProblemsetCreateRequest) GetProblemset() *Problemset {
 	if m != nil {
-		return m.ProblemEntry
+		return m.Problemset
 	}
 	return nil
 }
 
-type ProblemsetPage_ProblemEntry struct {
-	Id                   *string  `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	ProblemId            *string  `protobuf:"bytes,2,opt,name=problem_id,json=problemId" json:"problem_id,omitempty"`
-	ProblemTitle         *string  `protobuf:"bytes,3,opt,name=problem_title,json=problemTitle" json:"problem_title,omitempty"`
+type ProblemsetCreateResponse struct {
+	Success              *bool       `protobuf:"varint,1,opt,name=success" json:"success,omitempty"`
+	Reason               *string     `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
+	Problemset           *Problemset `protobuf:"bytes,3,opt,name=problemset" json:"problemset,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *ProblemsetCreateResponse) Reset()         { *m = ProblemsetCreateResponse{} }
+func (m *ProblemsetCreateResponse) String() string { return proto.CompactTextString(m) }
+func (*ProblemsetCreateResponse) ProtoMessage()    {}
+func (*ProblemsetCreateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{6}
+}
+func (m *ProblemsetCreateResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ProblemsetCreateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ProblemsetCreateResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *ProblemsetCreateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemsetCreateResponse.Merge(dst, src)
+}
+func (m *ProblemsetCreateResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *ProblemsetCreateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemsetCreateResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProblemsetCreateResponse proto.InternalMessageInfo
+
+func (m *ProblemsetCreateResponse) GetSuccess() bool {
+	if m != nil && m.Success != nil {
+		return *m.Success
+	}
+	return false
+}
+
+func (m *ProblemsetCreateResponse) GetReason() string {
+	if m != nil && m.Reason != nil {
+		return *m.Reason
+	}
+	return ""
+}
+
+func (m *ProblemsetCreateResponse) GetProblemset() *Problemset {
+	if m != nil {
+		return m.Problemset
+	}
+	return nil
+}
+
+type ProblemsetGetResponse struct {
+	Success              *bool       `protobuf:"varint,1,opt,name=success" json:"success,omitempty"`
+	Reason               *string     `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
+	Problemset           *Problemset `protobuf:"bytes,3,opt,name=problemset" json:"problemset,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *ProblemsetGetResponse) Reset()         { *m = ProblemsetGetResponse{} }
+func (m *ProblemsetGetResponse) String() string { return proto.CompactTextString(m) }
+func (*ProblemsetGetResponse) ProtoMessage()    {}
+func (*ProblemsetGetResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{7}
+}
+func (m *ProblemsetGetResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ProblemsetGetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ProblemsetGetResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *ProblemsetGetResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemsetGetResponse.Merge(dst, src)
+}
+func (m *ProblemsetGetResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *ProblemsetGetResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemsetGetResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProblemsetGetResponse proto.InternalMessageInfo
+
+func (m *ProblemsetGetResponse) GetSuccess() bool {
+	if m != nil && m.Success != nil {
+		return *m.Success
+	}
+	return false
+}
+
+func (m *ProblemsetGetResponse) GetReason() string {
+	if m != nil && m.Reason != nil {
+		return *m.Reason
+	}
+	return ""
+}
+
+func (m *ProblemsetGetResponse) GetProblemset() *Problemset {
+	if m != nil {
+		return m.Problemset
+	}
+	return nil
+}
+
+type ProblemsetAddProblemRequest struct {
+	Problem              *Problem `protobuf:"bytes,1,opt,name=problem" json:"problem,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProblemsetPage_ProblemEntry) Reset()         { *m = ProblemsetPage_ProblemEntry{} }
-func (m *ProblemsetPage_ProblemEntry) String() string { return proto.CompactTextString(m) }
-func (*ProblemsetPage_ProblemEntry) ProtoMessage()    {}
-func (*ProblemsetPage_ProblemEntry) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{9, 0}
+func (m *ProblemsetAddProblemRequest) Reset()         { *m = ProblemsetAddProblemRequest{} }
+func (m *ProblemsetAddProblemRequest) String() string { return proto.CompactTextString(m) }
+func (*ProblemsetAddProblemRequest) ProtoMessage()    {}
+func (*ProblemsetAddProblemRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{8}
 }
-func (m *ProblemsetPage_ProblemEntry) XXX_Unmarshal(b []byte) error {
+func (m *ProblemsetAddProblemRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ProblemsetPage_ProblemEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ProblemsetAddProblemRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ProblemsetPage_ProblemEntry.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ProblemsetAddProblemRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -655,58 +499,46 @@ func (m *ProblemsetPage_ProblemEntry) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
-func (dst *ProblemsetPage_ProblemEntry) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemsetPage_ProblemEntry.Merge(dst, src)
+func (dst *ProblemsetAddProblemRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemsetAddProblemRequest.Merge(dst, src)
 }
-func (m *ProblemsetPage_ProblemEntry) XXX_Size() int {
+func (m *ProblemsetAddProblemRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *ProblemsetPage_ProblemEntry) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemsetPage_ProblemEntry.DiscardUnknown(m)
+func (m *ProblemsetAddProblemRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemsetAddProblemRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProblemsetPage_ProblemEntry proto.InternalMessageInfo
+var xxx_messageInfo_ProblemsetAddProblemRequest proto.InternalMessageInfo
 
-func (m *ProblemsetPage_ProblemEntry) GetId() string {
-	if m != nil && m.Id != nil {
-		return *m.Id
+func (m *ProblemsetAddProblemRequest) GetProblem() *Problem {
+	if m != nil {
+		return m.Problem
 	}
-	return ""
+	return nil
 }
 
-func (m *ProblemsetPage_ProblemEntry) GetProblemId() string {
-	if m != nil && m.ProblemId != nil {
-		return *m.ProblemId
-	}
-	return ""
-}
-
-func (m *ProblemsetPage_ProblemEntry) GetProblemTitle() string {
-	if m != nil && m.ProblemTitle != nil {
-		return *m.ProblemTitle
-	}
-	return ""
-}
-
-type ProblemsetPage_CreateProblemRequest struct {
-	ProblemTitle         *string  `protobuf:"bytes,16,opt,name=problem_title,json=problemTitle" json:"problem_title,omitempty"`
+type ProblemsetAddProblemResponse struct {
+	Success              *bool    `protobuf:"varint,1,opt,name=success" json:"success,omitempty"`
+	Reason               *string  `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
+	Problem              *Problem `protobuf:"bytes,3,opt,name=problem" json:"problem,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProblemsetPage_CreateProblemRequest) Reset()         { *m = ProblemsetPage_CreateProblemRequest{} }
-func (m *ProblemsetPage_CreateProblemRequest) String() string { return proto.CompactTextString(m) }
-func (*ProblemsetPage_CreateProblemRequest) ProtoMessage()    {}
-func (*ProblemsetPage_CreateProblemRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{9, 1}
+func (m *ProblemsetAddProblemResponse) Reset()         { *m = ProblemsetAddProblemResponse{} }
+func (m *ProblemsetAddProblemResponse) String() string { return proto.CompactTextString(m) }
+func (*ProblemsetAddProblemResponse) ProtoMessage()    {}
+func (*ProblemsetAddProblemResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{9}
 }
-func (m *ProblemsetPage_CreateProblemRequest) XXX_Unmarshal(b []byte) error {
+func (m *ProblemsetAddProblemResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ProblemsetPage_CreateProblemRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ProblemsetAddProblemResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ProblemsetPage_CreateProblemRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ProblemsetAddProblemResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -716,153 +548,58 @@ func (m *ProblemsetPage_CreateProblemRequest) XXX_Marshal(b []byte, deterministi
 		return b[:n], nil
 	}
 }
-func (dst *ProblemsetPage_CreateProblemRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemsetPage_CreateProblemRequest.Merge(dst, src)
+func (dst *ProblemsetAddProblemResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemsetAddProblemResponse.Merge(dst, src)
 }
-func (m *ProblemsetPage_CreateProblemRequest) XXX_Size() int {
+func (m *ProblemsetAddProblemResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *ProblemsetPage_CreateProblemRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemsetPage_CreateProblemRequest.DiscardUnknown(m)
+func (m *ProblemsetAddProblemResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemsetAddProblemResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProblemsetPage_CreateProblemRequest proto.InternalMessageInfo
+var xxx_messageInfo_ProblemsetAddProblemResponse proto.InternalMessageInfo
 
-func (m *ProblemsetPage_CreateProblemRequest) GetProblemTitle() string {
-	if m != nil && m.ProblemTitle != nil {
-		return *m.ProblemTitle
+func (m *ProblemsetAddProblemResponse) GetSuccess() bool {
+	if m != nil && m.Success != nil {
+		return *m.Success
+	}
+	return false
+}
+
+func (m *ProblemsetAddProblemResponse) GetReason() string {
+	if m != nil && m.Reason != nil {
+		return *m.Reason
 	}
 	return ""
 }
 
-type ProblemViewPage struct {
-	ProblemTitle         *string           `protobuf:"bytes,16,opt,name=problem_title,json=problemTitle" json:"problem_title,omitempty"`
-	ProblemStatement     *ProblemStatement `protobuf:"bytes,17,opt,name=problem_statement,json=problemStatement" json:"problem_statement,omitempty"`
-	ProblemJudge         *ProblemJudge     `protobuf:"bytes,19,opt,name=problem_judge,json=problemJudge" json:"problem_judge,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
-}
-
-func (m *ProblemViewPage) Reset()         { *m = ProblemViewPage{} }
-func (m *ProblemViewPage) String() string { return proto.CompactTextString(m) }
-func (*ProblemViewPage) ProtoMessage()    {}
-func (*ProblemViewPage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{10}
-}
-func (m *ProblemViewPage) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ProblemViewPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ProblemViewPage.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *ProblemViewPage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemViewPage.Merge(dst, src)
-}
-func (m *ProblemViewPage) XXX_Size() int {
-	return m.Size()
-}
-func (m *ProblemViewPage) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemViewPage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProblemViewPage proto.InternalMessageInfo
-
-func (m *ProblemViewPage) GetProblemTitle() string {
-	if m != nil && m.ProblemTitle != nil {
-		return *m.ProblemTitle
-	}
-	return ""
-}
-
-func (m *ProblemViewPage) GetProblemStatement() *ProblemStatement {
+func (m *ProblemsetAddProblemResponse) GetProblem() *Problem {
 	if m != nil {
-		return m.ProblemStatement
+		return m.Problem
 	}
 	return nil
 }
 
-func (m *ProblemViewPage) GetProblemJudge() *ProblemJudge {
-	if m != nil {
-		return m.ProblemJudge
-	}
-	return nil
-}
-
-type ProblemViewPage_EditStatementRequest struct {
-	Statement            *ProblemStatement `protobuf:"bytes,1,opt,name=statement" json:"statement,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
-}
-
-func (m *ProblemViewPage_EditStatementRequest) Reset()         { *m = ProblemViewPage_EditStatementRequest{} }
-func (m *ProblemViewPage_EditStatementRequest) String() string { return proto.CompactTextString(m) }
-func (*ProblemViewPage_EditStatementRequest) ProtoMessage()    {}
-func (*ProblemViewPage_EditStatementRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{10, 0}
-}
-func (m *ProblemViewPage_EditStatementRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ProblemViewPage_EditStatementRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ProblemViewPage_EditStatementRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *ProblemViewPage_EditStatementRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemViewPage_EditStatementRequest.Merge(dst, src)
-}
-func (m *ProblemViewPage_EditStatementRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *ProblemViewPage_EditStatementRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemViewPage_EditStatementRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProblemViewPage_EditStatementRequest proto.InternalMessageInfo
-
-func (m *ProblemViewPage_EditStatementRequest) GetStatement() *ProblemStatement {
-	if m != nil {
-		return m.Statement
-	}
-	return nil
-}
-
-type ProblemViewPage_RemoveJudgeRequest struct {
+type ProblemGetResponse struct {
+	Problem              *Problem `protobuf:"bytes,1,opt,name=problem" json:"problem,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProblemViewPage_RemoveJudgeRequest) Reset()         { *m = ProblemViewPage_RemoveJudgeRequest{} }
-func (m *ProblemViewPage_RemoveJudgeRequest) String() string { return proto.CompactTextString(m) }
-func (*ProblemViewPage_RemoveJudgeRequest) ProtoMessage()    {}
-func (*ProblemViewPage_RemoveJudgeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{10, 1}
+func (m *ProblemGetResponse) Reset()         { *m = ProblemGetResponse{} }
+func (m *ProblemGetResponse) String() string { return proto.CompactTextString(m) }
+func (*ProblemGetResponse) ProtoMessage()    {}
+func (*ProblemGetResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{10}
 }
-func (m *ProblemViewPage_RemoveJudgeRequest) XXX_Unmarshal(b []byte) error {
+func (m *ProblemGetResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ProblemViewPage_RemoveJudgeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ProblemGetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ProblemViewPage_RemoveJudgeRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ProblemGetResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -872,142 +609,44 @@ func (m *ProblemViewPage_RemoveJudgeRequest) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-func (dst *ProblemViewPage_RemoveJudgeRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemViewPage_RemoveJudgeRequest.Merge(dst, src)
+func (dst *ProblemGetResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemGetResponse.Merge(dst, src)
 }
-func (m *ProblemViewPage_RemoveJudgeRequest) XXX_Size() int {
+func (m *ProblemGetResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *ProblemViewPage_RemoveJudgeRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemViewPage_RemoveJudgeRequest.DiscardUnknown(m)
+func (m *ProblemGetResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemGetResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProblemViewPage_RemoveJudgeRequest proto.InternalMessageInfo
+var xxx_messageInfo_ProblemGetResponse proto.InternalMessageInfo
 
-type ProblemViewPage_AddJudgeTraditionalRequest struct {
-	Data                 *TraditionalJudgeData `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
-}
-
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) Reset() {
-	*m = ProblemViewPage_AddJudgeTraditionalRequest{}
-}
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) String() string {
-	return proto.CompactTextString(m)
-}
-func (*ProblemViewPage_AddJudgeTraditionalRequest) ProtoMessage() {}
-func (*ProblemViewPage_AddJudgeTraditionalRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{10, 2}
-}
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ProblemViewPage_AddJudgeTraditionalRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *ProblemViewPage_AddJudgeTraditionalRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemViewPage_AddJudgeTraditionalRequest.Merge(dst, src)
-}
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemViewPage_AddJudgeTraditionalRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProblemViewPage_AddJudgeTraditionalRequest proto.InternalMessageInfo
-
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) GetData() *TraditionalJudgeData {
+func (m *ProblemGetResponse) GetProblem() *Problem {
 	if m != nil {
-		return m.Data
+		return m.Problem
 	}
 	return nil
 }
 
-type ProblemViewPage_SubmitJudgeTraditionalRequest struct {
-	Code                 *TraditionalJudgeCode `protobuf:"bytes,1,opt,name=code" json:"code,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
-}
-
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) Reset() {
-	*m = ProblemViewPage_SubmitJudgeTraditionalRequest{}
-}
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) String() string {
-	return proto.CompactTextString(m)
-}
-func (*ProblemViewPage_SubmitJudgeTraditionalRequest) ProtoMessage() {}
-func (*ProblemViewPage_SubmitJudgeTraditionalRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{10, 3}
-}
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ProblemViewPage_SubmitJudgeTraditionalRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *ProblemViewPage_SubmitJudgeTraditionalRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemViewPage_SubmitJudgeTraditionalRequest.Merge(dst, src)
-}
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemViewPage_SubmitJudgeTraditionalRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProblemViewPage_SubmitJudgeTraditionalRequest proto.InternalMessageInfo
-
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) GetCode() *TraditionalJudgeCode {
-	if m != nil {
-		return m.Code
-	}
-	return nil
-}
-
-type ProblemViewPage_SubmitJudgeTraditionalResponse struct {
+type ProblemUpdateRequest struct {
+	Problem              *Problem `protobuf:"bytes,1,opt,name=problem" json:"problem,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) Reset() {
-	*m = ProblemViewPage_SubmitJudgeTraditionalResponse{}
+func (m *ProblemUpdateRequest) Reset()         { *m = ProblemUpdateRequest{} }
+func (m *ProblemUpdateRequest) String() string { return proto.CompactTextString(m) }
+func (*ProblemUpdateRequest) ProtoMessage()    {}
+func (*ProblemUpdateRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{11}
 }
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) String() string {
-	return proto.CompactTextString(m)
-}
-func (*ProblemViewPage_SubmitJudgeTraditionalResponse) ProtoMessage() {}
-func (*ProblemViewPage_SubmitJudgeTraditionalResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{10, 4}
-}
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) XXX_Unmarshal(b []byte) error {
+func (m *ProblemUpdateRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ProblemUpdateRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ProblemViewPage_SubmitJudgeTraditionalResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ProblemUpdateRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1017,57 +656,24 @@ func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) XXX_Marshal(b []byte, d
 		return b[:n], nil
 	}
 }
-func (dst *ProblemViewPage_SubmitJudgeTraditionalResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProblemViewPage_SubmitJudgeTraditionalResponse.Merge(dst, src)
+func (dst *ProblemUpdateRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemUpdateRequest.Merge(dst, src)
 }
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) XXX_Size() int {
+func (m *ProblemUpdateRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProblemViewPage_SubmitJudgeTraditionalResponse.DiscardUnknown(m)
+func (m *ProblemUpdateRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemUpdateRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProblemViewPage_SubmitJudgeTraditionalResponse proto.InternalMessageInfo
+var xxx_messageInfo_ProblemUpdateRequest proto.InternalMessageInfo
 
-// Debug API
-type DebugPage struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *DebugPage) Reset()         { *m = DebugPage{} }
-func (m *DebugPage) String() string { return proto.CompactTextString(m) }
-func (*DebugPage) ProtoMessage()    {}
-func (*DebugPage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{11}
-}
-func (m *DebugPage) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *DebugPage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_DebugPage.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
+func (m *ProblemUpdateRequest) GetProblem() *Problem {
+	if m != nil {
+		return m.Problem
 	}
+	return nil
 }
-func (dst *DebugPage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DebugPage.Merge(dst, src)
-}
-func (m *DebugPage) XXX_Size() int {
-	return m.Size()
-}
-func (m *DebugPage) XXX_DiscardUnknown() {
-	xxx_messageInfo_DebugPage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_DebugPage proto.InternalMessageInfo
 
 type DebugAddJudgerRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1079,7 +685,7 @@ func (m *DebugAddJudgerRequest) Reset()         { *m = DebugAddJudgerRequest{} }
 func (m *DebugAddJudgerRequest) String() string { return proto.CompactTextString(m) }
 func (*DebugAddJudgerRequest) ProtoMessage()    {}
 func (*DebugAddJudgerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{12}
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{12}
 }
 func (m *DebugAddJudgerRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1120,7 +726,7 @@ func (m *DebugAddJudgerResponse) Reset()         { *m = DebugAddJudgerResponse{}
 func (m *DebugAddJudgerResponse) String() string { return proto.CompactTextString(m) }
 func (*DebugAddJudgerResponse) ProtoMessage()    {}
 func (*DebugAddJudgerResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a5b1a8188f8ab0c7, []int{13}
+	return fileDescriptor_syzoj_api_a015b6c960700244, []int{13}
 }
 func (m *DebugAddJudgerResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1165,27 +771,17 @@ func (m *DebugAddJudgerResponse) GetJudgerToken() string {
 
 func init() {
 	proto.RegisterType((*Response)(nil), "syzoj.api.Response")
-	proto.RegisterType((*Mutation)(nil), "syzoj.api.Mutation")
-	proto.RegisterType((*Error)(nil), "syzoj.api.Error")
-	proto.RegisterType((*Path)(nil), "syzoj.api.Path")
-	proto.RegisterType((*NotFoundPage)(nil), "syzoj.api.NotFoundPage")
-	proto.RegisterType((*IndexPage)(nil), "syzoj.api.IndexPage")
-	proto.RegisterType((*LoginPage)(nil), "syzoj.api.LoginPage")
-	proto.RegisterType((*LoginPage_LoginRequest)(nil), "syzoj.api.LoginPage.LoginRequest")
-	proto.RegisterType((*RegisterPage)(nil), "syzoj.api.RegisterPage")
-	proto.RegisterType((*RegisterPage_RegisterRequest)(nil), "syzoj.api.RegisterPage.RegisterRequest")
-	proto.RegisterType((*ProblemsetCreatePage)(nil), "syzoj.api.ProblemsetCreatePage")
-	proto.RegisterType((*ProblemsetCreatePage_CreateRequest)(nil), "syzoj.api.ProblemsetCreatePage.CreateRequest")
-	proto.RegisterType((*ProblemsetPage)(nil), "syzoj.api.ProblemsetPage")
-	proto.RegisterType((*ProblemsetPage_ProblemEntry)(nil), "syzoj.api.ProblemsetPage.ProblemEntry")
-	proto.RegisterType((*ProblemsetPage_CreateProblemRequest)(nil), "syzoj.api.ProblemsetPage.CreateProblemRequest")
-	proto.RegisterType((*ProblemViewPage)(nil), "syzoj.api.ProblemViewPage")
-	proto.RegisterType((*ProblemViewPage_EditStatementRequest)(nil), "syzoj.api.ProblemViewPage.EditStatementRequest")
-	proto.RegisterType((*ProblemViewPage_RemoveJudgeRequest)(nil), "syzoj.api.ProblemViewPage.RemoveJudgeRequest")
-	proto.RegisterType((*ProblemViewPage_AddJudgeTraditionalRequest)(nil), "syzoj.api.ProblemViewPage.AddJudgeTraditionalRequest")
-	proto.RegisterType((*ProblemViewPage_SubmitJudgeTraditionalRequest)(nil), "syzoj.api.ProblemViewPage.SubmitJudgeTraditionalRequest")
-	proto.RegisterType((*ProblemViewPage_SubmitJudgeTraditionalResponse)(nil), "syzoj.api.ProblemViewPage.SubmitJudgeTraditionalResponse")
-	proto.RegisterType((*DebugPage)(nil), "syzoj.api.DebugPage")
+	proto.RegisterType((*LoginRequest)(nil), "syzoj.api.LoginRequest")
+	proto.RegisterType((*LoginResponse)(nil), "syzoj.api.LoginResponse")
+	proto.RegisterType((*RegisterRequest)(nil), "syzoj.api.RegisterRequest")
+	proto.RegisterType((*RegisterResponse)(nil), "syzoj.api.RegisterResponse")
+	proto.RegisterType((*ProblemsetCreateRequest)(nil), "syzoj.api.ProblemsetCreateRequest")
+	proto.RegisterType((*ProblemsetCreateResponse)(nil), "syzoj.api.ProblemsetCreateResponse")
+	proto.RegisterType((*ProblemsetGetResponse)(nil), "syzoj.api.ProblemsetGetResponse")
+	proto.RegisterType((*ProblemsetAddProblemRequest)(nil), "syzoj.api.ProblemsetAddProblemRequest")
+	proto.RegisterType((*ProblemsetAddProblemResponse)(nil), "syzoj.api.ProblemsetAddProblemResponse")
+	proto.RegisterType((*ProblemGetResponse)(nil), "syzoj.api.ProblemGetResponse")
+	proto.RegisterType((*ProblemUpdateRequest)(nil), "syzoj.api.ProblemUpdateRequest")
 	proto.RegisterType((*DebugAddJudgerRequest)(nil), "syzoj.api.DebugAddJudgerRequest")
 	proto.RegisterType((*DebugAddJudgerResponse)(nil), "syzoj.api.DebugAddJudgerResponse")
 }
@@ -1204,84 +800,18 @@ func (m *Response) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Mutations) > 0 {
-		for _, msg := range m.Mutations {
-			dAtA[i] = 0x1a
-			i++
-			i = encodeVarintSyzojApi(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *Mutation) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Mutation) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Path != nil {
+	if m.Result != nil {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Path)))
-		i += copy(dAtA[i:], *m.Path)
-	}
-	if m.Method != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Method)))
-		i += copy(dAtA[i:], *m.Method)
-	}
-	if m.Value != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Value.Size()))
-		n1, err := m.Value.MarshalTo(dAtA[i:])
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Result.Size()))
+		n1, err := m.Result.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n1
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *Error) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Error) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
 	if m.Error != nil {
-		dAtA[i] = 0xa
+		dAtA[i] = 0x12
 		i++
 		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Error)))
 		i += copy(dAtA[i:], *m.Error)
@@ -1292,7 +822,7 @@ func (m *Error) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *Path) Marshal() (dAtA []byte, err error) {
+func (m *LoginRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1302,97 +832,7 @@ func (m *Path) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Path) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Path != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Path)))
-		i += copy(dAtA[i:], *m.Path)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *NotFoundPage) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *NotFoundPage) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *IndexPage) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *IndexPage) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *LoginPage) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *LoginPage) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *LoginPage_LoginRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *LoginPage_LoginRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *LoginRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -1415,7 +855,7 @@ func (m *LoginPage_LoginRequest) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *RegisterPage) Marshal() (dAtA []byte, err error) {
+func (m *LoginResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1425,167 +865,26 @@ func (m *RegisterPage) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *RegisterPage) MarshalTo(dAtA []byte) (int, error) {
+func (m *LoginResponse) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *RegisterPage_RegisterRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RegisterPage_RegisterRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.UserName != nil {
-		dAtA[i] = 0xa
+	if m.Success != nil {
+		dAtA[i] = 0x8
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.UserName)))
-		i += copy(dAtA[i:], *m.UserName)
-	}
-	if m.Password != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Password)))
-		i += copy(dAtA[i:], *m.Password)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *ProblemsetCreatePage) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ProblemsetCreatePage) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *ProblemsetCreatePage_CreateRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ProblemsetCreatePage_CreateRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.ProblemsetTitle != nil {
-		dAtA[i] = 0x82
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.ProblemsetTitle)))
-		i += copy(dAtA[i:], *m.ProblemsetTitle)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *ProblemsetPage) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ProblemsetPage) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.ProblemEntry) > 0 {
-		for _, msg := range m.ProblemEntry {
-			dAtA[i] = 0x82
-			i++
-			dAtA[i] = 0x1
-			i++
-			i = encodeVarintSyzojApi(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
+		if *m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *ProblemsetPage_ProblemEntry) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ProblemsetPage_ProblemEntry) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Id != nil {
-		dAtA[i] = 0xa
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Id)))
-		i += copy(dAtA[i:], *m.Id)
 	}
-	if m.ProblemId != nil {
+	if m.Reason != nil {
 		dAtA[i] = 0x12
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.ProblemId)))
-		i += copy(dAtA[i:], *m.ProblemId)
-	}
-	if m.ProblemTitle != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.ProblemTitle)))
-		i += copy(dAtA[i:], *m.ProblemTitle)
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Reason)))
+		i += copy(dAtA[i:], *m.Reason)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -1593,7 +892,7 @@ func (m *ProblemsetPage_ProblemEntry) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *ProblemsetPage_CreateProblemRequest) Marshal() (dAtA []byte, err error) {
+func (m *RegisterRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1603,18 +902,22 @@ func (m *ProblemsetPage_CreateProblemRequest) Marshal() (dAtA []byte, err error)
 	return dAtA[:n], nil
 }
 
-func (m *ProblemsetPage_CreateProblemRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *RegisterRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.ProblemTitle != nil {
-		dAtA[i] = 0x82
+	if m.UserName != nil {
+		dAtA[i] = 0xa
 		i++
-		dAtA[i] = 0x1
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.UserName)))
+		i += copy(dAtA[i:], *m.UserName)
+	}
+	if m.Password != nil {
+		dAtA[i] = 0x12
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.ProblemTitle)))
-		i += copy(dAtA[i:], *m.ProblemTitle)
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Password)))
+		i += copy(dAtA[i:], *m.Password)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -1622,7 +925,7 @@ func (m *ProblemsetPage_CreateProblemRequest) MarshalTo(dAtA []byte) (int, error
 	return i, nil
 }
 
-func (m *ProblemViewPage) Marshal() (dAtA []byte, err error) {
+func (m *RegisterResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1632,38 +935,100 @@ func (m *ProblemViewPage) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ProblemViewPage) MarshalTo(dAtA []byte) (int, error) {
+func (m *RegisterResponse) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.ProblemTitle != nil {
-		dAtA[i] = 0x82
+	if m.Success != nil {
+		dAtA[i] = 0x8
 		i++
-		dAtA[i] = 0x1
+		if *m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.ProblemTitle)))
-		i += copy(dAtA[i:], *m.ProblemTitle)
 	}
-	if m.ProblemStatement != nil {
-		dAtA[i] = 0x8a
+	if m.Reason != nil {
+		dAtA[i] = 0x12
 		i++
-		dAtA[i] = 0x1
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Reason)))
+		i += copy(dAtA[i:], *m.Reason)
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *ProblemsetCreateRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ProblemsetCreateRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Problemset != nil {
+		dAtA[i] = 0xa
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(m.ProblemStatement.Size()))
-		n2, err := m.ProblemStatement.MarshalTo(dAtA[i:])
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Problemset.Size()))
+		n2, err := m.Problemset.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n2
 	}
-	if m.ProblemJudge != nil {
-		dAtA[i] = 0x9a
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *ProblemsetCreateResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ProblemsetCreateResponse) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Success != nil {
+		dAtA[i] = 0x8
 		i++
-		dAtA[i] = 0x1
+		if *m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(m.ProblemJudge.Size()))
-		n3, err := m.ProblemJudge.MarshalTo(dAtA[i:])
+	}
+	if m.Reason != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Reason)))
+		i += copy(dAtA[i:], *m.Reason)
+	}
+	if m.Problemset != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Problemset.Size()))
+		n3, err := m.Problemset.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -1675,7 +1040,7 @@ func (m *ProblemViewPage) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *ProblemViewPage_EditStatementRequest) Marshal() (dAtA []byte, err error) {
+func (m *ProblemsetGetResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1685,16 +1050,32 @@ func (m *ProblemViewPage_EditStatementRequest) Marshal() (dAtA []byte, err error
 	return dAtA[:n], nil
 }
 
-func (m *ProblemViewPage_EditStatementRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *ProblemsetGetResponse) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.Statement != nil {
-		dAtA[i] = 0xa
+	if m.Success != nil {
+		dAtA[i] = 0x8
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Statement.Size()))
-		n4, err := m.Statement.MarshalTo(dAtA[i:])
+		if *m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if m.Reason != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Reason)))
+		i += copy(dAtA[i:], *m.Reason)
+	}
+	if m.Problemset != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Problemset.Size()))
+		n4, err := m.Problemset.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -1706,7 +1087,7 @@ func (m *ProblemViewPage_EditStatementRequest) MarshalTo(dAtA []byte) (int, erro
 	return i, nil
 }
 
-func (m *ProblemViewPage_RemoveJudgeRequest) Marshal() (dAtA []byte, err error) {
+func (m *ProblemsetAddProblemRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1716,37 +1097,16 @@ func (m *ProblemViewPage_RemoveJudgeRequest) Marshal() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *ProblemViewPage_RemoveJudgeRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *ProblemsetAddProblemRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Data != nil {
+	if m.Problem != nil {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Data.Size()))
-		n5, err := m.Data.MarshalTo(dAtA[i:])
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Problem.Size()))
+		n5, err := m.Problem.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -1758,7 +1118,7 @@ func (m *ProblemViewPage_AddJudgeTraditionalRequest) MarshalTo(dAtA []byte) (int
 	return i, nil
 }
 
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) Marshal() (dAtA []byte, err error) {
+func (m *ProblemsetAddProblemResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1768,16 +1128,32 @@ func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) Marshal() (dAtA []byte, 
 	return dAtA[:n], nil
 }
 
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *ProblemsetAddProblemResponse) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.Code != nil {
-		dAtA[i] = 0xa
+	if m.Success != nil {
+		dAtA[i] = 0x8
 		i++
-		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Code.Size()))
-		n6, err := m.Code.MarshalTo(dAtA[i:])
+		if *m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if m.Reason != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Reason)))
+		i += copy(dAtA[i:], *m.Reason)
+	}
+	if m.Problem != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Problem.Size()))
+		n6, err := m.Problem.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -1789,7 +1165,7 @@ func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) MarshalTo(dAtA []byte) (
 	return i, nil
 }
 
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) Marshal() (dAtA []byte, err error) {
+func (m *ProblemGetResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1799,18 +1175,28 @@ func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) Marshal() (dAtA []byte,
 	return dAtA[:n], nil
 }
 
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *ProblemGetResponse) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
+	if m.Problem != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Problem.Size()))
+		n7, err := m.Problem.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n7
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func (m *DebugPage) Marshal() (dAtA []byte, err error) {
+func (m *ProblemUpdateRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1820,11 +1206,21 @@ func (m *DebugPage) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *DebugPage) MarshalTo(dAtA []byte) (int, error) {
+func (m *ProblemUpdateRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
+	if m.Problem != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Problem.Size()))
+		n8, err := m.Problem.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n8
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
@@ -1900,48 +1296,10 @@ func (m *Response) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Mutations) > 0 {
-		for _, e := range m.Mutations {
-			l = e.Size()
-			n += 1 + l + sovSyzojApi(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Mutation) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Path != nil {
-		l = len(*m.Path)
+	if m.Result != nil {
+		l = m.Result.Size()
 		n += 1 + l + sovSyzojApi(uint64(l))
 	}
-	if m.Method != nil {
-		l = len(*m.Method)
-		n += 1 + l + sovSyzojApi(uint64(l))
-	}
-	if m.Value != nil {
-		l = m.Value.Size()
-		n += 1 + l + sovSyzojApi(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Error) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
 	if m.Error != nil {
 		l = len(*m.Error)
 		n += 1 + l + sovSyzojApi(uint64(l))
@@ -1952,59 +1310,7 @@ func (m *Error) Size() (n int) {
 	return n
 }
 
-func (m *Path) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Path != nil {
-		l = len(*m.Path)
-		n += 1 + l + sovSyzojApi(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *NotFoundPage) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *IndexPage) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *LoginPage) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *LoginPage_LoginRequest) Size() (n int) {
+func (m *LoginRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2024,19 +1330,26 @@ func (m *LoginPage_LoginRequest) Size() (n int) {
 	return n
 }
 
-func (m *RegisterPage) Size() (n int) {
+func (m *LoginResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	if m.Success != nil {
+		n += 2
+	}
+	if m.Reason != nil {
+		l = len(*m.Reason)
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
 
-func (m *RegisterPage_RegisterRequest) Size() (n int) {
+func (m *RegisterRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2056,68 +1369,17 @@ func (m *RegisterPage_RegisterRequest) Size() (n int) {
 	return n
 }
 
-func (m *ProblemsetCreatePage) Size() (n int) {
+func (m *RegisterResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
+	if m.Success != nil {
+		n += 2
 	}
-	return n
-}
-
-func (m *ProblemsetCreatePage_CreateRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.ProblemsetTitle != nil {
-		l = len(*m.ProblemsetTitle)
-		n += 2 + l + sovSyzojApi(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ProblemsetPage) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.ProblemEntry) > 0 {
-		for _, e := range m.ProblemEntry {
-			l = e.Size()
-			n += 2 + l + sovSyzojApi(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ProblemsetPage_ProblemEntry) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovSyzojApi(uint64(l))
-	}
-	if m.ProblemId != nil {
-		l = len(*m.ProblemId)
-		n += 1 + l + sovSyzojApi(uint64(l))
-	}
-	if m.ProblemTitle != nil {
-		l = len(*m.ProblemTitle)
+	if m.Reason != nil {
+		l = len(*m.Reason)
 		n += 1 + l + sovSyzojApi(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -2126,54 +1388,14 @@ func (m *ProblemsetPage_ProblemEntry) Size() (n int) {
 	return n
 }
 
-func (m *ProblemsetPage_CreateProblemRequest) Size() (n int) {
+func (m *ProblemsetCreateRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.ProblemTitle != nil {
-		l = len(*m.ProblemTitle)
-		n += 2 + l + sovSyzojApi(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ProblemViewPage) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.ProblemTitle != nil {
-		l = len(*m.ProblemTitle)
-		n += 2 + l + sovSyzojApi(uint64(l))
-	}
-	if m.ProblemStatement != nil {
-		l = m.ProblemStatement.Size()
-		n += 2 + l + sovSyzojApi(uint64(l))
-	}
-	if m.ProblemJudge != nil {
-		l = m.ProblemJudge.Size()
-		n += 2 + l + sovSyzojApi(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ProblemViewPage_EditStatementRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Statement != nil {
-		l = m.Statement.Size()
+	if m.Problemset != nil {
+		l = m.Problemset.Size()
 		n += 1 + l + sovSyzojApi(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -2182,26 +1404,21 @@ func (m *ProblemViewPage_EditStatementRequest) Size() (n int) {
 	return n
 }
 
-func (m *ProblemViewPage_RemoveJudgeRequest) Size() (n int) {
+func (m *ProblemsetCreateResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
+	if m.Success != nil {
+		n += 2
 	}
-	return n
-}
-
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) Size() (n int) {
-	if m == nil {
-		return 0
+	if m.Reason != nil {
+		l = len(*m.Reason)
+		n += 1 + l + sovSyzojApi(uint64(l))
 	}
-	var l int
-	_ = l
-	if m.Data != nil {
-		l = m.Data.Size()
+	if m.Problemset != nil {
+		l = m.Problemset.Size()
 		n += 1 + l + sovSyzojApi(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -2210,14 +1427,21 @@ func (m *ProblemViewPage_AddJudgeTraditionalRequest) Size() (n int) {
 	return n
 }
 
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) Size() (n int) {
+func (m *ProblemsetGetResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Code != nil {
-		l = m.Code.Size()
+	if m.Success != nil {
+		n += 2
+	}
+	if m.Reason != nil {
+		l = len(*m.Reason)
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.Problemset != nil {
+		l = m.Problemset.Size()
 		n += 1 + l + sovSyzojApi(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -2226,24 +1450,71 @@ func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) Size() (n int) {
 	return n
 }
 
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) Size() (n int) {
+func (m *ProblemsetAddProblemRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	if m.Problem != nil {
+		l = m.Problem.Size()
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
 
-func (m *DebugPage) Size() (n int) {
+func (m *ProblemsetAddProblemResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	if m.Success != nil {
+		n += 2
+	}
+	if m.Reason != nil {
+		l = len(*m.Reason)
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.Problem != nil {
+		l = m.Problem.Size()
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ProblemGetResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Problem != nil {
+		l = m.Problem.Size()
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ProblemUpdateRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Problem != nil {
+		l = m.Problem.Size()
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -2324,9 +1595,9 @@ func (m *Response) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: Response: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 3:
+		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Mutations", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Result", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2350,207 +1621,14 @@ func (m *Response) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Mutations = append(m.Mutations, &Mutation{})
-			if err := m.Mutations[len(m.Mutations)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.Result == nil {
+				m.Result = &types.Any{}
+			}
+			if err := m.Result.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Mutation) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Mutation: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Mutation: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Path", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSyzojApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Path = &s
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Method", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSyzojApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Method = &s
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSyzojApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Value == nil {
-				m.Value = &types.Any{}
-			}
-			if err := m.Value.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Error) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Error: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Error: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
 			}
@@ -2602,241 +1680,7 @@ func (m *Error) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Path) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Path: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Path: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Path", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSyzojApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Path = &s
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *NotFoundPage) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: NotFoundPage: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: NotFoundPage: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *IndexPage) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: IndexPage: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: IndexPage: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *LoginPage) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: LoginPage: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: LoginPage: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *LoginPage_LoginRequest) Unmarshal(dAtA []byte) error {
+func (m *LoginRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2947,7 +1791,7 @@ func (m *LoginPage_LoginRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *RegisterPage) Unmarshal(dAtA []byte) error {
+func (m *LoginResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2970,12 +1814,63 @@ func (m *RegisterPage) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: RegisterPage: wiretype end group for non-group")
+			return fmt.Errorf("proto: LoginResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RegisterPage: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: LoginResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.Success = &b
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.Reason = &s
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipSyzojApi(dAtA[iNdEx:])
@@ -2998,7 +1893,7 @@ func (m *RegisterPage) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *RegisterPage_RegisterRequest) Unmarshal(dAtA []byte) error {
+func (m *RegisterRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3109,7 +2004,7 @@ func (m *RegisterPage_RegisterRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ProblemsetCreatePage) Unmarshal(dAtA []byte) error {
+func (m *RegisterResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3132,66 +2027,36 @@ func (m *ProblemsetCreatePage) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ProblemsetCreatePage: wiretype end group for non-group")
+			return fmt.Errorf("proto: RegisterResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ProblemsetCreatePage: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: RegisterResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ProblemsetCreatePage_CreateRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: CreateRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CreateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 16:
+			b := bool(v != 0)
+			m.Success = &b
+		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProblemsetTitle", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3217,7 +2082,7 @@ func (m *ProblemsetCreatePage_CreateRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(dAtA[iNdEx:postIndex])
-			m.ProblemsetTitle = &s
+			m.Reason = &s
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3241,7 +2106,7 @@ func (m *ProblemsetCreatePage_CreateRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ProblemsetPage) Unmarshal(dAtA []byte) error {
+func (m *ProblemsetCreateRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3264,15 +2129,15 @@ func (m *ProblemsetPage) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ProblemsetPage: wiretype end group for non-group")
+			return fmt.Errorf("proto: ProblemsetCreateRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ProblemsetPage: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ProblemsetCreateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 16:
+		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProblemEntry", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Problemset", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3296,8 +2161,10 @@ func (m *ProblemsetPage) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ProblemEntry = append(m.ProblemEntry, &ProblemsetPage_ProblemEntry{})
-			if err := m.ProblemEntry[len(m.ProblemEntry)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.Problemset == nil {
+				m.Problemset = &Problemset{}
+			}
+			if err := m.Problemset.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3323,7 +2190,7 @@ func (m *ProblemsetPage) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ProblemsetPage_ProblemEntry) Unmarshal(dAtA []byte) error {
+func (m *ProblemsetCreateResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3346,17 +2213,17 @@ func (m *ProblemsetPage_ProblemEntry) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ProblemEntry: wiretype end group for non-group")
+			return fmt.Errorf("proto: ProblemsetCreateResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ProblemEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ProblemsetCreateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
 			}
-			var stringLen uint64
+			var v int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowSyzojApi
@@ -3366,25 +2233,16 @@ func (m *ProblemsetPage_ProblemEntry) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Id = &s
-			iNdEx = postIndex
+			b := bool(v != 0)
+			m.Success = &b
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProblemId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3410,11 +2268,116 @@ func (m *ProblemsetPage_ProblemEntry) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(dAtA[iNdEx:postIndex])
-			m.ProblemId = &s
+			m.Reason = &s
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProblemTitle", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Problemset", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Problemset == nil {
+				m.Problemset = &Problemset{}
+			}
+			if err := m.Problemset.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSyzojApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ProblemsetGetResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSyzojApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ProblemsetGetResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ProblemsetGetResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.Success = &b
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3440,7 +2403,40 @@ func (m *ProblemsetPage_ProblemEntry) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(dAtA[iNdEx:postIndex])
-			m.ProblemTitle = &s
+			m.Reason = &s
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Problemset", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Problemset == nil {
+				m.Problemset = &Problemset{}
+			}
+			if err := m.Problemset.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3464,7 +2460,7 @@ func (m *ProblemsetPage_ProblemEntry) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ProblemsetPage_CreateProblemRequest) Unmarshal(dAtA []byte) error {
+func (m *ProblemsetAddProblemRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3487,15 +2483,120 @@ func (m *ProblemsetPage_CreateProblemRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CreateProblemRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: ProblemsetAddProblemRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CreateProblemRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ProblemsetAddProblemRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 16:
+		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProblemTitle", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Problem", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Problem == nil {
+				m.Problem = &Problem{}
+			}
+			if err := m.Problem.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSyzojApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ProblemsetAddProblemResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSyzojApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ProblemsetAddProblemResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ProblemsetAddProblemResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.Success = &b
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3521,92 +2622,11 @@ func (m *ProblemsetPage_CreateProblemRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(dAtA[iNdEx:postIndex])
-			m.ProblemTitle = &s
+			m.Reason = &s
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ProblemViewPage) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ProblemViewPage: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ProblemViewPage: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 16:
+		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProblemTitle", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSyzojApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ProblemTitle = &s
-			iNdEx = postIndex
-		case 17:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProblemStatement", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Problem", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3630,43 +2650,10 @@ func (m *ProblemViewPage) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ProblemStatement == nil {
-				m.ProblemStatement = &ProblemStatement{}
+			if m.Problem == nil {
+				m.Problem = &Problem{}
 			}
-			if err := m.ProblemStatement.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 19:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProblemJudge", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSyzojApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.ProblemJudge == nil {
-				m.ProblemJudge = &ProblemJudge{}
-			}
-			if err := m.ProblemJudge.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Problem.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3692,7 +2679,7 @@ func (m *ProblemViewPage) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ProblemViewPage_EditStatementRequest) Unmarshal(dAtA []byte) error {
+func (m *ProblemGetResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3715,15 +2702,15 @@ func (m *ProblemViewPage_EditStatementRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EditStatementRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: ProblemGetResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EditStatementRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ProblemGetResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Statement", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Problem", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3747,10 +2734,10 @@ func (m *ProblemViewPage_EditStatementRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Statement == nil {
-				m.Statement = &ProblemStatement{}
+			if m.Problem == nil {
+				m.Problem = &Problem{}
 			}
-			if err := m.Statement.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Problem.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3776,7 +2763,7 @@ func (m *ProblemViewPage_EditStatementRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ProblemViewPage_RemoveJudgeRequest) Unmarshal(dAtA []byte) error {
+func (m *ProblemUpdateRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3799,66 +2786,15 @@ func (m *ProblemViewPage_RemoveJudgeRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: RemoveJudgeRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: ProblemUpdateRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RemoveJudgeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ProblemViewPage_AddJudgeTraditionalRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: AddJudgeTraditionalRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AddJudgeTraditionalRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ProblemUpdateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Problem", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3882,199 +2818,13 @@ func (m *ProblemViewPage_AddJudgeTraditionalRequest) Unmarshal(dAtA []byte) erro
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Data == nil {
-				m.Data = &TraditionalJudgeData{}
+			if m.Problem == nil {
+				m.Problem = &Problem{}
 			}
-			if err := m.Data.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Problem.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ProblemViewPage_SubmitJudgeTraditionalRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: SubmitJudgeTraditionalRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SubmitJudgeTraditionalRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Code", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSyzojApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Code == nil {
-				m.Code = &TraditionalJudgeCode{}
-			}
-			if err := m.Code.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ProblemViewPage_SubmitJudgeTraditionalResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: SubmitJudgeTraditionalResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SubmitJudgeTraditionalResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyzojApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyzojApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *DebugPage) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyzojApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: DebugPage: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DebugPage: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipSyzojApi(dAtA[iNdEx:])
@@ -4364,52 +3114,38 @@ var (
 	ErrIntOverflowSyzojApi   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("syzoj.api.proto", fileDescriptor_syzoj_api_a5b1a8188f8ab0c7) }
+func init() { proto.RegisterFile("syzoj.api.proto", fileDescriptor_syzoj_api_a015b6c960700244) }
 
-var fileDescriptor_syzoj_api_a5b1a8188f8ab0c7 = []byte{
-	// 694 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0x51, 0x4f, 0x13, 0x4d,
-	0x14, 0xcd, 0x52, 0xf8, 0xd2, 0xbd, 0x2d, 0xb4, 0x0c, 0xfd, 0x70, 0x59, 0xd2, 0xa6, 0xac, 0x89,
-	0x41, 0x13, 0xb6, 0x4a, 0xe2, 0x8b, 0x44, 0x13, 0x04, 0x34, 0xa0, 0x12, 0xb2, 0x6d, 0x88, 0xe1,
-	0xa5, 0x99, 0x32, 0xd7, 0x65, 0xb1, 0xbb, 0x53, 0x77, 0x67, 0xc1, 0xfa, 0x0b, 0x7d, 0xf4, 0x27,
-	0x18, 0x7e, 0x87, 0x31, 0x66, 0x67, 0x67, 0xba, 0x45, 0xd0, 0x90, 0xf8, 0xd2, 0xf4, 0x9c, 0x39,
-	0xf7, 0x9c, 0x7b, 0x67, 0x67, 0x06, 0x6a, 0xc9, 0xf8, 0x0b, 0x3f, 0x77, 0xe9, 0x28, 0x70, 0x47,
-	0x31, 0x17, 0x9c, 0x98, 0x13, 0xc2, 0x5e, 0xf1, 0x39, 0xf7, 0x87, 0xd8, 0x91, 0x0b, 0x83, 0xf4,
-	0x43, 0x87, 0x46, 0xe3, 0x5c, 0x65, 0x2f, 0xe6, 0xaa, 0x90, 0x33, 0x1c, 0xe6, 0x94, 0xf3, 0x1c,
-	0xca, 0x1e, 0x26, 0x23, 0x1e, 0x25, 0x48, 0x9e, 0x80, 0x19, 0xa6, 0x82, 0x8a, 0x80, 0x47, 0x89,
-	0x55, 0x6a, 0x97, 0xd6, 0x2b, 0x9b, 0x4b, 0x6e, 0x91, 0xf4, 0x4e, 0xad, 0x79, 0x85, 0xca, 0x19,
-	0x40, 0x59, 0xd3, 0x84, 0xc0, 0xec, 0x88, 0x8a, 0x33, 0xcb, 0x68, 0x1b, 0xeb, 0xa6, 0x27, 0xff,
-	0x93, 0x65, 0xf8, 0x2f, 0x44, 0x71, 0xc6, 0x99, 0x35, 0x23, 0x59, 0x85, 0xc8, 0x23, 0x98, 0xbb,
-	0xa0, 0xc3, 0x14, 0xad, 0x52, 0xdb, 0x58, 0xaf, 0x6c, 0x36, 0xdc, 0xbc, 0x69, 0x57, 0x37, 0xed,
-	0x6e, 0x47, 0x63, 0x2f, 0x97, 0x38, 0x4d, 0x98, 0xdb, 0x8b, 0x63, 0x1e, 0x93, 0x06, 0xcc, 0x61,
-	0xf6, 0x47, 0x25, 0xe4, 0xc0, 0xb1, 0x61, 0xf6, 0x28, 0x8b, 0xba, 0x25, 0xde, 0x59, 0x80, 0xea,
-	0x21, 0x17, 0xaf, 0x78, 0x1a, 0xb1, 0x23, 0xea, 0xa3, 0x53, 0x01, 0x73, 0x3f, 0x62, 0xf8, 0x59,
-	0x82, 0x1e, 0x98, 0x6f, 0xb9, 0x1f, 0x44, 0x19, 0xb0, 0x5f, 0x43, 0x55, 0x02, 0x0f, 0x3f, 0xa5,
-	0x98, 0x08, 0xb2, 0x0a, 0x66, 0x9a, 0x60, 0xdc, 0x8f, 0x68, 0x88, 0xca, 0xb2, 0x9c, 0x11, 0x87,
-	0x34, 0x44, 0x62, 0x43, 0x79, 0x44, 0x93, 0xe4, 0x92, 0xc7, 0x7a, 0xae, 0x09, 0x76, 0x4e, 0xa0,
-	0xea, 0xa1, 0x1f, 0x24, 0x02, 0x63, 0x69, 0x7c, 0x00, 0x35, 0x8d, 0xff, 0xd9, 0xdb, 0x83, 0xc6,
-	0x51, 0xcc, 0x07, 0x43, 0x0c, 0x13, 0x14, 0x3b, 0x31, 0x52, 0x81, 0x32, 0xe3, 0x19, 0xcc, 0xe7,
-	0x48, 0x27, 0x3c, 0x84, 0xfa, 0x68, 0x22, 0xec, 0x8b, 0x40, 0x0c, 0xd1, 0xaa, 0x4b, 0xb3, 0x5a,
-	0xc1, 0xf7, 0x32, 0xda, 0xf9, 0x69, 0xc0, 0x42, 0x61, 0x9a, 0xd9, 0x91, 0x37, 0x30, 0xaf, 0x54,
-	0x7d, 0x8c, 0x44, 0x3c, 0xb6, 0xea, 0xf2, 0x2c, 0x3c, 0x98, 0x3a, 0x0b, 0xd7, 0x2b, 0x34, 0xdc,
-	0xcb, 0xd4, 0x5e, 0x75, 0x34, 0x85, 0xec, 0x01, 0x54, 0xa7, 0x57, 0xc9, 0x02, 0xcc, 0x04, 0x4c,
-	0x4d, 0x3d, 0x13, 0x30, 0xd2, 0x04, 0xd0, 0x61, 0x81, 0x9e, 0xd8, 0x54, 0xcc, 0x3e, 0x23, 0xf7,
-	0x8b, 0x5e, 0xf2, 0x31, 0x4a, 0x52, 0xa1, 0x33, 0xe4, 0x0c, 0xf6, 0x16, 0x34, 0xd4, 0x6e, 0xe4,
-	0xac, 0xde, 0x86, 0x1b, 0xc5, 0xf5, 0x9b, 0xc5, 0xce, 0x8f, 0x12, 0xd4, 0x54, 0xdd, 0x71, 0x80,
-	0x97, 0x72, 0x07, 0xee, 0x52, 0x48, 0x0e, 0x60, 0x51, 0x8b, 0x12, 0x41, 0x05, 0x86, 0x18, 0x09,
-	0x6b, 0x51, 0x9e, 0xe7, 0xa6, 0x3b, 0x7d, 0xd3, 0x94, 0x7b, 0x57, 0x8b, 0x3c, 0xfd, 0x71, 0x26,
-	0x0c, 0x79, 0x51, 0x04, 0x9e, 0xa7, 0xcc, 0x47, 0x6b, 0x49, 0xfa, 0xac, 0xdc, 0xe6, 0x73, 0x90,
-	0x09, 0x26, 0xbd, 0x48, 0x64, 0x77, 0xa1, 0xb1, 0xc7, 0x02, 0x51, 0x44, 0xa8, 0x1d, 0xd8, 0x02,
-	0xb3, 0xe8, 0xcd, 0xb8, 0x4b, 0x6f, 0x85, 0xde, 0x6e, 0x00, 0xf1, 0x30, 0xe4, 0x17, 0x98, 0x27,
-	0xe6, 0x96, 0x76, 0x17, 0xec, 0x6d, 0xc6, 0x24, 0xd5, 0x8b, 0x29, 0x0b, 0xb2, 0xbb, 0x4f, 0x87,
-	0x3a, 0xf0, 0x29, 0xcc, 0x32, 0x2a, 0xa8, 0xca, 0x5a, 0xbb, 0x96, 0x35, 0x25, 0x97, 0xe5, 0xbb,
-	0x54, 0x50, 0x4f, 0xca, 0xed, 0x63, 0x68, 0x76, 0xd3, 0x41, 0x18, 0x88, 0xbf, 0xf8, 0x9e, 0x72,
-	0x86, 0x77, 0xf2, 0xdd, 0xe1, 0x0c, 0x3d, 0x29, 0xb7, 0xdb, 0xd0, 0xfa, 0x93, 0x6f, 0xfe, 0xe8,
-	0x65, 0x4f, 0xc2, 0x2e, 0x0e, 0x52, 0x5f, 0x3e, 0x09, 0xf7, 0xe0, 0x7f, 0x09, 0xf4, 0x80, 0xfa,
-	0xca, 0x3a, 0xef, 0x61, 0xf9, 0xf7, 0x05, 0xf5, 0x68, 0xae, 0x82, 0x29, 0xbf, 0x58, 0xdc, 0x9f,
-	0x1c, 0xeb, 0x72, 0x4e, 0xec, 0x33, 0xb2, 0x06, 0x55, 0xb5, 0x28, 0xf8, 0x47, 0x8c, 0xd4, 0xf1,
-	0xae, 0xe4, 0x5c, 0x2f, 0xa3, 0x5e, 0x3e, 0xfe, 0x7a, 0xd5, 0x32, 0xbe, 0x5d, 0xb5, 0x8c, 0xef,
-	0x57, 0x2d, 0xe3, 0xc4, 0xf1, 0x03, 0x71, 0x96, 0x0e, 0xdc, 0x53, 0x1e, 0x76, 0xe4, 0x88, 0xf9,
-	0xef, 0x46, 0xe4, 0x6f, 0xf8, 0xbc, 0x23, 0xc7, 0xfd, 0x15, 0x00, 0x00, 0xff, 0xff, 0x48, 0x74,
-	0x9c, 0x17, 0xfd, 0x05, 0x00, 0x00,
+var fileDescriptor_syzoj_api_a015b6c960700244 = []byte{
+	// 465 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x94, 0x4f, 0x6b, 0x13, 0x41,
+	0x18, 0xc6, 0x19, 0x8b, 0x36, 0xfb, 0xb6, 0x52, 0x5d, 0xd2, 0x26, 0x26, 0x12, 0xea, 0x9e, 0x7a,
+	0xb0, 0x13, 0xf1, 0xe2, 0x39, 0x1a, 0x2c, 0x16, 0x2d, 0x32, 0x28, 0x88, 0x97, 0xb2, 0xc9, 0xbc,
+	0x8e, 0x5b, 0xb3, 0x3b, 0xeb, 0xfc, 0x41, 0xe2, 0x49, 0x04, 0xbf, 0x9b, 0x47, 0x3f, 0x82, 0xe4,
+	0x93, 0x48, 0x76, 0x66, 0xb2, 0x6b, 0xed, 0xa1, 0x8d, 0x87, 0x5e, 0x16, 0xde, 0xe7, 0x7d, 0xf6,
+	0xe1, 0x37, 0xef, 0xfc, 0x81, 0x1d, 0x3d, 0xff, 0x2a, 0xcf, 0x68, 0x5a, 0x66, 0xb4, 0x54, 0xd2,
+	0xc8, 0x38, 0x5a, 0x09, 0xbd, 0x7b, 0x42, 0x4a, 0x31, 0xc3, 0x61, 0xd5, 0x98, 0xd8, 0x0f, 0xc3,
+	0xb4, 0x98, 0x3b, 0x57, 0xef, 0xae, 0x73, 0xe5, 0x92, 0xe3, 0xec, 0x6f, 0xe9, 0xcc, 0x72, 0x81,
+	0x4e, 0x4a, 0x4e, 0xa0, 0xc5, 0x50, 0x97, 0xb2, 0xd0, 0x18, 0x3f, 0x84, 0x5b, 0x0a, 0xb5, 0x9d,
+	0x99, 0x2e, 0xd9, 0x27, 0x07, 0x5b, 0x8f, 0xdb, 0xd4, 0xa5, 0xd3, 0x90, 0x4e, 0x47, 0xc5, 0x9c,
+	0x79, 0x4f, 0xdc, 0x86, 0x9b, 0xa8, 0x94, 0x54, 0xdd, 0x1b, 0xfb, 0xe4, 0x20, 0x62, 0xae, 0x48,
+	0x8e, 0x60, 0xfb, 0xa5, 0x14, 0x59, 0xc1, 0xf0, 0xb3, 0x45, 0x6d, 0xe2, 0x3e, 0x44, 0x56, 0xa3,
+	0x3a, 0x2d, 0xd2, 0x1c, 0xab, 0xd8, 0x88, 0xb5, 0x96, 0xc2, 0x49, 0x9a, 0x63, 0xdc, 0x83, 0x56,
+	0x99, 0x6a, 0xfd, 0x45, 0x2a, 0xee, 0x53, 0x56, 0x75, 0x32, 0x82, 0xdb, 0x3e, 0xc8, 0xd3, 0x75,
+	0x61, 0x53, 0xdb, 0xe9, 0x14, 0xb5, 0xae, 0x72, 0x5a, 0x2c, 0x94, 0xf1, 0xde, 0x92, 0x3b, 0xd5,
+	0xb2, 0xf0, 0x21, 0xbe, 0x4a, 0x8e, 0x61, 0x87, 0xa1, 0xc8, 0xb4, 0x41, 0xf5, 0xdf, 0x38, 0x63,
+	0xb8, 0x53, 0x67, 0xad, 0x4d, 0xc4, 0xa0, 0xf3, 0x5a, 0xc9, 0xc9, 0x0c, 0x73, 0x8d, 0xe6, 0x99,
+	0xc2, 0xd4, 0x60, 0x20, 0x7b, 0x02, 0x50, 0xae, 0x5a, 0x7e, 0x03, 0x3a, 0xb4, 0xb9, 0x87, 0xf5,
+	0x9f, 0xac, 0x61, 0x4d, 0x7e, 0x10, 0xe8, 0xfe, 0x1b, 0xba, 0x2e, 0xe2, 0x39, 0x8e, 0x8d, 0xcb,
+	0x73, 0x7c, 0x27, 0xb0, 0x5b, 0xb7, 0x8e, 0xd0, 0x5c, 0x07, 0xc4, 0x2b, 0xe8, 0xd7, 0x9d, 0x11,
+	0xe7, 0xbe, 0x08, 0x43, 0xa6, 0xb0, 0xe9, 0xcd, 0xab, 0x23, 0x7e, 0x41, 0x28, 0x0b, 0xa6, 0xe4,
+	0x1b, 0x81, 0xfb, 0x17, 0xe7, 0xad, 0xbd, 0xb4, 0x06, 0xc2, 0xc6, 0x65, 0x10, 0xc6, 0x10, 0x7b,
+	0xad, 0x39, 0xd2, 0xab, 0x2e, 0xe4, 0x39, 0xb4, 0xbd, 0xf6, 0xb6, 0xe4, 0x8d, 0x53, 0x77, 0xd5,
+	0x9c, 0x0e, 0xec, 0x8e, 0x71, 0x62, 0xc5, 0x88, 0xf3, 0xe3, 0xe5, 0x2b, 0x12, 0x2e, 0x56, 0xf2,
+	0x0e, 0xf6, 0xce, 0x37, 0x3c, 0x6a, 0x1f, 0xa2, 0xea, 0xc1, 0x51, 0xa7, 0x19, 0x0f, 0x57, 0xce,
+	0x09, 0x2f, 0x78, 0xfc, 0x00, 0xb6, 0x7d, 0xd3, 0xc8, 0x4f, 0x18, 0x66, 0xb5, 0xe5, 0xb4, 0x37,
+	0x4b, 0xe9, 0xe9, 0xa3, 0x9f, 0x8b, 0x01, 0xf9, 0xb5, 0x18, 0x90, 0xdf, 0x8b, 0x01, 0x79, 0x9f,
+	0x88, 0xcc, 0x7c, 0xb4, 0x13, 0x3a, 0x95, 0xf9, 0xb0, 0x22, 0x75, 0xdf, 0xc3, 0x42, 0x1c, 0x0a,
+	0x39, 0xac, 0xa8, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0xeb, 0x98, 0x23, 0x32, 0x31, 0x05, 0x00,
+	0x00,
 }

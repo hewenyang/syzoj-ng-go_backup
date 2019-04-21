@@ -4,6 +4,7 @@ package syzoj.api;
 
 import "google/protobuf/any.proto";
 import "syzoj.model.proto";
+import "syzoj.judge.proto";
 
 option go_package = "github.com/syzoj/syzoj-ng-go/model";
 
@@ -12,82 +13,62 @@ option go_package = "github.com/syzoj/syzoj-ng-go/model";
 
 ////////// Basic messages
 message Response {
-    repeated Mutation mutations = 3;
+    optional google.protobuf.Any result = 1;
+    optional string error = 2;
 }
 
-message Mutation {
-    optional string path = 1;
-    optional string method = 2;
-    optional google.protobuf.Any value = 3;
+message LoginRequest {
+    optional string user_name = 1;
+    optional string password = 2;
 }
 
-message Error {
-    optional string error = 1;
+message LoginResponse {
+    optional bool success = 1;
+    optional string reason = 2;
 }
 
-message Path {
-    optional string path = 1;
+message RegisterRequest {
+    optional string user_name = 1;
+    optional string password = 2;
 }
 
-message NotFoundPage {
+message RegisterResponse {
+    optional bool success = 1;
+    optional string reason = 2;
 }
 
-message IndexPage {
+message ProblemsetCreateRequest {
+    optional syzoj.model.Problemset problemset = 1;
 }
 
-message LoginPage {
-    message LoginRequest {
-        optional string user_name = 1;
-        optional string password = 2;
-    }
+message ProblemsetCreateResponse {
+    optional bool success = 1;
+    optional string reason = 2;
+    optional syzoj.model.Problemset problemset = 3;
 }
 
-message RegisterPage {
-    message RegisterRequest {
-        optional string user_name = 1;
-        optional string password = 2;
-    }
+message ProblemsetGetResponse {
+    optional bool success = 1;
+    optional string reason = 2;
+    optional syzoj.model.Problemset problemset = 3;
 }
 
-message ProblemsetCreatePage {
-    message CreateRequest {
-        optional string problemset_title = 16;
-    }
+message ProblemsetAddProblemRequest {
+    optional syzoj.model.Problem problem = 1;
 }
 
-message ProblemsetPage {
-    repeated ProblemEntry problem_entry = 16;
-    message ProblemEntry {
-        optional string id = 1;
-        optional string problem_id = 2;
-        optional string problem_title = 3;
-    }
-    message CreateProblemRequest {
-        optional string problem_title = 16;
-    }
+message ProblemsetAddProblemResponse {
+    optional bool success = 1;
+    optional string reason = 2;
+    optional syzoj.model.Problem problem = 3;
 }
 
-message ProblemViewPage {
-    optional string problem_title = 16;
-    optional syzoj.model.ProblemStatement problem_statement = 17;
-    optional syzoj.model.ProblemJudge problem_judge = 19;
-    message EditStatementRequest {
-        optional syzoj.model.ProblemStatement statement = 1;
-    }
-    message RemoveJudgeRequest {
-    }
-    message AddJudgeTraditionalRequest {
-    	optional syzoj.model.TraditionalJudgeData data = 1;
-    }
-    message SubmitJudgeTraditionalRequest {
-    	optional syzoj.model.TraditionalJudgeCode code = 1;
-    }
-    message SubmitJudgeTraditionalResponse {
-    }
+message ProblemGetResponse {
+    optional syzoj.model.Problem problem = 1;
 }
 
-// Debug API
-message DebugPage {
+message ProblemUpdateRequest {
+    optional syzoj.model.Problem problem = 1;
 }
 
 message DebugAddJudgerRequest {

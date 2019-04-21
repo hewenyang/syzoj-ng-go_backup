@@ -6,12 +6,13 @@ package judge // import "github.com/syzoj/syzoj-ng-go/model/judge"
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import model "github.com/syzoj/syzoj-ng-go/model"
 
 import (
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )
+
+import encoding_binary "encoding/binary"
 
 import io "io"
 
@@ -38,7 +39,7 @@ func (m *JudgerAuth) Reset()         { *m = JudgerAuth{} }
 func (m *JudgerAuth) String() string { return proto.CompactTextString(m) }
 func (*JudgerAuth) ProtoMessage()    {}
 func (*JudgerAuth) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{0}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{0}
 }
 func (m *JudgerAuth) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -92,7 +93,7 @@ func (m *FetchTaskRequest) Reset()         { *m = FetchTaskRequest{} }
 func (m *FetchTaskRequest) String() string { return proto.CompactTextString(m) }
 func (*FetchTaskRequest) ProtoMessage()    {}
 func (*FetchTaskRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{1}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{1}
 }
 func (m *FetchTaskRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -139,7 +140,7 @@ func (m *FetchTaskResponse) Reset()         { *m = FetchTaskResponse{} }
 func (m *FetchTaskResponse) String() string { return proto.CompactTextString(m) }
 func (*FetchTaskResponse) ProtoMessage()    {}
 func (*FetchTaskResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{2}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{2}
 }
 func (m *FetchTaskResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -188,7 +189,7 @@ func (m *HandleTaskRequest) Reset()         { *m = HandleTaskRequest{} }
 func (m *HandleTaskRequest) String() string { return proto.CompactTextString(m) }
 func (*HandleTaskRequest) ProtoMessage()    {}
 func (*HandleTaskRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{3}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{3}
 }
 func (m *HandleTaskRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -248,7 +249,7 @@ func (m *HandleTaskResponse) Reset()         { *m = HandleTaskResponse{} }
 func (m *HandleTaskResponse) String() string { return proto.CompactTextString(m) }
 func (*HandleTaskResponse) ProtoMessage()    {}
 func (*HandleTaskResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{4}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{4}
 }
 func (m *HandleTaskResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -290,7 +291,7 @@ func (m *JudgeRequest) Reset()         { *m = JudgeRequest{} }
 func (m *JudgeRequest) String() string { return proto.CompactTextString(m) }
 func (*JudgeRequest) ProtoMessage()    {}
 func (*JudgeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{5}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{5}
 }
 func (m *JudgeRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -401,19 +402,19 @@ func _JudgeRequest_OneofSizer(msg proto.Message) (n int) {
 }
 
 type TraditionalJudgeRequest struct {
-	ProblemId            *string                     `protobuf:"bytes,1,opt,name=problem_id,json=problemId" json:"problem_id,omitempty"`
-	Code                 *model.TraditionalJudgeCode `protobuf:"bytes,2,opt,name=code" json:"code,omitempty"`
-	Data                 *model.TraditionalJudgeData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
-	XXX_unrecognized     []byte                      `json:"-"`
-	XXX_sizecache        int32                       `json:"-"`
+	ProblemId            *string               `protobuf:"bytes,1,opt,name=problem_id,json=problemId" json:"problem_id,omitempty"`
+	Code                 *TraditionalJudgeCode `protobuf:"bytes,2,opt,name=code" json:"code,omitempty"`
+	Data                 *TraditionalJudgeData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
 }
 
 func (m *TraditionalJudgeRequest) Reset()         { *m = TraditionalJudgeRequest{} }
 func (m *TraditionalJudgeRequest) String() string { return proto.CompactTextString(m) }
 func (*TraditionalJudgeRequest) ProtoMessage()    {}
 func (*TraditionalJudgeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{6}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{6}
 }
 func (m *TraditionalJudgeRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -449,14 +450,14 @@ func (m *TraditionalJudgeRequest) GetProblemId() string {
 	return ""
 }
 
-func (m *TraditionalJudgeRequest) GetCode() *model.TraditionalJudgeCode {
+func (m *TraditionalJudgeRequest) GetCode() *TraditionalJudgeCode {
 	if m != nil {
 		return m.Code
 	}
 	return nil
 }
 
-func (m *TraditionalJudgeRequest) GetData() *model.TraditionalJudgeData {
+func (m *TraditionalJudgeRequest) GetData() *TraditionalJudgeData {
 	if m != nil {
 		return m.Data
 	}
@@ -477,7 +478,7 @@ func (m *JudgeResponse) Reset()         { *m = JudgeResponse{} }
 func (m *JudgeResponse) String() string { return proto.CompactTextString(m) }
 func (*JudgeResponse) ProtoMessage()    {}
 func (*JudgeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{7}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{7}
 }
 func (m *JudgeResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -628,7 +629,7 @@ func (m *JudgeStringResponse) Reset()         { *m = JudgeStringResponse{} }
 func (m *JudgeStringResponse) String() string { return proto.CompactTextString(m) }
 func (*JudgeStringResponse) ProtoMessage()    {}
 func (*JudgeStringResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_judge_17643e326ee2ab21, []int{8}
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{8}
 }
 func (m *JudgeStringResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -664,6 +665,116 @@ func (m *JudgeStringResponse) GetMessage() string {
 	return ""
 }
 
+type TraditionalJudgeData struct {
+	TimeLimit            *float64 `protobuf:"fixed64,16,opt,name=time_limit,json=timeLimit" json:"time_limit,omitempty"`
+	MemoryLimit          *float64 `protobuf:"fixed64,17,opt,name=memory_limit,json=memoryLimit" json:"memory_limit,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *TraditionalJudgeData) Reset()         { *m = TraditionalJudgeData{} }
+func (m *TraditionalJudgeData) String() string { return proto.CompactTextString(m) }
+func (*TraditionalJudgeData) ProtoMessage()    {}
+func (*TraditionalJudgeData) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{9}
+}
+func (m *TraditionalJudgeData) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TraditionalJudgeData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TraditionalJudgeData.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *TraditionalJudgeData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TraditionalJudgeData.Merge(dst, src)
+}
+func (m *TraditionalJudgeData) XXX_Size() int {
+	return m.Size()
+}
+func (m *TraditionalJudgeData) XXX_DiscardUnknown() {
+	xxx_messageInfo_TraditionalJudgeData.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TraditionalJudgeData proto.InternalMessageInfo
+
+func (m *TraditionalJudgeData) GetTimeLimit() float64 {
+	if m != nil && m.TimeLimit != nil {
+		return *m.TimeLimit
+	}
+	return 0
+}
+
+func (m *TraditionalJudgeData) GetMemoryLimit() float64 {
+	if m != nil && m.MemoryLimit != nil {
+		return *m.MemoryLimit
+	}
+	return 0
+}
+
+type TraditionalJudgeCode struct {
+	Language             *string  `protobuf:"bytes,1,opt,name=language" json:"language,omitempty"`
+	Code                 *string  `protobuf:"bytes,2,opt,name=code" json:"code,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *TraditionalJudgeCode) Reset()         { *m = TraditionalJudgeCode{} }
+func (m *TraditionalJudgeCode) String() string { return proto.CompactTextString(m) }
+func (*TraditionalJudgeCode) ProtoMessage()    {}
+func (*TraditionalJudgeCode) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_judge_e6b8abd99e270038, []int{10}
+}
+func (m *TraditionalJudgeCode) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TraditionalJudgeCode) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TraditionalJudgeCode.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *TraditionalJudgeCode) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TraditionalJudgeCode.Merge(dst, src)
+}
+func (m *TraditionalJudgeCode) XXX_Size() int {
+	return m.Size()
+}
+func (m *TraditionalJudgeCode) XXX_DiscardUnknown() {
+	xxx_messageInfo_TraditionalJudgeCode.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TraditionalJudgeCode proto.InternalMessageInfo
+
+func (m *TraditionalJudgeCode) GetLanguage() string {
+	if m != nil && m.Language != nil {
+		return *m.Language
+	}
+	return ""
+}
+
+func (m *TraditionalJudgeCode) GetCode() string {
+	if m != nil && m.Code != nil {
+		return *m.Code
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*JudgerAuth)(nil), "syzoj.judge.JudgerAuth")
 	proto.RegisterType((*FetchTaskRequest)(nil), "syzoj.judge.FetchTaskRequest")
@@ -674,6 +785,8 @@ func init() {
 	proto.RegisterType((*TraditionalJudgeRequest)(nil), "syzoj.judge.TraditionalJudgeRequest")
 	proto.RegisterType((*JudgeResponse)(nil), "syzoj.judge.JudgeResponse")
 	proto.RegisterType((*JudgeStringResponse)(nil), "syzoj.judge.JudgeStringResponse")
+	proto.RegisterType((*TraditionalJudgeData)(nil), "syzoj.judge.TraditionalJudgeData")
+	proto.RegisterType((*TraditionalJudgeCode)(nil), "syzoj.judge.TraditionalJudgeCode")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1165,6 +1278,76 @@ func (m *JudgeStringResponse) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *TraditionalJudgeData) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TraditionalJudgeData) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.TimeLimit != nil {
+		dAtA[i] = 0x81
+		i++
+		dAtA[i] = 0x1
+		i++
+		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.TimeLimit))))
+		i += 8
+	}
+	if m.MemoryLimit != nil {
+		dAtA[i] = 0x89
+		i++
+		dAtA[i] = 0x1
+		i++
+		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.MemoryLimit))))
+		i += 8
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *TraditionalJudgeCode) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TraditionalJudgeCode) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Language != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintSyzojJudge(dAtA, i, uint64(len(*m.Language)))
+		i += copy(dAtA[i:], *m.Language)
+	}
+	if m.Code != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintSyzojJudge(dAtA, i, uint64(len(*m.Code)))
+		i += copy(dAtA[i:], *m.Code)
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
 func encodeVarintSyzojJudge(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -1360,6 +1543,44 @@ func (m *JudgeStringResponse) Size() (n int) {
 	if m.Message != nil {
 		l = len(*m.Message)
 		n += 2 + l + sovSyzojJudge(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *TraditionalJudgeData) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.TimeLimit != nil {
+		n += 10
+	}
+	if m.MemoryLimit != nil {
+		n += 10
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *TraditionalJudgeCode) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Language != nil {
+		l = len(*m.Language)
+		n += 1 + l + sovSyzojJudge(uint64(l))
+	}
+	if m.Code != nil {
+		l = len(*m.Code)
+		n += 1 + l + sovSyzojJudge(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -2017,7 +2238,7 @@ func (m *TraditionalJudgeRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Code == nil {
-				m.Code = &model.TraditionalJudgeCode{}
+				m.Code = &TraditionalJudgeCode{}
 			}
 			if err := m.Code.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2050,7 +2271,7 @@ func (m *TraditionalJudgeRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Data == nil {
-				m.Data = &model.TraditionalJudgeData{}
+				m.Data = &TraditionalJudgeData{}
 			}
 			if err := m.Data.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2274,6 +2495,192 @@ func (m *JudgeStringResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *TraditionalJudgeData) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSyzojJudge
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TraditionalJudgeData: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TraditionalJudgeData: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 16:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TimeLimit", wireType)
+			}
+			var v uint64
+			if (iNdEx + 8) > l {
+				return io.ErrUnexpectedEOF
+			}
+			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
+			iNdEx += 8
+			v2 := float64(math.Float64frombits(v))
+			m.TimeLimit = &v2
+		case 17:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MemoryLimit", wireType)
+			}
+			var v uint64
+			if (iNdEx + 8) > l {
+				return io.ErrUnexpectedEOF
+			}
+			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
+			iNdEx += 8
+			v2 := float64(math.Float64frombits(v))
+			m.MemoryLimit = &v2
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSyzojJudge(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSyzojJudge
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TraditionalJudgeCode) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSyzojJudge
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TraditionalJudgeCode: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TraditionalJudgeCode: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Language", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojJudge
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSyzojJudge
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.Language = &s
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Code", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojJudge
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSyzojJudge
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.Code = &s
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSyzojJudge(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSyzojJudge
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func skipSyzojJudge(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2379,42 +2786,45 @@ var (
 	ErrIntOverflowSyzojJudge   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("syzoj.judge.proto", fileDescriptor_syzoj_judge_17643e326ee2ab21) }
+func init() { proto.RegisterFile("syzoj.judge.proto", fileDescriptor_syzoj_judge_e6b8abd99e270038) }
 
-var fileDescriptor_syzoj_judge_17643e326ee2ab21 = []byte{
-	// 529 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_syzoj_judge_e6b8abd99e270038 = []byte{
+	// 585 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x53, 0xdd, 0x6a, 0x13, 0x41,
-	0x14, 0xce, 0x68, 0x68, 0xb3, 0x27, 0x15, 0x9a, 0x51, 0xe8, 0x1a, 0x69, 0x4c, 0x17, 0x91, 0x80,
-	0x64, 0x03, 0x01, 0xbd, 0xe8, 0x8d, 0x1a, 0x45, 0xd2, 0x22, 0x28, 0xd3, 0x5c, 0x79, 0x23, 0xd3,
-	0x9d, 0x61, 0xb3, 0x4d, 0xb2, 0x13, 0x67, 0x66, 0x85, 0xfa, 0x0c, 0x3e, 0x80, 0xbe, 0x80, 0x37,
-	0xbe, 0x88, 0x97, 0x3e, 0x82, 0xc4, 0x17, 0x91, 0x9d, 0x99, 0x74, 0x37, 0x4d, 0x82, 0xd0, 0x9b,
-	0x90, 0x9c, 0xef, 0xe7, 0x7c, 0x73, 0xce, 0x09, 0x34, 0xd4, 0xe5, 0x17, 0x71, 0x11, 0x5e, 0x64,
-	0x2c, 0xe6, 0xe1, 0x5c, 0x0a, 0x2d, 0x70, 0xbd, 0x54, 0x6a, 0x3a, 0x7c, 0x26, 0x18, 0x9f, 0x5a,
-	0xbc, 0xe9, 0x97, 0x25, 0x53, 0x1e, 0xd3, 0xe8, 0xd2, 0x22, 0xc1, 0x5b, 0x80, 0xd3, 0xbc, 0x2a,
-	0x5f, 0x66, 0x7a, 0x8c, 0x1f, 0x80, 0x67, 0x38, 0xf2, 0x63, 0xc2, 0x7c, 0xd4, 0x46, 0x1d, 0x8f,
-	0xd4, 0x6c, 0xe1, 0x84, 0xe1, 0x23, 0xd8, 0x73, 0xa0, 0x16, 0x13, 0x9e, 0xfa, 0xb7, 0x0c, 0x5e,
-	0xb7, 0xb5, 0x51, 0x5e, 0x0a, 0x9e, 0xc3, 0xfe, 0x1b, 0xae, 0xa3, 0xf1, 0x88, 0xaa, 0x09, 0xe1,
-	0x9f, 0x32, 0xae, 0x34, 0x7e, 0x02, 0x55, 0x9a, 0xe9, 0xb1, 0xb1, 0xab, 0xf7, 0x0f, 0xc2, 0x72,
-	0x94, 0xa2, 0x35, 0x31, 0xa4, 0x60, 0x00, 0x8d, 0x92, 0x81, 0x9a, 0x8b, 0x54, 0x71, 0xdc, 0x85,
-	0xaa, 0xa6, 0x6a, 0xe2, 0xef, 0x1b, 0x87, 0xfb, 0xeb, 0x0e, 0xae, 0x15, 0x31, 0xb4, 0xe0, 0x2b,
-	0x82, 0xc6, 0x90, 0xa6, 0x6c, 0xca, 0x6f, 0x1a, 0x03, 0x3f, 0x83, 0x9a, 0x74, 0xdd, 0xcd, 0x33,
-	0xeb, 0xfd, 0xe6, 0xa6, 0xae, 0x96, 0x41, 0xae, 0xb8, 0x18, 0x43, 0x95, 0x89, 0x94, 0xfb, 0xb7,
-	0xdb, 0xa8, 0x53, 0x23, 0xe6, 0x7b, 0x70, 0x0f, 0x70, 0x39, 0x8d, 0x65, 0x06, 0x11, 0xec, 0x95,
-	0xa3, 0xe3, 0x21, 0xd4, 0xb5, 0xa4, 0x2c, 0xd1, 0x89, 0x48, 0xe9, 0xd4, 0x3d, 0xf5, 0xd1, 0x4a,
-	0xd3, 0x51, 0x81, 0x97, 0xa5, 0xc3, 0x0a, 0x29, 0x4b, 0x07, 0x1e, 0xec, 0x4a, 0x8b, 0x04, 0x3f,
-	0x10, 0x1c, 0x6c, 0x51, 0xe1, 0x43, 0x80, 0xb9, 0x14, 0xe7, 0x53, 0x3e, 0x2b, 0x76, 0xed, 0xb9,
-	0xca, 0x09, 0xc3, 0x4f, 0xa1, 0x1a, 0x09, 0xb6, 0x7c, 0xfd, 0x51, 0x58, 0xbe, 0xa9, 0xeb, 0x96,
-	0xaf, 0x04, 0xe3, 0xc4, 0xd0, 0x73, 0x19, 0xa3, 0x9a, 0x9a, 0x01, 0xfc, 0x4f, 0xf6, 0x9a, 0x6a,
-	0x4a, 0x0c, 0x3d, 0xf8, 0x8e, 0xe0, 0xce, 0xca, 0x4c, 0xf1, 0x31, 0xec, 0x28, 0x2d, 0x93, 0x34,
-	0x76, 0xa3, 0x68, 0xaf, 0xcf, 0xff, 0xcc, 0xe0, 0x4b, 0xc5, 0xb0, 0x42, 0x9c, 0x02, 0xbf, 0x80,
-	0x1d, 0x7b, 0xe3, 0x7e, 0xc3, 0x68, 0x1f, 0x87, 0x1b, 0xce, 0xff, 0xbd, 0x14, 0xb1, 0xe4, 0x4a,
-	0x11, 0x3e, 0x17, 0x52, 0xe7, 0x59, 0x72, 0x07, 0x0b, 0x0e, 0xa0, 0xd8, 0x7f, 0xd0, 0x83, 0xbb,
-	0x1b, 0xda, 0x61, 0x1f, 0x76, 0x67, 0x5c, 0x29, 0x1a, 0x73, 0x93, 0xd0, 0x23, 0xcb, 0x9f, 0xfd,
-	0x9f, 0xc8, 0xed, 0xf6, 0x8c, 0xcb, 0xcf, 0x49, 0xc4, 0xf1, 0x29, 0x78, 0x57, 0x47, 0x8d, 0x0f,
-	0x57, 0xc2, 0x5c, 0xff, 0xb7, 0x34, 0x5b, 0xdb, 0x60, 0xd7, 0xf6, 0x1d, 0x40, 0x71, 0x4d, 0x78,
-	0x95, 0xbd, 0x76, 0xf4, 0xcd, 0x87, 0x5b, 0x71, 0x6b, 0xd7, 0x41, 0x83, 0xe3, 0x5f, 0x8b, 0x16,
-	0xfa, 0xbd, 0x68, 0xa1, 0x3f, 0x8b, 0x16, 0xfa, 0xf6, 0xb7, 0x55, 0xf9, 0xd0, 0x89, 0x13, 0x3d,
-	0xce, 0xce, 0xc3, 0x48, 0xcc, 0x7a, 0x46, 0x6e, 0x3f, 0xbb, 0x69, 0xdc, 0x8d, 0x45, 0xcf, 0xec,
-	0xb2, 0x67, 0x0c, 0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0x95, 0xcd, 0x26, 0x58, 0x8a, 0x04, 0x00,
-	0x00,
+	0x14, 0xee, 0x68, 0x68, 0xb3, 0x67, 0x2b, 0x34, 0x63, 0xa1, 0x6b, 0xa4, 0xb1, 0x5d, 0x44, 0x02,
+	0x92, 0x04, 0x02, 0x7a, 0xd1, 0x1b, 0x35, 0x4a, 0x49, 0x4b, 0x41, 0x99, 0xe6, 0x42, 0xbc, 0x29,
+	0xd3, 0xdd, 0x61, 0xb3, 0xcd, 0xee, 0x4e, 0x9c, 0x9d, 0x15, 0xe2, 0x33, 0xf8, 0x00, 0xfa, 0x02,
+	0xde, 0xf8, 0x22, 0x5e, 0xfa, 0x08, 0x12, 0x5f, 0x44, 0xe6, 0x27, 0xc9, 0xc6, 0x24, 0x0a, 0xde,
+	0x84, 0xec, 0xf7, 0x73, 0xce, 0x99, 0xf3, 0x03, 0xb5, 0x7c, 0xf2, 0x91, 0xdf, 0xb4, 0x6f, 0x8a,
+	0x30, 0x62, 0xed, 0xb1, 0xe0, 0x92, 0x63, 0xb7, 0x04, 0xd5, 0xbd, 0x32, 0x9f, 0xb0, 0x88, 0x06,
+	0x13, 0x23, 0xf3, 0x2f, 0x00, 0xce, 0x15, 0x2a, 0x5e, 0x14, 0x72, 0x88, 0xef, 0x83, 0xa3, 0x35,
+	0xe2, 0x2a, 0x0e, 0x3d, 0x74, 0x84, 0x9a, 0x0e, 0xa9, 0x1a, 0xe0, 0x2c, 0xc4, 0xc7, 0xb0, 0x6b,
+	0x49, 0xc9, 0x47, 0x2c, 0xf3, 0x6e, 0x69, 0xde, 0x35, 0xd8, 0x40, 0x41, 0xfe, 0x33, 0xd8, 0x3b,
+	0x65, 0x32, 0x18, 0x0e, 0x68, 0x3e, 0x22, 0xec, 0x7d, 0xc1, 0x72, 0x89, 0x1f, 0x43, 0x85, 0x16,
+	0x72, 0xa8, 0xc3, 0xb9, 0xdd, 0x83, 0x76, 0xb9, 0x94, 0x45, 0x6a, 0xa2, 0x45, 0x7e, 0x0f, 0x6a,
+	0xa5, 0x00, 0xf9, 0x98, 0x67, 0x39, 0xc3, 0x2d, 0xa8, 0x48, 0x9a, 0x8f, 0xbc, 0x3d, 0x1d, 0xe1,
+	0xde, 0x6a, 0x04, 0x9b, 0x8a, 0x68, 0x99, 0xff, 0x09, 0x41, 0xad, 0x4f, 0xb3, 0x30, 0x61, 0xff,
+	0x5b, 0x06, 0x7e, 0x0a, 0x55, 0x61, 0xb3, 0xeb, 0x67, 0xba, 0xdd, 0xfa, 0xba, 0xac, 0x46, 0x41,
+	0xe6, 0x5a, 0x8c, 0xa1, 0x12, 0xf2, 0x8c, 0x79, 0xb7, 0x8f, 0x50, 0xb3, 0x4a, 0xf4, 0x7f, 0x7f,
+	0x1f, 0x70, 0xb9, 0x1a, 0xa3, 0xf4, 0x03, 0xd8, 0x2d, 0x97, 0x8e, 0xfb, 0xe0, 0x4a, 0x41, 0xc3,
+	0x58, 0xc6, 0x3c, 0xa3, 0x89, 0x7d, 0xea, 0xc3, 0xa5, 0xa4, 0x83, 0x05, 0x5f, 0xb6, 0xf6, 0xb7,
+	0x48, 0xd9, 0xda, 0x73, 0x60, 0x47, 0x18, 0xc6, 0xff, 0x8a, 0xe0, 0x60, 0x83, 0x0b, 0x1f, 0x02,
+	0x8c, 0x05, 0xbf, 0x4e, 0x58, 0xba, 0x98, 0xb5, 0x63, 0x91, 0xb3, 0x10, 0x3f, 0x81, 0x4a, 0xc0,
+	0xc3, 0xd9, 0xeb, 0x8f, 0xff, 0x5a, 0xc8, 0x4b, 0x1e, 0x32, 0xa2, 0xe5, 0xca, 0x16, 0x52, 0x49,
+	0x75, 0x03, 0xfe, 0x65, 0x7b, 0x45, 0x25, 0x25, 0x5a, 0xee, 0x7f, 0x41, 0x70, 0x67, 0xa9, 0xa7,
+	0xf8, 0x04, 0xb6, 0x73, 0x29, 0xe2, 0x2c, 0xb2, 0xad, 0x38, 0x5a, 0xed, 0xff, 0xa5, 0xe6, 0x67,
+	0x8e, 0xfe, 0x16, 0xb1, 0x0e, 0xfc, 0x1c, 0xb6, 0xcd, 0x8e, 0x7b, 0x35, 0xed, 0x7d, 0xd4, 0x5e,
+	0xb3, 0xfe, 0x6f, 0x04, 0x8f, 0x04, 0xcb, 0x73, 0xc2, 0xc6, 0x5c, 0x48, 0x55, 0x8b, 0x8a, 0x60,
+	0xc8, 0x1e, 0x2c, 0xe6, 0xef, 0x77, 0xe0, 0xee, 0x9a, 0x74, 0xd8, 0x83, 0x9d, 0x94, 0xe5, 0x39,
+	0x8d, 0x98, 0xae, 0xd0, 0x21, 0xb3, 0x4f, 0xff, 0x2d, 0xec, 0xaf, 0x7b, 0xaa, 0xea, 0xb8, 0x8c,
+	0x53, 0x76, 0x95, 0xc4, 0x69, 0x2c, 0xb5, 0x09, 0x11, 0x47, 0x21, 0x17, 0x0a, 0x50, 0xe7, 0x95,
+	0xb2, 0x94, 0x8b, 0x89, 0x15, 0xd4, 0xb4, 0xc0, 0x35, 0x98, 0x96, 0xf8, 0xa7, 0xab, 0x91, 0x55,
+	0xef, 0x71, 0x1d, 0xaa, 0x09, 0xcd, 0xa2, 0x42, 0x15, 0x63, 0xaf, 0x76, 0xf6, 0xad, 0x56, 0x72,
+	0x3e, 0x48, 0xc7, 0x4c, 0xa9, 0xfb, 0x0d, 0xd9, 0xed, 0xbb, 0x64, 0xe2, 0x43, 0x1c, 0x30, 0x7c,
+	0x0e, 0xce, 0xfc, 0xec, 0xf0, 0xe1, 0x52, 0xbb, 0xfe, 0xbc, 0xe7, 0x7a, 0x63, 0x13, 0x6d, 0x1b,
+	0xf3, 0x1a, 0x60, 0xb1, 0xef, 0x78, 0x59, 0xbd, 0x72, 0x96, 0xf5, 0x07, 0x1b, 0x79, 0x13, 0xae,
+	0x89, 0x7a, 0x27, 0xdf, 0xa7, 0x0d, 0xf4, 0x63, 0xda, 0x40, 0x3f, 0xa7, 0x0d, 0xf4, 0xf9, 0x57,
+	0x63, 0xeb, 0x5d, 0x33, 0x8a, 0xe5, 0xb0, 0xb8, 0x6e, 0x07, 0x3c, 0xed, 0x68, 0xbb, 0xf9, 0x6d,
+	0x65, 0x51, 0x2b, 0xe2, 0x9d, 0x94, 0x87, 0x2c, 0xe9, 0xe8, 0x80, 0xbf, 0x03, 0x00, 0x00, 0xff,
+	0xff, 0x16, 0x26, 0x81, 0x54, 0x19, 0x05, 0x00, 0x00,
 }

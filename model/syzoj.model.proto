@@ -2,22 +2,28 @@ syntax = "proto2";
 
 package syzoj.model;
 
+import "syzoj.judge.proto";
+
 option go_package = "github.com/syzoj/syzoj-ng-go/model";
 
-// UserAuth defines all the information necessary to authenticate a user.
 message UserAuth {
 	optional bytes password_hash = 1;
 }
 
-// DeviceInfo defines the immutable part of a device's identity.
 message DeviceInfo {
 	optional string token = 1;
 	optional string user_agent = 16;
 	optional string remote_addr = 17;
 }
 
-// Problem defines a problem.
+message Problemset {
+	optional string id = 1; // client-side only
+	optional string title = 2;
+	repeated Problem problem = 3; // client-side only
+}
+
 message Problem {
+	optional string id = 16; // client-side only
 	optional string title = 1;
 	optional ProblemStatement statement = 2;
 	repeated ProblemSource source = 3;
@@ -26,8 +32,12 @@ message Problem {
 
 message ProblemJudge {
 	oneof judge {
-		TraditionalJudgeData traditional = 1;
+		syzoj.judge.TraditionalJudgeData traditional = 1;
 	}
+}
+
+message Submission {
+	optional syzoj.judge.JudgeResponse result = 1;
 }
 
 // ProblemSource defines the content of a problem's source.
@@ -46,14 +56,4 @@ message ProblemStatement {
 
 message MarkdownLatexDocument {
 	optional string text = 1;
-}
-
-message TraditionalJudgeData {
-	optional double time_limit = 16; // in seconds
-	optional double memory_limit = 17; // in megabytes
-}
-
-message TraditionalJudgeCode {
-	optional string language = 1;
-	optional string code = 2;
 }

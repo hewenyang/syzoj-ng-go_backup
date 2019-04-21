@@ -5,18 +5,12 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/syzoj/syzoj-ng-go/database"
 	"github.com/syzoj/syzoj-ng-go/model"
 	"github.com/syzoj/syzoj-ng-go/server"
 )
-
-func Get_Debug(ctx context.Context) error {
-	c := server.GetApiContext(ctx)
-	c.SendBody(&model.DebugPage{})
-	return nil
-}
 
 func Handle_Debug_Add_Judger(ctx context.Context) error {
 	s := server.GetServer(ctx)
@@ -33,9 +27,13 @@ func Handle_Debug_Add_Judger(ctx context.Context) error {
 		log.WithError(err).Error("Failed to insert judger")
 		return server.ErrBusy
 	}
-	c.Mutate("/page/debug/add-judger", "setResult", &model.DebugAddJudgerResponse{
+	c.SendResult(&model.DebugAddJudgerResponse{
 		JudgerId:    proto.String(string(j.GetId())),
 		JudgerToken: j.Token,
 	})
 	return nil
+}
+
+func init() {
+	router.ActionDebug("/api/debug/add-judger", Handle_Debug_Add_Judger)
 }

@@ -100,6 +100,6 @@ func (c *WsApiContext) ReadBody(val proto.Message) error {
 	return jsonUnmarshaler.Unmarshal(r, val)
 }
 
-func (c *WsApiContext) SendValue(val proto.Message) {
+func (c *WsApiContext) Send(val proto.Message) {
 	c.msg <- val
 }

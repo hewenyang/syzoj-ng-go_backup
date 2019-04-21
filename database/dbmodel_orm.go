@@ -406,7 +406,7 @@ func CreateProblemRef(ref ProblemRef) *ProblemRef {
 func (d *Database) getProblem(ctx context.Context, ref ProblemRef) (*Problem, error) {
 	v := new(Problem)
 	var var3 *time.Time
-	err := d.QueryRowContext(ctx, "SELECT id, problemset, user, create_time, problem, title FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Problemset, &v.User, &var3, &v.Problem, &v.Title)
+	err := d.QueryRowContext(ctx, "SELECT id, problemset, user, create_time, problem FROM problem WHERE id=?", ref).Scan(&v.Id, &v.Problemset, &v.User, &var3, &v.Problem)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -425,14 +425,14 @@ func (d *Database) updateProblem(ctx context.Context, ref ProblemRef, v *Problem
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := d.ExecContext(ctx, "UPDATE problem SET problemset=?, user=?, create_time=?, problem=?, title=? WHERE id=?", v.Problemset, v.User, convertTimestamp(v.CreateTime), v.Problem, v.Title, v.Id)
+	_, err := d.ExecContext(ctx, "UPDATE problem SET problemset=?, user=?, create_time=?, problem=? WHERE id=?", v.Problemset, v.User, convertTimestamp(v.CreateTime), v.Problem, v.Id)
 	if err != nil {
 		log.WithError(err).Error("Failed to update Problem")
 	}
 }
 
 func (d *Database) insertProblem(ctx context.Context, v *Problem) {
-	_, err := d.ExecContext(ctx, "INSERT INTO problem (id, problemset, user, create_time, problem, title) VALUES (?, ?, ?, ?, ?, ?)", v.Id, v.Problemset, v.User, convertTimestamp(v.CreateTime), v.Problem, v.Title)
+	_, err := d.ExecContext(ctx, "INSERT INTO problem (id, problemset, user, create_time, problem) VALUES (?, ?, ?, ?, ?)", v.Id, v.Problemset, v.User, convertTimestamp(v.CreateTime), v.Problem)
 	if err != nil {
 		log.WithError(err).Error("Failed to insert Problem")
 	}
@@ -576,7 +576,7 @@ func CreateProblemsetRef(ref ProblemsetRef) *ProblemsetRef {
 func (d *Database) getProblemset(ctx context.Context, ref ProblemsetRef) (*Problemset, error) {
 	v := new(Problemset)
 
-	err := d.QueryRowContext(ctx, "SELECT id, title, user FROM problemset WHERE id=?", ref).Scan(&v.Id, &v.Title, &v.User)
+	err := d.QueryRowContext(ctx, "SELECT id, user, problemset FROM problemset WHERE id=?", ref).Scan(&v.Id, &v.User, &v.Problemset)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -591,14 +591,14 @@ func (d *Database) updateProblemset(ctx context.Context, ref ProblemsetRef, v *P
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := d.ExecContext(ctx, "UPDATE problemset SET title=?, user=? WHERE id=?", v.Title, v.User, v.Id)
+	_, err := d.ExecContext(ctx, "UPDATE problemset SET user=?, problemset=? WHERE id=?", v.User, v.Problemset, v.Id)
 	if err != nil {
 		log.WithError(err).Error("Failed to update Problemset")
 	}
 }
 
 func (d *Database) insertProblemset(ctx context.Context, v *Problemset) {
-	_, err := d.ExecContext(ctx, "INSERT INTO problemset (id, title, user) VALUES (?, ?, ?)", v.Id, v.Title, v.User)
+	_, err := d.ExecContext(ctx, "INSERT INTO problemset (id, user, problemset) VALUES (?, ?, ?)", v.Id, v.User, v.Problemset)
 	if err != nil {
 		log.WithError(err).Error("Failed to insert Problemset")
 	}
@@ -741,22 +741,15 @@ func CreateSubmissionRef(ref SubmissionRef) *SubmissionRef {
 
 func (d *Database) getSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
 	v := new(Submission)
-	var var3 []byte
-	err := d.QueryRowContext(ctx, "SELECT id, problem_judger, user, data FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &var3)
+
+	err := d.QueryRowContext(ctx, "SELECT id, problem_judger, user, submission FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Submission)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-	if var3 != nil {
-		v.Data = &any.Any{}
-		if err := proto.Unmarshal(var3, v.Data); err != nil {
-			panic(err)
-		}
-	} else {
-		v.Data = nil
-	}
+
 	return v, nil
 }
 
@@ -764,14 +757,14 @@ func (d *Database) updateSubmission(ctx context.Context, ref SubmissionRef, v *S
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := d.ExecContext(ctx, "UPDATE submission SET problem_judger=?, user=?, data=? WHERE id=?", v.ProblemJudger, v.User, convertAny(v.Data), v.Id)
+	_, err := d.ExecContext(ctx, "UPDATE submission SET problem_judger=?, user=?, submission=? WHERE id=?", v.ProblemJudger, v.User, v.Submission, v.Id)
 	if err != nil {
 		log.WithError(err).Error("Failed to update Submission")
 	}
 }
 
 func (d *Database) insertSubmission(ctx context.Context, v *Submission) {
-	_, err := d.ExecContext(ctx, "INSERT INTO submission (id, problem_judger, user, data) VALUES (?, ?, ?, ?)", v.Id, v.ProblemJudger, v.User, convertAny(v.Data))
+	_, err := d.ExecContext(ctx, "INSERT INTO submission (id, problem_judger, user, submission) VALUES (?, ?, ?, ?)", v.Id, v.ProblemJudger, v.User, v.Submission)
 	if err != nil {
 		log.WithError(err).Error("Failed to insert Submission")
 	}

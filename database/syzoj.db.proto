@@ -33,20 +33,19 @@ message Problem {
     optional string user = 3 [(dbmodel.model).fkey = "user"];
     optional google.protobuf.Timestamp create_time = 4 [(dbmodel.model).index = true];
     optional syzoj.model.Problem problem = 5;
-    optional string title = 6;
 }
 
 message Problemset {
     optional string id = 1;
-    optional string title = 2;
     optional string user = 3 [(dbmodel.model).fkey = "user"];
+    optional syzoj.model.Problemset problemset = 4;
 }
 
 message Submission {
     optional string id = 1;
     optional string problem_judger = 2;
     optional string user = 3 [(dbmodel.model).fkey = "user"];
-    optional google.protobuf.Any data = 16;
+    optional syzoj.model.Submission submission = 17;
 }
 
 message Judger {

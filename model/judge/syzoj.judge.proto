@@ -2,7 +2,6 @@ syntax = "proto2";
 
 package syzoj.judge;
 
-import "syzoj.model.proto";
 import "syzoj.judge.legacy.proto";
 
 option go_package = "github.com/syzoj/syzoj-ng-go/model/judge";
@@ -42,8 +41,8 @@ message JudgeRequest {
 
 message TraditionalJudgeRequest {
 	optional string problem_id = 1;
-	optional syzoj.model.TraditionalJudgeCode code = 2;
-	optional syzoj.model.TraditionalJudgeData data = 3;
+	optional TraditionalJudgeCode code = 2;
+	optional TraditionalJudgeData data = 3;
 }
 
 message JudgeResponse {
@@ -55,4 +54,14 @@ message JudgeResponse {
 
 message JudgeStringResponse {
 	optional string message = 16;
+}
+
+message TraditionalJudgeData {
+	optional double time_limit = 16; // in seconds;
+	optional double memory_limit = 17; // in megabytes
+}
+
+message TraditionalJudgeCode {
+	optional string language = 1;
+	optional string code = 2;
 }

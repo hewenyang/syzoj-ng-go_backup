@@ -13,49 +13,6 @@ import (
 	"github.com/syzoj/syzoj-ng-go/server/device"
 )
 
-func Handle_Problemset_Create_Problem(ctx context.Context) error {
-	c := server.GetApiContext(ctx)
-	s := server.GetServer(ctx)
-	vars := c.Vars()
-	problemsetRef := database.ProblemsetRef(vars["problemset_id"])
-	req := &model.ProblemsetPage_CreateProblemRequest{}
-	if err := c.ReadBody(req); err != nil {
-		return server.ErrBadRequest
-	}
-	if req.ProblemTitle == nil {
-		return server.ErrBadRequest
-	}
-	dev, err := device.GetDevice(ctx)
-	if err != nil && err != device.ErrDeviceNotFound {
-		log.WithError(err).Error("Failed to find device")
-		return server.ErrBusy
-	} else if err == device.ErrDeviceNotFound || dev.User == nil {
-		return server.ErrNotLoggedIn
-	}
-	problemset, err := s.GetDB().GetProblemset(ctx, problemsetRef)
-	if err != nil {
-		log.WithError(err).Error("Failed to get problemset")
-		return server.ErrBusy
-	}
-	if problemset == nil {
-		return server.ErrNotFound
-	}
-	if problemset.User == nil || dev.User == nil || problemset.GetUser() != dev.GetUser() {
-		return server.ErrPermissionDenied
-	}
-	pb := &database.Problem{}
-	pb.Title = req.ProblemTitle
-	pb.User = dev.User
-	pb.Problemset = problemset.Id
-	pb.Problem = &model.Problem{}
-	if err := s.GetDB().InsertProblem(ctx, pb); err != nil {
-		log.WithError(err).Error("Failed to insert problem")
-		return server.ErrBusy
-	}
-	c.Redirect("/problem/" + string(pb.GetId()))
-	return nil
-}
-
 func Handle_Problem_Remove_Judge(ctx context.Context) error {
 	c := server.GetApiContext(ctx)
 	s := server.GetServer(ctx)
@@ -254,11 +211,14 @@ func Handle_Problem_Submit_Judge_Traditional(ctx context.Context) error {
 			Data:      traditional.Traditional,
 		}},
 	}
+	log.Info(jreq)
 	j, err := s.GetJudge().JudgeSubmission(ctx, jreq)
 	if err != nil {
 		log.WithError(err).Error("Failed to judge submission")
 		return server.ErrBusy
 	}
+	log.Info("Start")
+	c.Mutate(&model.StartCurrentSubmission{})
 	var result *judge.JudgeResponse
 	for {
 		result, err = j.GetResult(result)
@@ -268,28 +228,28 @@ func Handle_Problem_Submit_Judge_Traditional(ctx context.Context) error {
 			log.WithError(err).Error("Failed to get judge result")
 			return server.ErrBusy
 		}
-		c.SendValue(result)
+		c.Mutate(&model.UpdateCurrentSubmission{Result: result})
 	}
+	c.Mutate(&model.StopCurrentSubmission{Result: result})
 	return nil
 }
 
 func Get_Problem(ctx context.Context) error {
 	c := server.GetApiContext(ctx)
-	s := server.GetServer(ctx)
 	vars := c.Vars()
 	problemId := database.ProblemRef(vars["problem_id"])
-	p, err := s.GetDB().GetProblem(ctx, problemId)
-	if err != nil {
-		log.WithError(err).Error("Failed to get problem")
-		return server.ErrBusy
+	if err := populateProblemFull(ctx, problemId); err != nil {
+		return err
 	}
-	if p == nil {
-		return server.ErrNotFound
-	}
-	page := &model.ProblemViewPage{}
-	page.ProblemTitle = p.Title
-	page.ProblemStatement = p.Problem.Statement
-	page.ProblemJudge = p.Problem.Judge
+	page := &model.ProblemViewPage{Problem: proto.String(string(problemId))}
 	c.SendBody(page)
 	return nil
+}
+
+func init() {
+	router.Get("/api/problem/{problem_id:[0-9A-Za-z-_]{16}}", Get_Problem)
+	router.Action("/api/problem/{problem_id:[0-9A-Za-z-_]{16}}/remove-judge", Handle_Problem_Remove_Judge)
+	router.Action("/api/problem/{problem_id:[0-9A-Za-z-_]{16}}/edit-statement", Handle_Problem_Edit_Statement)
+	router.Action("/api/problem/{problem_id:[0-9A-Za-z-_]{16}}/add-judge-traditional", Handle_Problem_Add_Judge_Traditional)
+	router.WebSocket("/api/problem/{problem_id:[0-9A-Za-z-_]{16}}/judge/traditional/submit", Handle_Problem_Submit_Judge_Traditional)
 }

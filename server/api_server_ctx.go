@@ -17,7 +17,7 @@ type ApiContext struct {
 	r   *http.Request
 	w   http.ResponseWriter
 	s   *ApiServer
-	mut []*model.Mutation
+	mut []*types.Any
 }
 
 var jsonMarshaler = jsonpb.Marshaler{OrigName: true}
@@ -33,7 +33,6 @@ func (s *ApiServer) WrapHandler(h func(context.Context) error, checkToken bool) 
 		ctx, cancelFunc := context.WithCancel(ctx)
 		defer cancelFunc()
 		ctx = context.WithValue(ctx, apiContextKey{}, c)
-		defer c.Send()
 		if checkToken {
 			token := r.Header.Get("X-CSRF-Token")
 			if token != "1" {
@@ -59,7 +58,6 @@ func (s *ApiServer) WrapDebugHandler(h func(context.Context) error) http.Handler
 		ctx, cancelFunc := context.WithCancel(ctx)
 		defer cancelFunc()
 		ctx = context.WithValue(ctx, apiContextKey{}, c)
-		defer c.Send()
 		err := h(ctx)
 		if err != nil {
 			c.SendError(err)
@@ -95,35 +93,20 @@ func (c *ApiContext) ReadBody(val proto.Message) error {
 	return jsonUnmarshaler.Unmarshal(c.r.Body, val)
 }
 
-func (c *ApiContext) Mutate(path string, method string, val proto.Message) {
-	m, err := types.MarshalAny(val)
-	if err != nil {
-		log.WithError(err).Error("Failed to marshal message into any")
-		return
+func (c *ApiContext) Send(val *model.Response) {
+	if err := jsonMarshaler.Marshal(c.w, val); err != nil {
+		log.WithError(err).Error("Failed to send response")
 	}
-	mutation := &model.Mutation{
-		Path:   proto.String(path),
-		Method: proto.String(method),
-		Value:  m,
-	}
-	c.mut = append(c.mut, mutation)
 }
 
-func (c *ApiContext) SendBody(val proto.Message) {
-	c.Mutate("", "setBody", val)
+func (c *ApiContext) SendResult(val proto.Message) {
+	m, err := types.MarshalAny(val)
+	if err != nil {
+		panic(err)
+	}
+	c.Send(&model.Response{Result: m})
 }
 
 func (c *ApiContext) SendError(err error) {
-	c.Mutate("", "setError", &model.Error{Error: proto.String(err.Error())})
-}
-
-func (c *ApiContext) Redirect(path string) {
-	c.Mutate("", "redirect", &model.Path{Path: proto.String(path)})
-}
-
-func (c *ApiContext) Send() {
-	resp := &model.Response{Mutations: c.mut}
-	if err := jsonMarshaler.Marshal(c.w, resp); err != nil {
-		log.WithError(err).Error("Failed to send response")
-	}
+	c.Send(&model.Response{Error: proto.String(err.Error())})
 }

@@ -18,21 +18,20 @@ CREATE TABLE problem (
   user VARCHAR(16) REFERENCES user(id),
   create_time DATETIME,
   problem BLOB,
-  title VARCHAR(255),
 INDEX create_time (create_time)
 );
 
 CREATE TABLE problemset (
   id VARCHAR(16) PRIMARY KEY,
-  title VARCHAR(255),
-  user VARCHAR(16) REFERENCES user(id)
+  user VARCHAR(16) REFERENCES user(id),
+  problemset BLOB
 );
 
 CREATE TABLE submission (
   id VARCHAR(16) PRIMARY KEY,
   problem_judger VARCHAR(255),
   user VARCHAR(16) REFERENCES user(id),
-  data BLOB
+  submission BLOB
 );
 
 CREATE TABLE judger (

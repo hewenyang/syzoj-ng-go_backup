@@ -5,21 +5,16 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/syzoj/syzoj-ng-go/database"
 	"github.com/syzoj/syzoj-ng-go/model"
 	"github.com/syzoj/syzoj-ng-go/server"
 )
 
-func Get_Register(ctx context.Context) error {
-	c := server.GetApiContext(ctx)
-	c.SendBody(&model.RegisterPage{})
-	return nil
-}
-
 func Handle_Register(ctx context.Context) error {
 	s := server.GetServer(ctx)
 	c := server.GetApiContext(ctx)
-	req := &model.RegisterPage_RegisterRequest{}
+	req := &model.RegisterRequest{}
 	if err := c.ReadBody(req); err != nil {
 		return err
 	}
@@ -56,7 +51,11 @@ func Handle_Register(ctx context.Context) error {
 			found = true
 		}
 		if found {
-			return server.ErrDuplicateUserName
+			c.SendResult(&model.RegisterResponse{
+				Success: proto.Bool(false),
+				Reason:  proto.String("Duplicate username"),
+			})
+			return nil
 		}
 		// Insert user
 		user := &database.User{}
@@ -72,7 +71,9 @@ func Handle_Register(ctx context.Context) error {
 			log.WithError(err).Error("Failed to insert user")
 			return server.ErrBusy
 		}
-		c.Redirect("/login")
+		c.SendResult(&model.RegisterResponse{
+			Success: proto.Bool(true),
+		})
 		return nil
 	}()
 
@@ -82,4 +83,8 @@ func Handle_Register(ctx context.Context) error {
 	o.Broadcast()
 	o.Unlock()
 	return err
+}
+
+func init() {
+	router.Action("/api/register", Handle_Register)
 }
