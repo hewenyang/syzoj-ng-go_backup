@@ -742,7 +742,7 @@ func CreateSubmissionRef(ref SubmissionRef) *SubmissionRef {
 func (d *Database) getSubmission(ctx context.Context, ref SubmissionRef) (*Submission, error) {
 	v := new(Submission)
 
-	err := d.QueryRowContext(ctx, "SELECT id, problem_judger, user, submission FROM submission WHERE id=?", ref).Scan(&v.Id, &v.ProblemJudger, &v.User, &v.Submission)
+	err := d.QueryRowContext(ctx, "SELECT id, user, problemset, problem, submission FROM submission WHERE id=?", ref).Scan(&v.Id, &v.User, &v.Problemset, &v.Problem, &v.Submission)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -757,14 +757,14 @@ func (d *Database) updateSubmission(ctx context.Context, ref SubmissionRef, v *S
 	if v.Id == nil || v.GetId() != ref {
 		panic("ref and v does not match")
 	}
-	_, err := d.ExecContext(ctx, "UPDATE submission SET problem_judger=?, user=?, submission=? WHERE id=?", v.ProblemJudger, v.User, v.Submission, v.Id)
+	_, err := d.ExecContext(ctx, "UPDATE submission SET user=?, problemset=?, problem=?, submission=? WHERE id=?", v.User, v.Problemset, v.Problem, v.Submission, v.Id)
 	if err != nil {
 		log.WithError(err).Error("Failed to update Submission")
 	}
 }
 
 func (d *Database) insertSubmission(ctx context.Context, v *Submission) {
-	_, err := d.ExecContext(ctx, "INSERT INTO submission (id, problem_judger, user, submission) VALUES (?, ?, ?, ?)", v.Id, v.ProblemJudger, v.User, v.Submission)
+	_, err := d.ExecContext(ctx, "INSERT INTO submission (id, user, problemset, problem, submission) VALUES (?, ?, ?, ?, ?)", v.Id, v.User, v.Problemset, v.Problem, v.Submission)
 	if err != nil {
 		log.WithError(err).Error("Failed to insert Submission")
 	}

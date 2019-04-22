@@ -43,8 +43,9 @@ message Problemset {
 
 message Submission {
     optional string id = 1;
-    optional string problem_judger = 2;
     optional string user = 3 [(dbmodel.model).fkey = "user"];
+    optional string problemset = 4 [(dbmodel.model).fkey = "problemset"];
+    optional string problem = 5 [(dbmodel.model).fkey = "problem"];
     optional syzoj.model.Submission submission = 17;
 }
 

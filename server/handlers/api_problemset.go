@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"context"
+	"io"
 
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/syzoj/syzoj-ng-go/database"
 	"github.com/syzoj/syzoj-ng-go/model"
+	"github.com/syzoj/syzoj-ng-go/model/judge"
 	"github.com/syzoj/syzoj-ng-go/server"
 	"github.com/syzoj/syzoj-ng-go/server/device"
 )
@@ -197,10 +199,124 @@ func Handle_Problem_Update(ctx context.Context) error {
 	return nil
 }
 
+func Handle_Problem_Submit(ctx context.Context) error {
+	s := server.GetServer(ctx)
+	c := server.GetApiContext(ctx)
+	vars := c.Vars()
+	problemId := database.ProblemRef(vars["problem_id"])
+	dev, err := device.GetDevice(ctx)
+	if err != nil && err != device.ErrDeviceNotFound {
+		return server.ErrBusy
+	}
+	if dev == nil || dev.User == nil {
+		c.SendResult(&model.ProblemSubmitResponse{Success: proto.Bool(false), Reason: proto.String("Not logged in")})
+		return nil
+	}
+	req := &model.ProblemSubmitRequest{}
+	if err := c.ReadBody(req); err != nil {
+		return server.ErrBadRequest
+	}
+	problem, err := s.GetDB().GetProblem(ctx, problemId)
+	if err != nil {
+		log.WithError(err).Error("Failed to get problem")
+		return server.ErrBusy
+	}
+	var jreq *judge.JudgeRequest
+	switch j := problem.GetProblem().GetJudge().GetJudge().(type) {
+	case *model.ProblemJudge_Traditional:
+		t, ok := req.Submission.Request.(*judge.JudgeRequest_Traditional)
+		if !ok {
+			return server.ErrBadRequest
+		}
+		treq := &judge.TraditionalJudgeRequest{}
+		treq.ProblemId = proto.String(string(problemId))
+		treq.Code = t.Traditional.Code
+		treq.Data = j.Traditional
+		jreq = &judge.JudgeRequest{}
+		jreq.Request = &judge.JudgeRequest_Traditional{Traditional: treq}
+	default:
+		log.Error("/api/problem/submit: Invalid problem judge type")
+		return server.ErrBadRequest
+	}
+	submission := &database.Submission{}
+	submission.User = dev.User
+	submission.Problemset = problem.Problemset
+	submission.Problem = problem.Id
+	submission.Submission = &model.Submission{}
+	submission.Submission.Request = jreq
+	if err := s.GetDB().InsertSubmission(ctx, submission); err != nil {
+		log.WithError(err).Error("Failed to insert submission")
+		return server.ErrBusy
+	}
+	handleSubmission(s, submission)
+	c.SendResult(&model.ProblemSubmitResponse{Success: proto.Bool(true), Submission: &model.Submission{Id: proto.String(string(submission.GetId()))}})
+	return nil
+}
+
+func Get_Submission(ctx context.Context) error {
+	s := server.GetServer(ctx)
+	c := server.GetApiContext(ctx)
+	vars := c.Vars()
+	submissionId := database.SubmissionRef(vars["submission_id"])
+	submission, err := s.GetDB().GetSubmission(ctx, submissionId)
+	if err != nil {
+		log.WithError(err).Error("Failed to get submission")
+		return server.ErrBusy
+	}
+	submission2 := &model.Submission{}
+	*submission2 = *submission.Submission
+	submission2.Id = proto.String(string(submissionId))
+	m, found := s.GetRunningJudges().Load(submissionId)
+	if found {
+		res, err := m.(*server.JudgeRequest).GetResult(nil)
+		if err == nil {
+			submission2.Result = res
+		}
+	}
+	c.SendResult(&model.SubmissionGetResponse{Success: proto.Bool(true), Submission: submission2})
+	return nil
+}
+
+// TODO: track this goroutine
+func handleSubmission(s *server.Server, submission *database.Submission) {
+	ctx := s.GetContext()
+	j, err := s.GetJudge().JudgeSubmission(ctx, submission.Submission.Request)
+	if err != nil {
+		log.WithError(err).Error("Failed to judge submission")
+		return
+	}
+	s.GetRunningJudges().Store(submission.GetId(), j)
+	go func() {
+		defer s.GetRunningJudges().Delete(submission.GetId())
+		var result *judge.JudgeResponse
+		for {
+			result, err = j.GetResult(result)
+			log.Info(result)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				log.WithError(err).Error("Failed to get result")
+				return
+			}
+		}
+		s2 := &database.Submission{}
+		*s2 = *submission
+		s2.Submission = &model.Submission{}
+		*s2.Submission = *submission.Submission
+		s2.Submission.Result = result
+		if _, err := s.GetDB().UpdateSubmission(ctx, s2.GetId(), func(*database.Submission) *database.Submission { return s2 }); err != nil {
+			log.WithError(err).Error("Failed to update submission")
+		}
+	}()
+}
+
 func init() {
 	router.Action("/api/problemset/create", Handle_Problemset_Create)
 	router.Get("/api/problemset/{problemset_id}", Get_Problemset)
 	router.Action("/api/problemset/{problemset_id}/add-problem", Handle_Problemset_Add_Problem)
 	router.Get("/api/problem/{problem_id}", Get_Problem)
 	router.Action("/api/problem/{problem_id}/update", Handle_Problem_Update)
+	router.Action("/api/problem/{problem_id}/submit", Handle_Problem_Submit)
+	router.Get("/api/submission/{submission_id}", Get_Submission)
 }

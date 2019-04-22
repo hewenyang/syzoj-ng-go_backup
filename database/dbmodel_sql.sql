@@ -29,8 +29,9 @@ CREATE TABLE problemset (
 
 CREATE TABLE submission (
   id VARCHAR(16) PRIMARY KEY,
-  problem_judger VARCHAR(255),
   user VARCHAR(16) REFERENCES user(id),
+  problemset VARCHAR(16) REFERENCES problemset(id),
+  problem VARCHAR(16) REFERENCES problem(id),
   submission BLOB
 );
 

@@ -37,6 +37,8 @@ message ProblemJudge {
 }
 
 message Submission {
+	optional string id = 3;
+	optional syzoj.judge.JudgeRequest request = 2;
 	optional syzoj.judge.JudgeResponse result = 1;
 }
 

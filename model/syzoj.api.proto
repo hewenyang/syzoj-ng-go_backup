@@ -71,6 +71,22 @@ message ProblemUpdateRequest {
     optional syzoj.model.Problem problem = 1;
 }
 
+message ProblemSubmitRequest {
+    optional syzoj.judge.JudgeRequest submission = 1;
+}
+
+message ProblemSubmitResponse {
+    optional bool success = 1;
+    optional string reason = 2;
+    optional syzoj.model.Submission submission = 3;
+}
+
+message SubmissionGetResponse {
+    optional bool success = 1;
+    optional string reason = 2;
+    optional syzoj.model.Submission submission = 3;
+}
+
 message DebugAddJudgerRequest {
 }
 

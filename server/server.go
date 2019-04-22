@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 
@@ -16,6 +17,8 @@ type Server struct {
 
 	apiServer   *ApiServer
 	judgeServer *JudgeServer
+
+	runningJudges sync.Map // database.Submission -> *JudgeRequest
 }
 
 type serverKey struct{}
@@ -53,8 +56,16 @@ func (s *Server) GetJudge() *JudgeServer {
 	return s.judgeServer
 }
 
+func (s *Server) GetContext() context.Context {
+	return context.TODO()
+}
+
 func (s *Server) Close() error {
 	s.apiServer.close()
 	s.judgeServer.close()
 	return nil
+}
+
+func (s *Server) GetRunningJudges() *sync.Map {
+	return &s.runningJudges
 }

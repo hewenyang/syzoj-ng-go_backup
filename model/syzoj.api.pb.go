@@ -7,7 +7,7 @@ import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import types "github.com/gogo/protobuf/types"
-import _ "github.com/syzoj/syzoj-ng-go/model/judge"
+import judge "github.com/syzoj/syzoj-ng-go/model/judge"
 
 import io "io"
 
@@ -35,7 +35,7 @@ func (m *Response) Reset()         { *m = Response{} }
 func (m *Response) String() string { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()    {}
 func (*Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{0}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{0}
 }
 func (m *Response) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -90,7 +90,7 @@ func (m *LoginRequest) Reset()         { *m = LoginRequest{} }
 func (m *LoginRequest) String() string { return proto.CompactTextString(m) }
 func (*LoginRequest) ProtoMessage()    {}
 func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{1}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{1}
 }
 func (m *LoginRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -145,7 +145,7 @@ func (m *LoginResponse) Reset()         { *m = LoginResponse{} }
 func (m *LoginResponse) String() string { return proto.CompactTextString(m) }
 func (*LoginResponse) ProtoMessage()    {}
 func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{2}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{2}
 }
 func (m *LoginResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -200,7 +200,7 @@ func (m *RegisterRequest) Reset()         { *m = RegisterRequest{} }
 func (m *RegisterRequest) String() string { return proto.CompactTextString(m) }
 func (*RegisterRequest) ProtoMessage()    {}
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{3}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{3}
 }
 func (m *RegisterRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -255,7 +255,7 @@ func (m *RegisterResponse) Reset()         { *m = RegisterResponse{} }
 func (m *RegisterResponse) String() string { return proto.CompactTextString(m) }
 func (*RegisterResponse) ProtoMessage()    {}
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{4}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{4}
 }
 func (m *RegisterResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -309,7 +309,7 @@ func (m *ProblemsetCreateRequest) Reset()         { *m = ProblemsetCreateRequest
 func (m *ProblemsetCreateRequest) String() string { return proto.CompactTextString(m) }
 func (*ProblemsetCreateRequest) ProtoMessage()    {}
 func (*ProblemsetCreateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{5}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{5}
 }
 func (m *ProblemsetCreateRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -358,7 +358,7 @@ func (m *ProblemsetCreateResponse) Reset()         { *m = ProblemsetCreateRespon
 func (m *ProblemsetCreateResponse) String() string { return proto.CompactTextString(m) }
 func (*ProblemsetCreateResponse) ProtoMessage()    {}
 func (*ProblemsetCreateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{6}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{6}
 }
 func (m *ProblemsetCreateResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -421,7 +421,7 @@ func (m *ProblemsetGetResponse) Reset()         { *m = ProblemsetGetResponse{} }
 func (m *ProblemsetGetResponse) String() string { return proto.CompactTextString(m) }
 func (*ProblemsetGetResponse) ProtoMessage()    {}
 func (*ProblemsetGetResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{7}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{7}
 }
 func (m *ProblemsetGetResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -482,7 +482,7 @@ func (m *ProblemsetAddProblemRequest) Reset()         { *m = ProblemsetAddProble
 func (m *ProblemsetAddProblemRequest) String() string { return proto.CompactTextString(m) }
 func (*ProblemsetAddProblemRequest) ProtoMessage()    {}
 func (*ProblemsetAddProblemRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{8}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{8}
 }
 func (m *ProblemsetAddProblemRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -531,7 +531,7 @@ func (m *ProblemsetAddProblemResponse) Reset()         { *m = ProblemsetAddProbl
 func (m *ProblemsetAddProblemResponse) String() string { return proto.CompactTextString(m) }
 func (*ProblemsetAddProblemResponse) ProtoMessage()    {}
 func (*ProblemsetAddProblemResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{9}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{9}
 }
 func (m *ProblemsetAddProblemResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -592,7 +592,7 @@ func (m *ProblemGetResponse) Reset()         { *m = ProblemGetResponse{} }
 func (m *ProblemGetResponse) String() string { return proto.CompactTextString(m) }
 func (*ProblemGetResponse) ProtoMessage()    {}
 func (*ProblemGetResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{10}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{10}
 }
 func (m *ProblemGetResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -639,7 +639,7 @@ func (m *ProblemUpdateRequest) Reset()         { *m = ProblemUpdateRequest{} }
 func (m *ProblemUpdateRequest) String() string { return proto.CompactTextString(m) }
 func (*ProblemUpdateRequest) ProtoMessage()    {}
 func (*ProblemUpdateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{11}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{11}
 }
 func (m *ProblemUpdateRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -675,6 +675,179 @@ func (m *ProblemUpdateRequest) GetProblem() *Problem {
 	return nil
 }
 
+type ProblemSubmitRequest struct {
+	Submission           *judge.JudgeRequest `protobuf:"bytes,1,opt,name=submission" json:"submission,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
+}
+
+func (m *ProblemSubmitRequest) Reset()         { *m = ProblemSubmitRequest{} }
+func (m *ProblemSubmitRequest) String() string { return proto.CompactTextString(m) }
+func (*ProblemSubmitRequest) ProtoMessage()    {}
+func (*ProblemSubmitRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{12}
+}
+func (m *ProblemSubmitRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ProblemSubmitRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ProblemSubmitRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *ProblemSubmitRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemSubmitRequest.Merge(dst, src)
+}
+func (m *ProblemSubmitRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *ProblemSubmitRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemSubmitRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProblemSubmitRequest proto.InternalMessageInfo
+
+func (m *ProblemSubmitRequest) GetSubmission() *judge.JudgeRequest {
+	if m != nil {
+		return m.Submission
+	}
+	return nil
+}
+
+type ProblemSubmitResponse struct {
+	Success              *bool       `protobuf:"varint,1,opt,name=success" json:"success,omitempty"`
+	Reason               *string     `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
+	Submission           *Submission `protobuf:"bytes,3,opt,name=submission" json:"submission,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *ProblemSubmitResponse) Reset()         { *m = ProblemSubmitResponse{} }
+func (m *ProblemSubmitResponse) String() string { return proto.CompactTextString(m) }
+func (*ProblemSubmitResponse) ProtoMessage()    {}
+func (*ProblemSubmitResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{13}
+}
+func (m *ProblemSubmitResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ProblemSubmitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ProblemSubmitResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *ProblemSubmitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemSubmitResponse.Merge(dst, src)
+}
+func (m *ProblemSubmitResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *ProblemSubmitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemSubmitResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProblemSubmitResponse proto.InternalMessageInfo
+
+func (m *ProblemSubmitResponse) GetSuccess() bool {
+	if m != nil && m.Success != nil {
+		return *m.Success
+	}
+	return false
+}
+
+func (m *ProblemSubmitResponse) GetReason() string {
+	if m != nil && m.Reason != nil {
+		return *m.Reason
+	}
+	return ""
+}
+
+func (m *ProblemSubmitResponse) GetSubmission() *Submission {
+	if m != nil {
+		return m.Submission
+	}
+	return nil
+}
+
+type SubmissionGetResponse struct {
+	Success              *bool       `protobuf:"varint,1,opt,name=success" json:"success,omitempty"`
+	Reason               *string     `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
+	Submission           *Submission `protobuf:"bytes,3,opt,name=submission" json:"submission,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *SubmissionGetResponse) Reset()         { *m = SubmissionGetResponse{} }
+func (m *SubmissionGetResponse) String() string { return proto.CompactTextString(m) }
+func (*SubmissionGetResponse) ProtoMessage()    {}
+func (*SubmissionGetResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{14}
+}
+func (m *SubmissionGetResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SubmissionGetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SubmissionGetResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *SubmissionGetResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SubmissionGetResponse.Merge(dst, src)
+}
+func (m *SubmissionGetResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *SubmissionGetResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SubmissionGetResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SubmissionGetResponse proto.InternalMessageInfo
+
+func (m *SubmissionGetResponse) GetSuccess() bool {
+	if m != nil && m.Success != nil {
+		return *m.Success
+	}
+	return false
+}
+
+func (m *SubmissionGetResponse) GetReason() string {
+	if m != nil && m.Reason != nil {
+		return *m.Reason
+	}
+	return ""
+}
+
+func (m *SubmissionGetResponse) GetSubmission() *Submission {
+	if m != nil {
+		return m.Submission
+	}
+	return nil
+}
+
 type DebugAddJudgerRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -685,7 +858,7 @@ func (m *DebugAddJudgerRequest) Reset()         { *m = DebugAddJudgerRequest{} }
 func (m *DebugAddJudgerRequest) String() string { return proto.CompactTextString(m) }
 func (*DebugAddJudgerRequest) ProtoMessage()    {}
 func (*DebugAddJudgerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{12}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{15}
 }
 func (m *DebugAddJudgerRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -726,7 +899,7 @@ func (m *DebugAddJudgerResponse) Reset()         { *m = DebugAddJudgerResponse{}
 func (m *DebugAddJudgerResponse) String() string { return proto.CompactTextString(m) }
 func (*DebugAddJudgerResponse) ProtoMessage()    {}
 func (*DebugAddJudgerResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_syzoj_api_a015b6c960700244, []int{13}
+	return fileDescriptor_syzoj_api_c1472edcf8249526, []int{16}
 }
 func (m *DebugAddJudgerResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -782,6 +955,9 @@ func init() {
 	proto.RegisterType((*ProblemsetAddProblemResponse)(nil), "syzoj.api.ProblemsetAddProblemResponse")
 	proto.RegisterType((*ProblemGetResponse)(nil), "syzoj.api.ProblemGetResponse")
 	proto.RegisterType((*ProblemUpdateRequest)(nil), "syzoj.api.ProblemUpdateRequest")
+	proto.RegisterType((*ProblemSubmitRequest)(nil), "syzoj.api.ProblemSubmitRequest")
+	proto.RegisterType((*ProblemSubmitResponse)(nil), "syzoj.api.ProblemSubmitResponse")
+	proto.RegisterType((*SubmissionGetResponse)(nil), "syzoj.api.SubmissionGetResponse")
 	proto.RegisterType((*DebugAddJudgerRequest)(nil), "syzoj.api.DebugAddJudgerRequest")
 	proto.RegisterType((*DebugAddJudgerResponse)(nil), "syzoj.api.DebugAddJudgerResponse")
 }
@@ -1227,6 +1403,131 @@ func (m *ProblemUpdateRequest) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *ProblemSubmitRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ProblemSubmitRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Submission != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Submission.Size()))
+		n9, err := m.Submission.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n9
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *ProblemSubmitResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ProblemSubmitResponse) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Success != nil {
+		dAtA[i] = 0x8
+		i++
+		if *m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if m.Reason != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Reason)))
+		i += copy(dAtA[i:], *m.Reason)
+	}
+	if m.Submission != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Submission.Size()))
+		n10, err := m.Submission.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n10
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *SubmissionGetResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SubmissionGetResponse) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Success != nil {
+		dAtA[i] = 0x8
+		i++
+		if *m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if m.Reason != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(len(*m.Reason)))
+		i += copy(dAtA[i:], *m.Reason)
+	}
+	if m.Submission != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintSyzojApi(dAtA, i, uint64(m.Submission.Size()))
+		n11, err := m.Submission.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n11
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
 func (m *DebugAddJudgerRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1513,6 +1814,68 @@ func (m *ProblemUpdateRequest) Size() (n int) {
 	_ = l
 	if m.Problem != nil {
 		l = m.Problem.Size()
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ProblemSubmitRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Submission != nil {
+		l = m.Submission.Size()
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ProblemSubmitResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Success != nil {
+		n += 2
+	}
+	if m.Reason != nil {
+		l = len(*m.Reason)
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.Submission != nil {
+		l = m.Submission.Size()
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *SubmissionGetResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Success != nil {
+		n += 2
+	}
+	if m.Reason != nil {
+		l = len(*m.Reason)
+		n += 1 + l + sovSyzojApi(uint64(l))
+	}
+	if m.Submission != nil {
+		l = m.Submission.Size()
 		n += 1 + l + sovSyzojApi(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -2847,6 +3210,360 @@ func (m *ProblemUpdateRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *ProblemSubmitRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSyzojApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ProblemSubmitRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ProblemSubmitRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Submission", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Submission == nil {
+				m.Submission = &judge.JudgeRequest{}
+			}
+			if err := m.Submission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSyzojApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ProblemSubmitResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSyzojApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ProblemSubmitResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ProblemSubmitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.Success = &b
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.Reason = &s
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Submission", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Submission == nil {
+				m.Submission = &Submission{}
+			}
+			if err := m.Submission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSyzojApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SubmissionGetResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSyzojApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SubmissionGetResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SubmissionGetResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.Success = &b
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.Reason = &s
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Submission", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyzojApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Submission == nil {
+				m.Submission = &Submission{}
+			}
+			if err := m.Submission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSyzojApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSyzojApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *DebugAddJudgerRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3114,38 +3831,41 @@ var (
 	ErrIntOverflowSyzojApi   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("syzoj.api.proto", fileDescriptor_syzoj_api_a015b6c960700244) }
+func init() { proto.RegisterFile("syzoj.api.proto", fileDescriptor_syzoj_api_c1472edcf8249526) }
 
-var fileDescriptor_syzoj_api_a015b6c960700244 = []byte{
-	// 465 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x94, 0x4f, 0x6b, 0x13, 0x41,
-	0x18, 0xc6, 0x19, 0x8b, 0x36, 0xfb, 0xb6, 0x52, 0x5d, 0xd2, 0x26, 0x26, 0x12, 0xea, 0x9e, 0x7a,
-	0xb0, 0x13, 0xf1, 0xe2, 0x39, 0x1a, 0x2c, 0x16, 0x2d, 0x32, 0x28, 0x88, 0x97, 0xb2, 0xc9, 0xbc,
-	0x8e, 0x5b, 0xb3, 0x3b, 0xeb, 0xfc, 0x41, 0xe2, 0x49, 0x04, 0xbf, 0x9b, 0x47, 0x3f, 0x82, 0xe4,
-	0x93, 0x48, 0x76, 0x66, 0xb2, 0x6b, 0xed, 0xa1, 0x8d, 0x87, 0x5e, 0x16, 0xde, 0xe7, 0x7d, 0xf6,
-	0xe1, 0x37, 0xef, 0xfc, 0x81, 0x1d, 0x3d, 0xff, 0x2a, 0xcf, 0x68, 0x5a, 0x66, 0xb4, 0x54, 0xd2,
-	0xc8, 0x38, 0x5a, 0x09, 0xbd, 0x7b, 0x42, 0x4a, 0x31, 0xc3, 0x61, 0xd5, 0x98, 0xd8, 0x0f, 0xc3,
-	0xb4, 0x98, 0x3b, 0x57, 0xef, 0xae, 0x73, 0xe5, 0x92, 0xe3, 0xec, 0x6f, 0xe9, 0xcc, 0x72, 0x81,
-	0x4e, 0x4a, 0x4e, 0xa0, 0xc5, 0x50, 0x97, 0xb2, 0xd0, 0x18, 0x3f, 0x84, 0x5b, 0x0a, 0xb5, 0x9d,
-	0x99, 0x2e, 0xd9, 0x27, 0x07, 0x5b, 0x8f, 0xdb, 0xd4, 0xa5, 0xd3, 0x90, 0x4e, 0x47, 0xc5, 0x9c,
-	0x79, 0x4f, 0xdc, 0x86, 0x9b, 0xa8, 0x94, 0x54, 0xdd, 0x1b, 0xfb, 0xe4, 0x20, 0x62, 0xae, 0x48,
-	0x8e, 0x60, 0xfb, 0xa5, 0x14, 0x59, 0xc1, 0xf0, 0xb3, 0x45, 0x6d, 0xe2, 0x3e, 0x44, 0x56, 0xa3,
-	0x3a, 0x2d, 0xd2, 0x1c, 0xab, 0xd8, 0x88, 0xb5, 0x96, 0xc2, 0x49, 0x9a, 0x63, 0xdc, 0x83, 0x56,
-	0x99, 0x6a, 0xfd, 0x45, 0x2a, 0xee, 0x53, 0x56, 0x75, 0x32, 0x82, 0xdb, 0x3e, 0xc8, 0xd3, 0x75,
-	0x61, 0x53, 0xdb, 0xe9, 0x14, 0xb5, 0xae, 0x72, 0x5a, 0x2c, 0x94, 0xf1, 0xde, 0x92, 0x3b, 0xd5,
-	0xb2, 0xf0, 0x21, 0xbe, 0x4a, 0x8e, 0x61, 0x87, 0xa1, 0xc8, 0xb4, 0x41, 0xf5, 0xdf, 0x38, 0x63,
-	0xb8, 0x53, 0x67, 0xad, 0x4d, 0xc4, 0xa0, 0xf3, 0x5a, 0xc9, 0xc9, 0x0c, 0x73, 0x8d, 0xe6, 0x99,
-	0xc2, 0xd4, 0x60, 0x20, 0x7b, 0x02, 0x50, 0xae, 0x5a, 0x7e, 0x03, 0x3a, 0xb4, 0xb9, 0x87, 0xf5,
-	0x9f, 0xac, 0x61, 0x4d, 0x7e, 0x10, 0xe8, 0xfe, 0x1b, 0xba, 0x2e, 0xe2, 0x39, 0x8e, 0x8d, 0xcb,
-	0x73, 0x7c, 0x27, 0xb0, 0x5b, 0xb7, 0x8e, 0xd0, 0x5c, 0x07, 0xc4, 0x2b, 0xe8, 0xd7, 0x9d, 0x11,
-	0xe7, 0xbe, 0x08, 0x43, 0xa6, 0xb0, 0xe9, 0xcd, 0xab, 0x23, 0x7e, 0x41, 0x28, 0x0b, 0xa6, 0xe4,
-	0x1b, 0x81, 0xfb, 0x17, 0xe7, 0xad, 0xbd, 0xb4, 0x06, 0xc2, 0xc6, 0x65, 0x10, 0xc6, 0x10, 0x7b,
-	0xad, 0x39, 0xd2, 0xab, 0x2e, 0xe4, 0x39, 0xb4, 0xbd, 0xf6, 0xb6, 0xe4, 0x8d, 0x53, 0x77, 0xd5,
-	0x9c, 0x0e, 0xec, 0x8e, 0x71, 0x62, 0xc5, 0x88, 0xf3, 0xe3, 0xe5, 0x2b, 0x12, 0x2e, 0x56, 0xf2,
-	0x0e, 0xf6, 0xce, 0x37, 0x3c, 0x6a, 0x1f, 0xa2, 0xea, 0xc1, 0x51, 0xa7, 0x19, 0x0f, 0x57, 0xce,
-	0x09, 0x2f, 0x78, 0xfc, 0x00, 0xb6, 0x7d, 0xd3, 0xc8, 0x4f, 0x18, 0x66, 0xb5, 0xe5, 0xb4, 0x37,
-	0x4b, 0xe9, 0xe9, 0xa3, 0x9f, 0x8b, 0x01, 0xf9, 0xb5, 0x18, 0x90, 0xdf, 0x8b, 0x01, 0x79, 0x9f,
-	0x88, 0xcc, 0x7c, 0xb4, 0x13, 0x3a, 0x95, 0xf9, 0xb0, 0x22, 0x75, 0xdf, 0xc3, 0x42, 0x1c, 0x0a,
-	0x39, 0xac, 0xa8, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0xeb, 0x98, 0x23, 0x32, 0x31, 0x05, 0x00,
-	0x00,
+var fileDescriptor_syzoj_api_c1472edcf8249526 = []byte{
+	// 516 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x94, 0xcf, 0x6e, 0xd3, 0x40,
+	0x10, 0x87, 0x65, 0x2a, 0x68, 0x3c, 0x2d, 0x2a, 0x58, 0x69, 0x93, 0x26, 0x28, 0x2a, 0x3e, 0xf5,
+	0x40, 0x1d, 0xc4, 0x05, 0x71, 0x0c, 0x44, 0x54, 0x54, 0x50, 0xc1, 0x16, 0x24, 0xc4, 0xa5, 0xb2,
+	0xb3, 0x83, 0x71, 0x89, 0xbd, 0x66, 0xff, 0x08, 0x85, 0x13, 0x42, 0xe2, 0xdd, 0x38, 0xf2, 0x08,
+	0x28, 0x4f, 0x82, 0x6c, 0xef, 0xda, 0x4b, 0x9b, 0x43, 0x93, 0x1c, 0xb8, 0x58, 0x9a, 0xdf, 0x8c,
+	0x3f, 0x7d, 0x5e, 0x8f, 0x16, 0x76, 0xc4, 0xec, 0x1b, 0xbb, 0x08, 0xc2, 0x3c, 0x09, 0x72, 0xce,
+	0x24, 0xf3, 0xdc, 0x3a, 0xe8, 0xed, 0xc7, 0x8c, 0xc5, 0x53, 0x1c, 0x96, 0x8d, 0x48, 0x7d, 0x1c,
+	0x86, 0xd9, 0xac, 0x9a, 0xea, 0xdd, 0xad, 0xa6, 0x52, 0x46, 0x71, 0xfa, 0x6f, 0x74, 0xa1, 0x68,
+	0x8c, 0x55, 0xe4, 0x9f, 0x42, 0x8b, 0xa0, 0xc8, 0x59, 0x26, 0xd0, 0x7b, 0x00, 0xb7, 0x38, 0x0a,
+	0x35, 0x95, 0x5d, 0xe7, 0xc0, 0x39, 0xdc, 0x7a, 0xd4, 0x0e, 0x2a, 0x7a, 0x60, 0xe8, 0xc1, 0x28,
+	0x9b, 0x11, 0x3d, 0xe3, 0xb5, 0xe1, 0x26, 0x72, 0xce, 0x78, 0xf7, 0xc6, 0x81, 0x73, 0xe8, 0x92,
+	0xaa, 0xf0, 0x8f, 0x61, 0xfb, 0x25, 0x8b, 0x93, 0x8c, 0xe0, 0x17, 0x85, 0x42, 0x7a, 0x7d, 0x70,
+	0x95, 0x40, 0x7e, 0x9e, 0x85, 0x29, 0x96, 0x58, 0x97, 0xb4, 0x8a, 0xe0, 0x34, 0x4c, 0xd1, 0xeb,
+	0x41, 0x2b, 0x0f, 0x85, 0xf8, 0xca, 0x38, 0xd5, 0x94, 0xba, 0xf6, 0x47, 0x70, 0x5b, 0x83, 0xb4,
+	0x5d, 0x17, 0x36, 0x85, 0x9a, 0x4c, 0x50, 0x88, 0x92, 0xd3, 0x22, 0xa6, 0xf4, 0xf6, 0x0a, 0xef,
+	0x50, 0xb0, 0x4c, 0x43, 0x74, 0xe5, 0x9f, 0xc0, 0x0e, 0xc1, 0x38, 0x11, 0x12, 0xf9, 0xda, 0x3a,
+	0x63, 0xb8, 0xd3, 0xb0, 0x56, 0x36, 0x22, 0xd0, 0x79, 0xcd, 0x59, 0x34, 0xc5, 0x54, 0xa0, 0x7c,
+	0xc6, 0x31, 0x94, 0x68, 0xcc, 0x1e, 0x03, 0xe4, 0x75, 0x4b, 0xff, 0x80, 0x4e, 0x60, 0xff, 0xc3,
+	0xe6, 0x4d, 0x62, 0x8d, 0xfa, 0x3f, 0x1d, 0xe8, 0x5e, 0x85, 0xae, 0xaa, 0x78, 0xc9, 0x63, 0xe3,
+	0xfa, 0x1e, 0x3f, 0x1c, 0xd8, 0x6d, 0x5a, 0xc7, 0x28, 0xff, 0x87, 0xc4, 0x2b, 0xe8, 0x37, 0x9d,
+	0x11, 0xa5, 0xba, 0x30, 0x87, 0x1c, 0xc0, 0xa6, 0x1e, 0xae, 0x57, 0x7c, 0x01, 0x94, 0x98, 0x21,
+	0xff, 0xbb, 0x03, 0xf7, 0x16, 0xf3, 0x56, 0xfe, 0x34, 0x4b, 0x61, 0xe3, 0x3a, 0x0a, 0x63, 0xf0,
+	0x74, 0x66, 0x1f, 0xe9, 0xb2, 0x1f, 0xf2, 0x1c, 0xda, 0x3a, 0x7b, 0x97, 0x53, 0x6b, 0xeb, 0x96,
+	0xe5, 0xbc, 0xa9, 0x39, 0x67, 0x2a, 0x4a, 0x13, 0x69, 0x38, 0x4f, 0x00, 0x44, 0x11, 0x08, 0x91,
+	0xb0, 0x4c, 0xa3, 0xf6, 0x03, 0xfb, 0xba, 0x39, 0x29, 0x9e, 0x7a, 0x9c, 0x58, 0xc3, 0xf6, 0xde,
+	0x18, 0xe6, 0x3a, 0x7b, 0x63, 0x69, 0x2c, 0xda, 0x9b, 0xb3, 0xba, 0x7d, 0x45, 0xa2, 0x69, 0xad,
+	0xbd, 0xbc, 0xab, 0x49, 0x74, 0x60, 0x77, 0x8c, 0x91, 0x8a, 0x47, 0x94, 0x96, 0xa7, 0x65, 0x6e,
+	0x2d, 0xff, 0x3d, 0xec, 0x5d, 0x6e, 0x68, 0xbb, 0x3e, 0xb8, 0xe5, 0xf1, 0xf2, 0xf3, 0x84, 0x9a,
+	0xfb, 0xac, 0x0a, 0x5e, 0x50, 0xef, 0x3e, 0x6c, 0xeb, 0xa6, 0x64, 0x9f, 0xd1, 0x68, 0x6e, 0x55,
+	0xd9, 0xdb, 0x22, 0x7a, 0xfa, 0xf0, 0xd7, 0x7c, 0xe0, 0xfc, 0x9e, 0x0f, 0x9c, 0x3f, 0xf3, 0x81,
+	0xf3, 0xc1, 0x8f, 0x13, 0xf9, 0x49, 0x45, 0xc1, 0x84, 0xa5, 0xc3, 0xd2, 0xb7, 0x7a, 0x1e, 0x65,
+	0xf1, 0x51, 0xcc, 0x86, 0xa5, 0xfb, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x77, 0x9f, 0x29,
+	0x8e, 0x06, 0x00, 0x00,
 }

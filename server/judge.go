@@ -255,7 +255,7 @@ func (r *JudgeRequest) GetResult(last *judge.JudgeResponse) (*judge.JudgeRespons
 	if res != last {
 		return res, nil
 	} else {
-		return nil, io.EOF
+		return last, io.EOF
 	}
 }
 
