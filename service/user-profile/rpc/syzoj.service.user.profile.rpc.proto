@@ -1,0 +1,36 @@
+syntax = "proto2";
+
+package syzoj.service.user.profile.rpc;
+
+import "model/common/syzoj.common.proto";
+
+option go_package = "github.com/syzoj/syzoj-ng-go/service/user-profile/rpc";
+
+service UserProfile {
+	rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+	rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+}
+
+enum Error {
+	Unknown = 0;
+	UserNotFound = 1;
+	BadRequest = 2;
+}
+
+message GetProfileRequest {
+	optional string user_id = 1;
+}
+
+message GetProfileResponse {
+	optional Error error = 1;
+	optional syzoj.common.UserProfile profile = 2;
+}
+
+message UpdateProfileRequest {
+	optional string user_id = 1;
+	optional syzoj.common.UserProfile profile = 2;
+}
+
+message UpdateProfileResponse {
+	optional Error error = 1;
+}

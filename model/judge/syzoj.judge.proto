@@ -2,7 +2,7 @@ syntax = "proto2";
 
 package syzoj.judge;
 
-import "syzoj.judge.legacy.proto";
+import "model/judge/legacy/syzoj.judge.legacy.proto";
 
 option go_package = "github.com/syzoj/syzoj-ng-go/model/judge";
 

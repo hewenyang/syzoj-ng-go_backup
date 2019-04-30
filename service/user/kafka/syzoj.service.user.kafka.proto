@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package syzoj.service.user.kafka;
+
+option go_package = "github.com/syzoj/syzoj-ng-go/service/user/kafka";
+
+message UserEvent {
+	optional string user_id = 1;
+	oneof event {
+		UserRegisterEvent register = 16;
+	}
+}
+
+message UserRegisterEvent {
+}

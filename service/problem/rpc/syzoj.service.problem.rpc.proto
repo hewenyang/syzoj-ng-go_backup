@@ -1,0 +1,45 @@
+syntax = "proto2";
+
+package syzoj.service.problem.rpc;
+
+import "model/common/syzoj.common.proto";
+
+option go_package = "github.com/syzoj/syzoj-ng-go/service/problem/rpc";
+
+service Problem {
+	rpc CreateProblem(CreateProblemRequest) returns (CreateProblemResponse);
+	rpc UpdateProblemStatement(UpdateProblemStatementRequest) returns (UpdateProblemStatementResponse);
+	rpc ListProblem(ListProblemRequest) returns (ListProblemResponse);
+}
+
+enum Error {
+	Unknown = 0;
+	BadRequest = 1;
+	ProblemNotFound = 2;
+}
+
+message CreateProblemRequest {
+	optional string title = 2;
+}
+
+message CreateProblemResponse {
+	optional Error error = 1;
+	optional syzoj.common.Problem problem = 2;
+}
+
+message UpdateProblemStatementRequest {
+	optional string problem_id = 1;
+	optional syzoj.common.ProblemStatement statement = 2;
+}
+
+message UpdateProblemStatementResponse {
+	optional Error error = 1;
+}
+
+message ListProblemRequest {
+}
+
+message ListProblemResponse {
+	optional Error error = 1;
+	repeated syzoj.common.Problem problem = 2;
+}

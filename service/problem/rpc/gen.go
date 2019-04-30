@@ -1,0 +1,2 @@
+//go:generate protoc -I. -I$GOPATH/src/github.com/syzoj/syzoj-ng-go -I$GOPATH/src/github.com/gogo/protobuf/protobuf --gogofast_out=Mgoogle/protobuf/any.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/duration.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/struct.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/wrappers.proto=github.com/gogo/protobuf/types,plugins=grpc:$GOPATH/src syzoj.service.problem.rpc.proto
+package rpc

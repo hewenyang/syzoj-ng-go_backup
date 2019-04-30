@@ -1,0 +1,27 @@
+syntax = "proto2";
+
+package syzoj.common;
+
+option go_package = "github.com/syzoj/syzoj-ng-go/model/common";
+
+message DeviceInfo {
+	optional string token = 1;
+	optional string user_agent = 16;
+	optional string remote_addr = 17;
+}
+
+message UserProfile {
+	optional string signature = 16;
+}
+
+message Problem {
+	optional string id = 1;
+	optional string title = 2;
+	optional ProblemStatement statement = 3;
+}
+
+message ProblemStatement {
+	oneof statement {
+		string markdown = 1;
+	}
+}

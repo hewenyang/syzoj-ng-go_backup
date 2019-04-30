@@ -1,125 +1,68 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
-	"fmt"
-	"github.com/gorilla/mux"
-	"io/ioutil"
-	"net"
-	"net/http"
+	"context"
 	"os"
 	"os/signal"
-	"syscall"
-	"time"
+	"runtime"
+	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 
-	"github.com/syzoj/syzoj-ng-go/database"
-	"github.com/syzoj/syzoj-ng-go/model/judge"
-	"github.com/syzoj/syzoj-ng-go/server"
-	"github.com/syzoj/syzoj-ng-go/server/handlers"
+	"github.com/syzoj/syzoj-ng-go/service"
+	apiService "github.com/syzoj/syzoj-ng-go/service/api/service"
+	problemService "github.com/syzoj/syzoj-ng-go/service/problem/service"
+	userProfileService "github.com/syzoj/syzoj-ng-go/service/user-profile/service"
+	userService "github.com/syzoj/syzoj-ng-go/service/user/service"
 )
 
 var log = logrus.StandardLogger()
 
-type syzoj_config struct {
-	MySQL   string              `json:"mysql"`
-	Addr    string              `json:"addr"`
-	RpcAddr string              `json:"rpc_addr"`
-	Server  server.ServerConfig `json:"server"`
-}
-
-func init() {
-	logrus.SetLevel(logrus.DebugLevel)
-}
-
 func main() {
-	if len(os.Args) <= 1 {
-		fmt.Println("Must specify a subcommand")
-		return
-	}
-	switch os.Args[1] {
-	case "run":
-		cmdRun()
-	default:
-		fmt.Println("Must specify a subcommand")
-		return
-	}
-}
-
-func cmdRun() {
-	runFlagSet := flag.NewFlagSet("run", flag.ExitOnError)
-	configPtr := runFlagSet.String("config", "config.json", "Sets the config file")
-	runFlagSet.Parse(os.Args[2:])
-	logrus.SetLevel(logrus.DebugLevel)
-
-	var err error
-	var configData []byte
-	if configData, err = ioutil.ReadFile(*configPtr); err != nil {
-		log.Fatal("Error reading config file: ", err)
-	}
-	var config *syzoj_config
-	if err = json.Unmarshal(configData, &config); err != nil {
-		log.Fatal("Error parsing config file: ", err)
-	}
-
-	log.Info("Connecting to MySQL")
-	var db *database.Database
-	if db, err = database.Open("mysql", config.MySQL); err != nil {
-		log.Fatal("Error connecting to MySQL: ", err)
-	}
-	defer func() {
-		log.Info("Disconnecting from MySQL")
-		db.Close()
-	}()
-
-	var grpcServer *grpc.Server = grpc.NewServer()
-
-	log.Info("Start SYZOJ")
-	var s *server.Server
-	s = server.NewServer(db, &config.Server)
-	defer func() {
-		log.Info("Stopping SYZOJ")
-		s.Close()
-	}()
-	judge.RegisterJudgeServiceServer(grpcServer, s.GetJudge().GetService())
-	reflection.Register(grpcServer)
+	var wg sync.WaitGroup
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	wg.Add(1)
 	go func() {
-		log.WithField("rpcAddr", config.RpcAddr).Info("Setting up gRPC service")
-		lis, err := net.Listen("tcp", config.RpcAddr)
-		if err != nil {
-			log.Fatal("Failed to listen: ", err)
-		}
-		if err = grpcServer.Serve(lis); err != nil {
-			log.Fatal("Failed to serve gRPC service: ", err)
-		}
+		<-c
+		cancelFunc()
+		signal.Stop(c)
+		wg.Done()
 	}()
-
-	log.Info("Setting up HTTP server")
-	handlers.RegisterHandlers(s.ApiServer())
-	router := mux.NewRouter()
-	router.PathPrefix("/api").Handler(s.ApiServer())
-	router.Handle("/", http.FileServer(http.Dir("static")))
-
-	server := &http.Server{
-		Addr:         config.Addr,
-		Handler:      router,
-		WriteTimeout: time.Second * 10,
+	manager := service.NewServiceManager("services.json")
+	manager.AddService(userService.NewUserService(&userService.Config{
+		MySQL:        "test:@/test",
+		KafkaBrokers: []string{"localhost:9092"},
+	}))
+	manager.AddService(apiService.NewApiService(&apiService.Config{
+		Debug:    true,
+		HttpAddr: ":3124",
+	}))
+	manager.AddService(userProfileService.NewUserProfileService(&userProfileService.Config{
+		MySQL:        "test:@/test",
+		KafkaBrokers: []string{"localhost:9092"},
+	}))
+	manager.AddService(problemService.NewProblemService(&problemService.Config{
+		MySQL:        "test:@/test",
+		KafkaBrokers: []string{"localhost:9092"},
+	}))
+	if err := manager.Migrate(); err != nil {
+		log.WithError(err).Error("Failed to migrate")
+		os.Exit(1)
 	}
-	go func() {
-		log.Infof("Starting web server at %s", server.Addr)
-		if err := server.ListenAndServe(); err != http.ErrServerClosed {
-			log.Error("Web server failed unexpectedly: ", err)
-		}
-	}()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	<-sigChan
-	log.Info("Shutting down web server")
-	server.Close()
+	if err := manager.Run(ctx); err != nil && err != context.Canceled {
+		log.WithError(err).Error("Failed to run service")
+		os.Exit(1)
+	}
+	wg.Wait()
+	log.Info("Done")
+	var numBytes int = 32768
+	stack := make([]byte, numBytes)
+	for runtime.Stack(stack, true) >= numBytes {
+		numBytes *= 2
+		stack = make([]byte, numBytes)
+	}
+	os.Stderr.Write(stack)
 }

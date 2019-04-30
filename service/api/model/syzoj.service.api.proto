@@ -1,0 +1,43 @@
+syntax = "proto2";
+
+package syzoj.service.api;
+
+import "model/common/syzoj.common.proto";
+
+option go_package = "github.com/syzoj/syzoj-ng-go/service/api/model";
+
+// This file defines messages used in the frontend.
+// When making any changes to this file, reflect them tn the frontend too.
+
+////////// Basic messages
+message Response {
+	optional string error = 1;
+}
+
+message LoginRequest {
+	optional string user_name = 1;
+	optional string password = 2;
+}
+
+message LoginResponse {
+	optional string error = 1;
+}
+
+message RegisterRequest {
+	optional string user_name = 1;
+	optional string password = 2;
+}
+
+message RegisterResponse {
+	optional string error = 1;
+}
+
+message ProblemsResponse {
+	repeated Problem problems = 1;
+}
+
+message Problem {
+	optional string id = 1;
+	optional string title = 2;
+	optional syzoj.common.ProblemStatement statement = 3;
+}
