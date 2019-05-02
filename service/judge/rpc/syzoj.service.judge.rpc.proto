@@ -1,0 +1,60 @@
+syntax = "proto2";
+
+package syzoj.service.judge.rpc;
+
+import "model/common/syzoj.common.proto";
+
+option go_package = "github.com/syzoj/syzoj-ng-go/service/judge/rpc";
+
+service Judge {
+	rpc CreateSubmission(CreateSubmissionRequest) returns (CreateSubmissionResponse);
+	rpc GetSubmission(GetSubmissionRequest) returns (GetSubmissionResponse);
+	rpc SubscribeSubmission(SubscribeSubmissionRequest) returns (stream SubscribeSubmissionResponse);
+	// First request should contain submission_id only
+	rpc HandleSubmission(stream HandleSubmissionRequest) returns (HandleSubmissionResponse);
+};
+
+enum Error {
+	Unknown = 0;
+	SubmissionNotFound = 1;
+}
+
+message CreateSubmissionRequest {
+	optional syzoj.common.Data test_data = 2;
+	optional syzoj.common.Data submit_data = 3;
+}
+
+message CreateSubmissionResponse {
+	optional Error error = 1;
+	optional string submission_id = 2;
+}
+
+message GetSubmissionRequest {
+	optional string submission_id = 1;
+}
+
+message GetSubmissionResponse {
+	optional Error error = 1;
+	optional syzoj.common.Data test_data = 2;
+	optional syzoj.common.Data submit_data = 3;
+	optional syzoj.common.Data result = 4;
+}
+
+message SubscribeSubmissionRequest {
+	optional string submission_id = 1;
+}
+
+message SubscribeSubmissionResponse {
+	optional Error error = 1;
+	optional syzoj.common.Data result = 2;
+}
+
+message HandleSubmissionRequest {
+	optional string submission_id = 1;
+	optional syzoj.common.Data result = 2;
+	optional bool done = 3;
+}
+
+message HandleSubmissionResponse {
+	optional Error error = 1;
+}

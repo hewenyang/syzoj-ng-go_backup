@@ -2,7 +2,14 @@ syntax = "proto2";
 
 package syzoj.common;
 
+import "google/protobuf/struct.proto";
+
 option go_package = "github.com/syzoj/syzoj-ng-go/model/common";
+
+message Data {
+	optional google.protobuf.Struct info = 1;
+	map<string, string> blobs = 2;
+}
 
 message DeviceInfo {
 	optional string token = 1;

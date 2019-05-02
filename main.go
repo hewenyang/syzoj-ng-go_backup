@@ -12,6 +12,7 @@ import (
 
 	"github.com/syzoj/syzoj-ng-go/service"
 	apiService "github.com/syzoj/syzoj-ng-go/service/api/service"
+	judgeService "github.com/syzoj/syzoj-ng-go/service/judge/service"
 	problemService "github.com/syzoj/syzoj-ng-go/service/problem/service"
 	userProfileService "github.com/syzoj/syzoj-ng-go/service/user-profile/service"
 	userService "github.com/syzoj/syzoj-ng-go/service/user/service"
@@ -47,6 +48,9 @@ func main() {
 	manager.AddService(problemService.NewProblemService(&problemService.Config{
 		MySQL:        "test:@/test",
 		KafkaBrokers: []string{"localhost:9092"},
+	}))
+	manager.AddService(judgeService.NewJudgeService(&judgeService.Config{
+		MySQL: "test:@/test",
 	}))
 	if err := manager.Migrate(); err != nil {
 		log.WithError(err).Error("Failed to migrate")
