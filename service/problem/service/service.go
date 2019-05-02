@@ -13,10 +13,9 @@ import (
 
 	"github.com/syzoj/syzoj-ng-go/fakenet"
 	"github.com/syzoj/syzoj-ng-go/service"
+	judgecli "github.com/syzoj/syzoj-ng-go/service/judge/client"
 	"github.com/syzoj/syzoj-ng-go/service/problem/rpc"
 )
-
-var log = logrus.StandardLogger()
 
 type Config struct {
 	MySQL        string
@@ -26,9 +25,11 @@ type Config struct {
 type serv struct {
 	config      *Config
 	ctx         context.Context
+	log         *logrus.Logger
 	wg          sync.WaitGroup
 	db          *sql.DB
 	kafkaWriter *kafka.Writer
+	judgeCli    *judgecli.Client
 }
 
 func NewProblemService(config *Config) *service.ServiceInfo {
@@ -42,8 +43,9 @@ func NewProblemService(config *Config) *service.ServiceInfo {
 func (s *serv) Main(ctx context.Context, c *service.ServiceContext) {
 	var err error
 	s.ctx = ctx
+	s.log = c.GetLogger()
 	if s.db, err = sql.Open("mysql", s.config.MySQL); err != nil {
-		log.WithError(err).Error("Failed to open MySQL")
+		s.log.WithError(err).Error("Failed to open MySQL")
 		return
 	}
 	defer s.db.Close()
@@ -53,11 +55,15 @@ func (s *serv) Main(ctx context.Context, c *service.ServiceContext) {
 		Balancer: &kafka.Hash{},
 	})
 	defer s.kafkaWriter.Close()
+	if s.judgeCli, err = judgecli.NewJudgeClient(); err != nil {
+		s.log.WithError(err).Error("Failed to connect to judge service")
+		return
+	}
 	grpcServer := grpc.NewServer()
 	rpc.RegisterProblemServer(grpcServer, s)
 	var listener net.Listener
 	if listener, err = fakenet.Base.Listen("service-problem"); err != nil {
-		log.WithError(err).Error("Failed to listen")
+		s.log.WithError(err).Error("Failed to listen")
 		return
 	}
 	c.StartupDone()

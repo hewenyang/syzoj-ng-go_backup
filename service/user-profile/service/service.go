@@ -18,8 +18,6 @@ import (
 	userkpb "github.com/syzoj/syzoj-ng-go/service/user/kafka"
 )
 
-var log = logrus.StandardLogger()
-
 type Config struct {
 	MySQL        string
 	KafkaBrokers []string
@@ -27,6 +25,7 @@ type Config struct {
 
 type serv struct {
 	config      *Config
+	log         *logrus.Logger
 	wg          sync.WaitGroup
 	db          *sql.DB
 	kafkaReader *kafka.Reader
@@ -42,9 +41,10 @@ func NewUserProfileService(config *Config) *service.ServiceInfo {
 
 func (s *serv) Main(ctx context.Context, c *service.ServiceContext) {
 	var err error
+	s.log = c.GetLogger()
 	s.db, err = sql.Open("mysql", s.config.MySQL)
 	if err != nil {
-		log.WithError(err).Error("Failed to connect to MySQL")
+		s.log.WithError(err).Error("Failed to connect to MySQL")
 		return
 	}
 	defer s.db.Close()
@@ -65,12 +65,12 @@ func (s *serv) Main(ctx context.Context, c *service.ServiceContext) {
 			}
 			msg := &userkpb.UserEvent{}
 			if err := proto.Unmarshal(m.Value, msg); err != nil {
-				log.WithError(err).Error("Failed to unmarshal message from topic:user to UserEvent")
+				s.log.WithError(err).Error("Failed to unmarshal message from topic:user to UserEvent")
 				continue
 			}
 		retry:
 			if err := s.handleUserEvent(ctx, msg); err != nil {
-				log.WithError(err).Error("Failed to process message")
+				s.log.WithError(err).Error("Failed to process message")
 				t := time.NewTimer(time.Second * 1)
 				select {
 				case <-ctx.Done():
@@ -81,13 +81,13 @@ func (s *serv) Main(ctx context.Context, c *service.ServiceContext) {
 				}
 			}
 			if err := s.kafkaReader.CommitMessages(ctx, m); err != nil {
-				log.WithError(err).Error("Failed to commit message")
+				s.log.WithError(err).Error("Failed to commit message")
 			}
 		}
 	}()
 	listener, err := fakenet.Base.Listen("service-user-profile")
 	if err != nil {
-		log.WithError(err).Error("Failed to listen on service-user-profile")
+		s.log.WithError(err).Error("Failed to listen on service-user-profile")
 		return
 	}
 	grpcServer := grpc.NewServer()
@@ -96,7 +96,7 @@ func (s *serv) Main(ctx context.Context, c *service.ServiceContext) {
 	go func() {
 		defer s.wg.Done()
 		if err := grpcServer.Serve(listener); err != nil {
-			log.WithError(err).Error("Failed to serve gRPC")
+			s.log.WithError(err).Error("Failed to serve gRPC")
 		}
 	}()
 	s.wg.Add(1)

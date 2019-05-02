@@ -16,16 +16,14 @@ import (
 	userclient "github.com/syzoj/syzoj-ng-go/service/user/client"
 )
 
-var log = logrus.StandardLogger()
-
 type Config struct {
 	Debug    bool
 	HttpAddr string
 }
 
 type apiService struct {
-	config *Config
-
+	config        *Config
+	log           *logrus.Logger
 	userClient    *userclient.Client
 	problemClient *problemclient.Client
 	addr          string
@@ -45,13 +43,14 @@ func NewApiService(config *Config) *service.ServiceInfo {
 
 func (s *apiService) Main(ctx context.Context, c *service.ServiceContext) {
 	var err error
+	s.log = c.GetLogger()
 	if s.userClient, err = userclient.NewUserClient(); err != nil {
-		log.WithError(err).Error("Failed to connect to user service")
+		s.log.WithError(err).Error("Failed to connect to user service")
 		return
 	}
 	defer s.userClient.Close()
 	if s.problemClient, err = problemclient.NewProblemClient(); err != nil {
-		log.WithError(err).Error("Failed to connect to problem service")
+		s.log.WithError(err).Error("Failed to connect to problem service")
 		return
 	}
 	defer s.problemClient.Close()
@@ -75,13 +74,13 @@ func (s *apiService) Main(ctx context.Context, c *service.ServiceContext) {
 	}
 	listener, err := net.Listen("tcp", s.addr)
 	if err != nil {
-		log.WithError(err).Error("Failed to listen")
+		s.log.WithError(err).Error("Failed to listen")
 		return
 	}
 	s.wg.Add(1)
 	go func() {
 		if err := server.Serve(listener); err != http.ErrServerClosed {
-			log.WithError(err).Error("Failed to serve HTTP")
+			s.log.WithError(err).Error("Failed to serve HTTP")
 		}
 		s.wg.Done()
 	}()
@@ -93,7 +92,8 @@ func (s *apiService) Main(ctx context.Context, c *service.ServiceContext) {
 	s.wg.Wait()
 }
 
-func (s *apiService) Migrate(prevVersion string) error {
-	log.Infof("apiService: Migrating from %s to %s", prevVersion, "v0.0.1")
+func (s *apiService) Migrate(ctx context.Context, c *service.ServiceContext, prevVersion string) error {
+	s.log = c.GetLogger()
+	s.log.Infof("apiService: Migrating from %s to %s", prevVersion, "v0.0.1")
 	return nil
 }

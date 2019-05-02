@@ -8,8 +8,10 @@ option go_package = "github.com/syzoj/syzoj-ng-go/service/problem/rpc";
 
 service Problem {
 	rpc CreateProblem(CreateProblemRequest) returns (CreateProblemResponse);
+	rpc GetProblem(GetProblemRequest) returns (GetProblemResponse);
 	rpc UpdateProblemStatement(UpdateProblemStatementRequest) returns (UpdateProblemStatementResponse);
-	rpc ListProblem(ListProblemRequest) returns (ListProblemResponse);
+	rpc UpdateProblemTestData(UpdateProblemTestDataRequest) returns (UpdateProblemTestDataResponse);
+	rpc SubmitProblem(SubmitProblemRequest) returns (SubmitProblemResponse);
 }
 
 enum Error {
@@ -24,7 +26,18 @@ message CreateProblemRequest {
 
 message CreateProblemResponse {
 	optional Error error = 1;
-	optional syzoj.common.Problem problem = 2;
+	optional string problem_id = 2;
+}
+
+message GetProblemRequest {
+	optional string problem_id = 1;
+}
+
+message GetProblemResponse {
+	optional Error error = 1;
+	optional string title = 2;
+	optional syzoj.common.ProblemStatement statement = 3;
+	optional syzoj.common.Data test_data = 4;
 }
 
 message UpdateProblemStatementRequest {
@@ -36,10 +49,21 @@ message UpdateProblemStatementResponse {
 	optional Error error = 1;
 }
 
-message ListProblemRequest {
+message UpdateProblemTestDataRequest {
+	optional string problem_id = 1;
+	optional syzoj.common.Data test_data = 2;
 }
 
-message ListProblemResponse {
+message UpdateProblemTestDataResponse {
 	optional Error error = 1;
-	repeated syzoj.common.Problem problem = 2;
+}
+
+message SubmitProblemRequest {
+	optional string problem_id = 1;
+	optional syzoj.common.Data submit_data = 2;
+}
+
+message SubmitProblemResponse {
+	optional Error error = 1;
+	optional string submission_id = 2;
 }

@@ -21,12 +21,6 @@ message UserProfile {
 	optional string signature = 16;
 }
 
-message Problem {
-	optional string id = 1;
-	optional string title = 2;
-	optional ProblemStatement statement = 3;
-}
-
 message ProblemStatement {
 	oneof statement {
 		string markdown = 1;

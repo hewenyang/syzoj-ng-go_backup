@@ -10,6 +10,7 @@ import (
 )
 
 type WsApiContext struct {
+	s          *apiService
 	r          *http.Request
 	wsConn     *websocket.Conn
 	cancelFunc func()
@@ -20,11 +21,12 @@ func (s *apiService) WrapWsHandler(ctx context.Context, h func(context.Context, 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wsConn, err := s.wsUpgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.WithError(err).Error("Failed to upgrade websocket")
+			s.log.WithError(err).Error("Failed to upgrade websocket")
 			return
 		}
 		msgChan := make(chan proto.Message, 10)
 		c := &WsApiContext{
+			s:      s,
 			r:      r,
 			wsConn: wsConn,
 			msg:    msgChan,
@@ -57,7 +59,7 @@ func (s *apiService) WrapWsHandler(ctx context.Context, h func(context.Context, 
 
 		err = h(ctx, c)
 		if err != nil {
-			log.WithError(err).Error("Websocket error")
+			s.log.WithError(err).Error("Websocket error")
 		}
 	})
 }
@@ -85,7 +87,7 @@ func (c *WsApiContext) ReadBody(val proto.Message) error {
 		return err
 	}
 	if messageType != websocket.TextMessage {
-		log.Error("Cannot use non-text message for websocket")
+		c.s.log.Error("Cannot use non-text message for websocket")
 		return ErrBusy
 	}
 	return jsonUnmarshaler.Unmarshal(r, val)

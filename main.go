@@ -50,7 +50,8 @@ func main() {
 		KafkaBrokers: []string{"localhost:9092"},
 	}))
 	manager.AddService(judgeService.NewJudgeService(&judgeService.Config{
-		MySQL: "test:@/test",
+		MySQL:        "test:@/test",
+		KafkaBrokers: []string{"localhost:9092"},
 	}))
 	if err := manager.Migrate(); err != nil {
 		log.WithError(err).Error("Failed to migrate")

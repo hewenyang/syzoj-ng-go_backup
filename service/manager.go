@@ -60,10 +60,12 @@ func (s *ServiceManager) Migrate() error {
 	if s.info.ServiceVersion == nil {
 		s.info.ServiceVersion = make(map[string]string)
 	}
+	ctx := context.Background()
 	for _, i := range s.services {
 		v := s.info.ServiceVersion[i.GetName()]
 		if i.GetVersion() != v {
-			err := i.object.Migrate(v)
+			sv := NewService(ctx, i)
+			err := sv.Migrate(v)
 			if err != nil {
 				log.WithError(err).Errorf("Failed to migrate service %s", i.GetName())
 				s.saveDB()
@@ -83,6 +85,7 @@ func (s *ServiceManager) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	for _, i := range s.services {
 		sv := NewService(ctx, i)
+		sv.Run()
 		<-sv.StartupChan()
 		wg.Add(1)
 		go func() {

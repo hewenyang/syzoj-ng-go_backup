@@ -16,7 +16,7 @@ func (s *serv) GetProfile(ctx context.Context, req *rpc.GetProfileRequest) (*rpc
 	profile := &common.UserProfile{}
 	err := s.db.QueryRowContext(ctx, "SELECT profile FROM user_profile WHERE id=?", req.GetUserId()).Scan(util.ProtoSql{profile})
 	if err != nil {
-		log.WithError(err).Error("Failed to query database")
+		s.log.WithError(err).Error("Failed to query database")
 		return nil, err
 	}
 	if err == sql.ErrNoRows {
@@ -31,7 +31,7 @@ func (s *serv) UpdateProfile(ctx context.Context, req *rpc.UpdateProfileRequest)
 	}
 	_, err := s.db.ExecContext(ctx, "UPDATE user_profile SET profile=? WHERE id=?", util.ProtoSql{req.Profile}, req.GetUserId())
 	if err != nil {
-		log.WithError(err).Error("Failed to update database")
+		s.log.WithError(err).Error("Failed to update database")
 		return nil, err
 	}
 	return &rpc.UpdateProfileResponse{}, nil

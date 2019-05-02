@@ -28,8 +28,8 @@ func (s *apiService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	curTime := time.Now()
 	defer func() {
 		d := time.Now().Sub(curTime)
-		log.Info(r)
-		log.Info("Request spent ", d)
+		s.log.Info(r)
+		s.log.Info("Request spent ", d)
 	}()
 	if s.debug {
 		if origin := r.Header.Get("Origin"); origin != "" {

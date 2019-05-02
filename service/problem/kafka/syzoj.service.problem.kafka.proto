@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+package syzoj.service.problem.kafka;
+
+option go_package = "github.com/syzoj/syzoj-ng-go/service/problem/kafka";
+
+message ProblemEvent {
+	optional string problem_id = 1;
+	oneof event {
+		ProblemSubmissionEvent submission = 16;
+	}
+}
+
+message ProblemSubmissionEvent {
+	optional string submission_id = 1;
+}

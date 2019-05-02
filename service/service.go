@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"io/ioutil"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -21,6 +22,7 @@ type Service struct {
 
 type ServiceContext struct {
 	s *Service
+	l *logrus.Logger
 }
 
 // ServiceBuilder is a struct used to build ServiceInfo.
@@ -39,7 +41,7 @@ type ServiceInfo struct {
 
 type ServiceObject interface {
 	Main(context.Context, *ServiceContext)
-	Migrate(string) error
+	Migrate(context.Context, *ServiceContext, string) error
 }
 
 func (s ServiceBuilder) Build() *ServiceInfo {
@@ -73,17 +75,37 @@ func NewService(ctx context.Context, info *ServiceInfo) *Service {
 	s.ctx, s.cancel = context.WithCancel(ctx)
 	s.startup = make(chan struct{})
 	s.stop = make(chan struct{})
+	return s
+}
+
+func (s *Service) Run() {
 	c := &ServiceContext{s: s}
+	l := logrus.New()
+	l.Out = ioutil.Discard
+	l.AddHook(&logHook{l: logrus.StandardLogger(), name: s.info.GetName()})
+	c.l = l
 	go func() {
-		log.Infof("Starting service %s", info.GetName())
+		log.Infof("Starting service %s", s.info.GetName())
 		defer func() {
-			log.Infof("Stopped service %s", info.GetName())
+			log.Infof("Stopped service %s", s.info.GetName())
 			s.doStartup()
 			s.doStop()
 		}()
-		info.object.Main(s.ctx, c)
+		s.info.object.Main(s.ctx, c)
 	}()
-	return s
+}
+
+func (s *Service) Migrate(prevVersion string) error {
+	c := &ServiceContext{s: s}
+	l := logrus.New()
+	l.Out = ioutil.Discard
+	l.AddHook(&logHook{l: logrus.StandardLogger(), name: s.info.GetName()})
+	c.l = l
+	return s.info.object.Migrate(s.ctx, c, prevVersion)
+}
+
+func (s *Service) Stop() {
+	s.cancel()
 }
 
 func (s *Service) StartupChan() <-chan struct{} {
@@ -104,4 +126,22 @@ func (s *Service) doStop() {
 
 func (s *ServiceContext) StartupDone() {
 	s.s.doStartup()
+}
+
+func (s *ServiceContext) GetLogger() *logrus.Logger {
+	return s.l
+}
+
+type logHook struct {
+	l    *logrus.Logger
+	name string
+}
+
+func (h *logHook) Levels() []logrus.Level {
+	return []logrus.Level{logrus.PanicLevel, logrus.FatalLevel, logrus.ErrorLevel, logrus.WarnLevel, logrus.InfoLevel, logrus.DebugLevel, logrus.TraceLevel}
+}
+
+func (h *logHook) Fire(e *logrus.Entry) error {
+	h.l.WithFields(e.Data).WithField("service", h.name).WithTime(e.Time).Log(e.Level, e.Message)
+	return nil
 }

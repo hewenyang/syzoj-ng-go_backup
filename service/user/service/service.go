@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/segmentio/kafka-go"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
 	"github.com/syzoj/syzoj-ng-go/fakenet"
@@ -22,6 +23,7 @@ type Config struct {
 
 type serv struct {
 	config      *Config
+	log         *logrus.Logger
 	ctx         context.Context
 	wg          sync.WaitGroup
 	db          *sql.DB
@@ -38,9 +40,10 @@ func NewUserService(config *Config) *service.ServiceInfo {
 
 func (s *serv) Main(ctx context.Context, c *service.ServiceContext) {
 	var err error
+	s.log = c.GetLogger()
 	s.ctx = ctx
 	if s.db, err = sql.Open("mysql", s.config.MySQL); err != nil {
-		log.WithError(err).Error("Failed to open MySQL")
+		s.log.WithError(err).Error("Failed to open MySQL")
 		return
 	}
 	defer s.db.Close()
@@ -54,7 +57,7 @@ func (s *serv) Main(ctx context.Context, c *service.ServiceContext) {
 	rpc.RegisterUserServer(grpcServer, s)
 	var listener net.Listener
 	if listener, err = fakenet.Base.Listen("service-user"); err != nil {
-		log.WithError(err).Error("Failed to listen")
+		s.log.WithError(err).Error("Failed to listen")
 		return
 	}
 	c.StartupDone()

@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package syzoj.service.judge.kafka;
+
+option go_package = "github.com/syzoj/syzoj-ng-go/service/judge/kafka";
+
+message JudgeEvent {
+	optional string submission_id = 1;
+	oneof event {
+		JudgeDoneEvent done = 16;
+	}
+}
+
+message JudgeDoneEvent {
+}

@@ -17,6 +17,7 @@ service Judge {
 enum Error {
 	Unknown = 0;
 	SubmissionNotFound = 1;
+	SubmissionDone = 2;
 }
 
 message CreateSubmissionRequest {
@@ -38,6 +39,7 @@ message GetSubmissionResponse {
 	optional syzoj.common.Data test_data = 2;
 	optional syzoj.common.Data submit_data = 3;
 	optional syzoj.common.Data result = 4;
+	optional bool done = 5;
 }
 
 message SubscribeSubmissionRequest {

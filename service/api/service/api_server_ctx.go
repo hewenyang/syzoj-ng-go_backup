@@ -12,6 +12,7 @@ import (
 )
 
 type ApiContext struct {
+	s *apiService
 	r *http.Request
 	w http.ResponseWriter
 }
@@ -24,7 +25,7 @@ func (s *apiService) wrapHandler(ctx context.Context, h func(context.Context, *A
 		checkToken = false
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c := &ApiContext{r: r, w: w}
+		c := &ApiContext{s: s, r: r, w: w}
 		ctx, cancelFunc := context.WithCancel(ctx)
 		defer cancelFunc()
 		if checkToken {
@@ -67,7 +68,7 @@ func (c *ApiContext) ReadBody(val proto.Message) error {
 
 func (c *ApiContext) SendBody(val proto.Message) {
 	if err := jsonMarshaler.Marshal(c.w, val); err != nil {
-		log.WithError(err).Error("Failed to send response")
+		c.s.log.WithError(err).Error("Failed to send response")
 	}
 }
 
